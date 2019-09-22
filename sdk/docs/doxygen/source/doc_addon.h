@@ -1613,7 +1613,7 @@ Example script with metadata:
     vector3 myPosition;
     
     [editable]
-	[range [10, 100]]
+    [range [10, 100]]
     int     myStrength;
   }
   
@@ -1641,14 +1641,14 @@ if( r >= 0 )
   for( int n = 0; n < count; n++ )
   {
     vector<string> metadata = builder.GetMetadataStringForVar(n);
-	for( int m = 0; m < metadata.size(); m++ )
-	{
+    for( int m = 0; m < metadata.size(); m++ )
+    {
       if( metadata[m] == "editable" )
       {
         // Show the global variable in a GUI
         ...
       }
-	}
+    }
   }
 }
 \endcode
