@@ -817,10 +817,43 @@ void asCModule::InternalReset()
 // interface
 asIScriptFunction *asCModule::GetFunctionByName(const char *in_name) const
 {
+	if( in_name == 0 )
+		return 0;
+	
+	asCString name = in_name;
+	asCString scope;
 	asSNameSpace *ns = defaultNamespace;
+	
+	// Check if the given name contains a scope
+	int pos = name.FindLast("::");
+	if( pos >= 0 )
+	{
+		scope = name.SubString(0, pos);
+		name = name.SubString(pos+2);
+		if( pos == 0 )
+		{
+			// The scope is '::' so the search must start in the global namespace
+			ns = engine->nameSpaces[0];
+		}
+		else if( scope.SubString(0, 2) == "::" )
+		{
+			// The scope starts with '::' so the given scope is fully qualified
+			ns = engine->FindNameSpace(scope.SubString(2).AddressOf());
+		}
+		else
+		{
+			// The scope doesn't start with '::' so it is relative to the current namespace
+			if( defaultNamespace->name == "" )
+				ns = engine->FindNameSpace(scope.AddressOf());
+			else
+				ns = engine->FindNameSpace((defaultNamespace->name + "::" + scope).AddressOf());
+		}
+	}
+	
+	// Search recursively in the given namespace, moving up to parent namespace until the function is found
 	while( ns )
 	{
-		const asCArray<unsigned int> &idxs = globalFunctions.GetIndexes(ns, in_name);
+		const asCArray<unsigned int> &idxs = globalFunctions.GetIndexes(ns, name);
 		if( idxs.GetLength() != 1 )
 			return 0;
 

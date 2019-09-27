@@ -1,6 +1,8 @@
 #include "utils.h"
 #include "../../add_on/scriptbuilder/scriptbuilder.h"
 
+using namespace std;
+
 namespace TestModule
 {
 
@@ -12,6 +14,44 @@ bool Test()
 	COutStream out;
 	asIScriptContext *ctx;
 
+	// Test GetFunctionByName with namespaces
+	// https://www.gamedev.net/forums/topic/704043-module-getfunctionbyname-namespace/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+		"namespace A { \n"
+		" void func() {} \n"
+		"} \n"
+		"namespace B { \n"
+		" void func() {} \n"
+		"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		
+		asIScriptFunction *f = mod->GetFunctionByName("A::func");
+		if( f == 0 || string(f->GetNamespace()) != "A" || string(f->GetName()) != "func")
+			TEST_FAILED;
+		
+		f = mod->GetFunctionByName("B::func");
+		if( f == 0 || string(f->GetNamespace()) != "B" || string(f->GetName()) != "func")
+			TEST_FAILED;
+		
+		mod->SetDefaultNamespace("B");
+		f = mod->GetFunctionByName("func");
+		if( f == 0 || string(f->GetNamespace()) != "B" || string(f->GetName()) != "func")
+			TEST_FAILED;
+		
+		f = mod->GetFunctionByName("::A::func");
+		if( f == 0 || string(f->GetNamespace()) != "A" || string(f->GetName()) != "func")
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+	
 	// Test discarding module right after compiling
 	// http://www.gamedev.net/topic/677465-refcount-mismatch-when-discarding-module/
 	{

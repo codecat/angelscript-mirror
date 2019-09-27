@@ -64,8 +64,8 @@ BEGIN_AS_NAMESPACE
 // AngelScript version
 
 //! Version 2.34.0
-#define ANGELSCRIPT_VERSION        23400
-#define ANGELSCRIPT_VERSION_STRING "2.34.0"
+#define ANGELSCRIPT_VERSION        23500
+#define ANGELSCRIPT_VERSION_STRING "2.35.0"
 
 // Data types
 
@@ -2332,6 +2332,11 @@ public:
 	//! \brief Returns the function by its name
 	//! \param[in] name The function name
 	//! \return The function or null if not found or there are multiple matches.
+	//!
+	//! The search for functions will be performed in the default namespace as given 
+	//!  by \ref SetDefaultNamespace unless the name is prefixed with a scope, using 
+	//! the scoping operator ::. If the scope starts with :: it will be used as the 
+	//! absolute scope, otherwise it will be relative to the default namespace.
 	virtual asIScriptFunction *GetFunctionByName(const char *name) const = 0;
 	//! \brief Remove a single function from the scope of the module
 	//! \param[in] func The pointer to the function that should be removed.
