@@ -2334,7 +2334,7 @@ public:
 	//! \return The function or null if not found or there are multiple matches.
 	//!
 	//! The search for functions will be performed in the default namespace as given 
-	//!  by \ref SetDefaultNamespace unless the name is prefixed with a scope, using 
+	//! by \ref SetDefaultNamespace unless the name is prefixed with a scope, using 
 	//! the scoping operator ::. If the scope starts with :: it will be used as the 
 	//! absolute scope, otherwise it will be relative to the default namespace.
 	virtual asIScriptFunction *GetFunctionByName(const char *name) const = 0;
@@ -2369,13 +2369,15 @@ public:
 	//! \brief Returns the global variable index by name.
 	//! \param[in] name The name of the global variable.
 	//! \return A negative value on error, or the global variable index.
-	//! \retval asERROR The module was not built successfully.
+	//! \retval asINVALID_ARG The name and scope for search cannot be determined
 	//! \retval asNO_GLOBAL_VAR The matching global variable was found.
 	//!
 	//! This method should be used to retrieve the index of the script variable that you wish to access.
 	//!
-	//! If the variable is declared in a namespace first call \ref SetDefaultNamespace 
-	//! to set the namespace that should be searched first for the variable.
+	//! The search for global variables will be performed in the default namespace as given 
+	//! by \ref SetDefaultNamespace unless the name is prefixed with a scope, using 
+	//! the scoping operator ::. If the scope starts with :: it will be used as the 
+	//! absolute scope, otherwise it will be relative to the default namespace.
 	virtual int         GetGlobalVarIndexByName(const char *name) const = 0;
 	//! \brief Returns the global variable index by declaration.
 	//! \param[in] decl The global variable declaration.

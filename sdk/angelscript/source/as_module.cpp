@@ -814,11 +814,11 @@ void asCModule::InternalReset()
 	asASSERT( IsEmpty() );
 }
 
-// interface
-asIScriptFunction *asCModule::GetFunctionByName(const char *in_name) const
+// internal
+int asCModule::DetermineNameAndNamespace(const char *in_name, asCString &out_name, asSNameSpace *&out_ns) const
 {
 	if( in_name == 0 )
-		return 0;
+		return asINVALID_ARG;
 	
 	asCString name = in_name;
 	asCString scope;
@@ -849,6 +849,20 @@ asIScriptFunction *asCModule::GetFunctionByName(const char *in_name) const
 				ns = engine->FindNameSpace((defaultNamespace->name + "::" + scope).AddressOf());
 		}
 	}
+	
+	out_name = name;
+	out_ns = ns;
+	
+	return 0;
+}
+
+// interface
+asIScriptFunction *asCModule::GetFunctionByName(const char *in_name) const
+{
+	asCString name;
+	asSNameSpace *ns = 0;
+	if( DetermineNameAndNamespace(in_name, name, ns) < 0 )
+		return 0;
 	
 	// Search recursively in the given namespace, moving up to parent namespace until the function is found
 	while( ns )
@@ -1000,12 +1014,15 @@ asUINT asCModule::GetGlobalVarCount() const
 // interface
 int asCModule::GetGlobalVarIndexByName(const char *in_name) const
 {
-	asSNameSpace *ns = defaultNamespace;
-
+	asCString name;
+	asSNameSpace *ns = 0;
+	if( DetermineNameAndNamespace(in_name, name, ns) < 0 )
+		return asINVALID_ARG;
+	
 	// Find the global var id
 	while( ns )
 	{
-		int id = scriptGlobals.GetFirstIndex(ns, in_name);
+		int id = scriptGlobals.GetFirstIndex(ns, name);
 		if( id >= 0 ) return id;
 
 		// Recursively search parent namespaces
@@ -1106,7 +1123,7 @@ const char *asCModule::GetGlobalVarDeclaration(asUINT index, bool includeNamespa
 int asCModule::GetGlobalVar(asUINT index, const char **out_name, const char **out_nameSpace, int *out_typeId, bool *out_isConst) const
 {
 	const asCGlobalProperty *prop = scriptGlobals.Get(index);
-	if (!prop) return 0;
+	if (!prop) return asINVALID_ARG;
 
 	if( out_name )
 		*out_name = prop->name.AddressOf();

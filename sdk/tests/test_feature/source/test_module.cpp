@@ -14,6 +14,52 @@ bool Test()
 	COutStream out;
 	asIScriptContext *ctx;
 
+	// Test GetGlobalVarIndexByName with namespaces
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+		"namespace A { \n"
+		" int var; \n"
+		"} \n"
+		"namespace B { \n"
+		" int var; \n"
+		"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		
+		const char *name = 0, *ns = 0;
+		int v = mod->GetGlobalVarIndexByName("A::var");
+		if( v < 0 ) TEST_FAILED;
+		r = mod->GetGlobalVar(v, &name, &ns, 0, 0);
+		if( r < 0 || string(name) != "var" || string(ns) != "A" )
+			TEST_FAILED;
+			
+		v = mod->GetGlobalVarIndexByName("B::var");
+		if( v < 0 ) TEST_FAILED;
+		r = mod->GetGlobalVar(v, &name, &ns, 0, 0);
+		if( r < 0 || string(name) != "var" || string(ns) != "B" )
+			TEST_FAILED;
+						
+		mod->SetDefaultNamespace("B");
+		v = mod->GetGlobalVarIndexByName("var");
+		if( v < 0 ) TEST_FAILED;
+		r = mod->GetGlobalVar(v, &name, &ns, 0, 0);
+		if( r < 0 || string(name) != "var" || string(ns) != "B" )
+			TEST_FAILED;
+
+		v = mod->GetGlobalVarIndexByName("::A::var");
+		if( v < 0 ) TEST_FAILED;
+		r = mod->GetGlobalVar(v, &name, &ns, 0, 0);
+		if( r < 0 || string(name) != "var" || string(ns) != "A" )
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();	
+	}
+	
 	// Test GetFunctionByName with namespaces
 	// https://www.gamedev.net/forums/topic/704043-module-getfunctionbyname-namespace/
 	{

@@ -182,6 +182,8 @@ public:
 
 	int  CallInit(asIScriptContext *ctx);
 	void CallExit();
+	
+	int  DetermineNameAndNamespace(const char *in_name, asCString &out_name, asSNameSpace *&out_ns) const;
 
 	void JITCompile();
 
