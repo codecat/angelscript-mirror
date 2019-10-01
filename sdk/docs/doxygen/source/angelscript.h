@@ -2464,7 +2464,10 @@ public:
 	//! \param[in] name The name of the type.
 	//! \return The type interface for the type, or null if not found.
 	//!
-	//! This does not increase the reference count of the returned type info.
+	//! The search for types will be performed in the default namespace as given 
+	//! by \ref SetDefaultNamespace unless the name is prefixed with a scope, using 
+	//! the scoping operator ::. If the scope starts with :: it will be used as the 
+	//! absolute scope, otherwise it will be relative to the default namespace.
 	virtual asITypeInfo   *GetTypeInfoByName(const char *name) const = 0;
 	//! \brief Returns a type by declaration.
 	//! \param[in] decl The declaration of the type.

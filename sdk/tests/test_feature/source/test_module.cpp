@@ -14,6 +14,44 @@ bool Test()
 	COutStream out;
 	asIScriptContext *ctx;
 
+	// Test GetTypeInfoByName with namespaces
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+		"namespace A { \n"
+		" class Foo {} \n"
+		"} \n"
+		"namespace B { \n"
+		" class Foo {} \n"
+		"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		
+		const char *name = 0, *ns = 0;
+		asITypeInfo *info = mod->GetTypeInfoByName("A::Foo");
+		if( info == 0 || string(info->GetName()) != "Foo" || string(info->GetNamespace()) != "A" )
+			TEST_FAILED;
+			
+		info = mod->GetTypeInfoByName("B::Foo");
+		if( info == 0 || string(info->GetName()) != "Foo" || string(info->GetNamespace()) != "B" )
+			TEST_FAILED;
+						
+		mod->SetDefaultNamespace("B");
+		info = mod->GetTypeInfoByName("Foo");
+		if( info == 0 || string(info->GetName()) != "Foo" || string(info->GetNamespace()) != "B" )
+			TEST_FAILED;
+
+		info = mod->GetTypeInfoByName("::A::Foo");
+		if( info == 0 || string(info->GetName()) != "Foo" || string(info->GetNamespace()) != "A" )
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();	
+	}
+	
 	// Test GetGlobalVarIndexByName with namespaces
 	{
 		asIScriptEngine *engine = asCreateScriptEngine();

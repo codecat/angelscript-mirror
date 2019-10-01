@@ -1155,13 +1155,17 @@ asITypeInfo *asCModule::GetObjectTypeByIndex(asUINT index) const
 // interface
 asITypeInfo *asCModule::GetTypeInfoByName(const char *in_name) const
 {
-	asSNameSpace *ns = defaultNamespace;
+	asCString name;
+	asSNameSpace *ns = 0;
+	if( DetermineNameAndNamespace(in_name, name, ns) < 0 )
+		return 0;
+		
 	while (ns)
 	{
 		for (asUINT n = 0; n < classTypes.GetLength(); n++)
 		{
 			if (classTypes[n] &&
-				classTypes[n]->name == in_name &&
+				classTypes[n]->name == name &&
 				classTypes[n]->nameSpace == ns)
 				return classTypes[n];
 		}
@@ -1169,7 +1173,7 @@ asITypeInfo *asCModule::GetTypeInfoByName(const char *in_name) const
 		for (asUINT n = 0; n < enumTypes.GetLength(); n++)
 		{
 			if (enumTypes[n] &&
-				enumTypes[n]->name == in_name &&
+				enumTypes[n]->name == name &&
 				enumTypes[n]->nameSpace == ns)
 				return enumTypes[n];
 		}
@@ -1177,7 +1181,7 @@ asITypeInfo *asCModule::GetTypeInfoByName(const char *in_name) const
 		for (asUINT n = 0; n < typeDefs.GetLength(); n++)
 		{
 			if (typeDefs[n] &&
-				typeDefs[n]->name == in_name &&
+				typeDefs[n]->name == name &&
 				typeDefs[n]->nameSpace == ns)
 				return typeDefs[n];
 		}
