@@ -1,5 +1,7 @@
 ﻿#include "utils.h"
 
+using namespace std;
+
 namespace TestNamespace
 {
 
@@ -11,6 +13,41 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test GetTypeInfoByName with namespaces
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->SetDefaultNamespace("A");
+		r = engine->RegisterEnum("Foo");
+		if( r < 0 ) TEST_FAILED;
+		engine->SetDefaultNamespace("B");
+		r = engine->RegisterEnum("Foo");
+		if( r < 0 ) TEST_FAILED;
+		engine->SetDefaultNamespace("");
+
+		
+		const char *name = 0, *ns = 0;
+		asITypeInfo *info = engine->GetTypeInfoByName("A::Foo");
+		if( info == 0 || string(info->GetName()) != "Foo" || string(info->GetNamespace()) != "A" )
+			TEST_FAILED;
+			
+		info = engine->GetTypeInfoByName("B::Foo");
+		if( info == 0 || string(info->GetName()) != "Foo" || string(info->GetNamespace()) != "B" )
+			TEST_FAILED;
+						
+		engine->SetDefaultNamespace("B");
+		info = engine->GetTypeInfoByName("Foo");
+		if( info == 0 || string(info->GetName()) != "Foo" || string(info->GetNamespace()) != "B" )
+			TEST_FAILED;
+
+		info = engine->GetTypeInfoByName("::A::Foo");
+		if( info == 0 || string(info->GetName()) != "Foo" || string(info->GetNamespace()) != "A" )
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();	
+	}
+	
 	// Test correct declaration from GetDeclaration when returning class method using types from different namespace
 	// https://www.gamedev.net/forums/topic/698616-version-2330-wip-vs-version-2321-wip/
 	{

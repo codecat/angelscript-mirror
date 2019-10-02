@@ -814,54 +814,12 @@ void asCModule::InternalReset()
 	asASSERT( IsEmpty() );
 }
 
-// internal
-int asCModule::DetermineNameAndNamespace(const char *in_name, asCString &out_name, asSNameSpace *&out_ns) const
-{
-	if( in_name == 0 )
-		return asINVALID_ARG;
-	
-	asCString name = in_name;
-	asCString scope;
-	asSNameSpace *ns = defaultNamespace;
-	
-	// Check if the given name contains a scope
-	int pos = name.FindLast("::");
-	if( pos >= 0 )
-	{
-		scope = name.SubString(0, pos);
-		name = name.SubString(pos+2);
-		if( pos == 0 )
-		{
-			// The scope is '::' so the search must start in the global namespace
-			ns = engine->nameSpaces[0];
-		}
-		else if( scope.SubString(0, 2) == "::" )
-		{
-			// The scope starts with '::' so the given scope is fully qualified
-			ns = engine->FindNameSpace(scope.SubString(2).AddressOf());
-		}
-		else
-		{
-			// The scope doesn't start with '::' so it is relative to the current namespace
-			if( defaultNamespace->name == "" )
-				ns = engine->FindNameSpace(scope.AddressOf());
-			else
-				ns = engine->FindNameSpace((defaultNamespace->name + "::" + scope).AddressOf());
-		}
-	}
-	
-	out_name = name;
-	out_ns = ns;
-	
-	return 0;
-}
-
 // interface
 asIScriptFunction *asCModule::GetFunctionByName(const char *in_name) const
 {
 	asCString name;
 	asSNameSpace *ns = 0;
-	if( DetermineNameAndNamespace(in_name, name, ns) < 0 )
+	if( engine->DetermineNameAndNamespace(in_name, defaultNamespace, name, ns) < 0 )
 		return 0;
 	
 	// Search recursively in the given namespace, moving up to parent namespace until the function is found
@@ -1016,7 +974,7 @@ int asCModule::GetGlobalVarIndexByName(const char *in_name) const
 {
 	asCString name;
 	asSNameSpace *ns = 0;
-	if( DetermineNameAndNamespace(in_name, name, ns) < 0 )
+	if( engine->DetermineNameAndNamespace(in_name, defaultNamespace, name, ns) < 0 )
 		return asINVALID_ARG;
 	
 	// Find the global var id
@@ -1157,7 +1115,7 @@ asITypeInfo *asCModule::GetTypeInfoByName(const char *in_name) const
 {
 	asCString name;
 	asSNameSpace *ns = 0;
-	if( DetermineNameAndNamespace(in_name, name, ns) < 0 )
+	if( engine->DetermineNameAndNamespace(in_name, defaultNamespace, name, ns) < 0 )
 		return 0;
 		
 	while (ns)
