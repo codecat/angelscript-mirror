@@ -13,6 +13,48 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test GetGlobalPropertyIndexByName with namespaces
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->SetDefaultNamespace("A");
+		r = engine->RegisterGlobalProperty("int var", (void*)1);
+		if( r < 0 ) TEST_FAILED;
+		engine->SetDefaultNamespace("B");
+		r = engine->RegisterGlobalProperty("int var", (void*)1);
+		if( r < 0 ) TEST_FAILED;
+		engine->SetDefaultNamespace("");
+
+		const char *name = 0, *ns = 0;
+		int v = engine->GetGlobalPropertyIndexByName("A::var");
+		if( v < 0 ) TEST_FAILED;
+		r = engine->GetGlobalPropertyByIndex(v, &name, &ns, 0, 0);
+		if( r < 0 || string(name) != "var" || string(ns) != "A" )
+			TEST_FAILED;
+			
+		v = engine->GetGlobalPropertyIndexByName("B::var");
+		if( v < 0 ) TEST_FAILED;
+		r = engine->GetGlobalPropertyByIndex(v, &name, &ns, 0, 0);
+		if( r < 0 || string(name) != "var" || string(ns) != "B" )
+			TEST_FAILED;
+						
+		engine->SetDefaultNamespace("B");
+		v = engine->GetGlobalPropertyIndexByName("var");
+		if( v < 0 ) TEST_FAILED;
+		r = engine->GetGlobalPropertyByIndex(v, &name, &ns, 0, 0);
+		if( r < 0 || string(name) != "var" || string(ns) != "B" )
+			TEST_FAILED;
+
+		v = engine->GetGlobalPropertyIndexByName("::A::var");
+		if( v < 0 ) TEST_FAILED;
+		r = engine->GetGlobalPropertyByIndex(v, &name, &ns, 0, 0);
+		if( r < 0 || string(name) != "var" || string(ns) != "A" )
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();	
+	}
+	
 	// Test GetTypeInfoByName with namespaces
 	{
 		asIScriptEngine *engine = asCreateScriptEngine();

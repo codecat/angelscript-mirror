@@ -1255,6 +1255,12 @@ public:
 	//! \param[in] name The name of the property.
 	//! \return The index of the matching property or negative on error.
 	//! \retval asNO_GLOBAL_VAR No matching property was found.
+	//! \retval asINVALID_ARG The name and scope for search cannot be determined.
+	//!
+	//! The search for global properties will be performed in the default namespace as given 
+	//! by \ref SetDefaultNamespace unless the name is prefixed with a scope, using 
+	//! the scoping operator ::. If the scope starts with :: it will be used as the 
+	//! absolute scope, otherwise it will be relative to the default namespace.
 	virtual int    GetGlobalPropertyIndexByName(const char *name) const = 0;
 	//! \brief Returns the index of the property.
 	//! \param[in] decl The declaration of the property to search for.
