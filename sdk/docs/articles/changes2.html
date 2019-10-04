@@ -15,18 +15,24 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.35.0 WIP - 2019/10/02</h2>
+<h2>Version 2.35.0 WIP - 2019/10/04</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>asIScriptModule::GetGlobalVar was returning asSUCCESS when the given index was out of range
+<li>Compiler would give an error when compiling functions returning a reference to a type that cannot be instantiated
 </ul>
 <li>Library
 <ul>
 <li>asIScriptModule::GetFunctionByName now supports informing the scope in the name (Thanks Boost113)
 <li>asIScriptModule::GetGlobalVarByName and GetTypeInfoByName also support informing the scope in the name
 <li>asIScriptEngine::GetTypeInfoByName and GetGlobalPropertyIndexByName also support informing the scope in the name
+<li>The default opAssign implementation for script classes will use the base class' opAssign method to copy inherited properties (Thanks hiago desena)
+</ul>
+<li>Library interface
+<ul>
+<li>asIScriptObject::CopyFrom now takes a const pointer
 </ul>
 </ul>
 

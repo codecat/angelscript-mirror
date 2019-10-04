@@ -3441,7 +3441,7 @@ public:
 	//! \retval asINVALID_TYPE The other object is of different type.
 	//!
 	//! This method copies the contents of the other object to this one.
-	virtual int              CopyFrom(asIScriptObject *other) = 0;
+	virtual int              CopyFrom(const asIScriptObject *other) = 0;
 	//! \}
 
 	// User data
