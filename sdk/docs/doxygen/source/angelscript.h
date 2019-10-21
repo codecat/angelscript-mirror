@@ -809,6 +809,7 @@ struct asSMessageInfo
 extern "C"
 {
 	// Engine
+	//! \ingroup api_principal_functions
 	//! \brief Creates the script engine.
 	//! \param[in] version The library version. Should always be \ref ANGELSCRIPT_VERSION.
 	//! \return A pointer to the script engine interface, or null on error.
@@ -823,11 +824,13 @@ extern "C"
 	//! important when linking dynamically against the library. If the version is 
 	//! incorrect a null pointer is returned.
 	AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version = ANGELSCRIPT_VERSION);
+	//! \ingroup api_auxiliary_functions
 	//! \brief Returns the version of the compiled library.
 	//! \return A null terminated string with the library version.
 	//!
 	//! The returned string can be used for presenting the library version in a log file, or in the GUI.
 	AS_API const char      *asGetLibraryVersion();
+	//! \ingroup api_auxiliary_functions
 	//! \brief Returns the options used to compile the library.
 	//! \return A null terminated string with indicators that identify the options
 	//!         used to compile the script library.
@@ -838,6 +841,7 @@ extern "C"
 	AS_API const char      *asGetLibraryOptions();
 
 	// Context
+	//! \ingroup api_principal_functions
 	//! \brief Returns the currently active context.
 	//! \return A pointer to the currently executing context, or null if no context is executing.
 	//!
@@ -853,6 +857,7 @@ extern "C"
 	AS_API asIScriptContext *asGetActiveContext();
 
 	// Thread support
+	//! \ingroup api_multithread_functions
 	//! \brief Sets up the internally shared resources for multithreading
 	//! \param[in] externalMgr Pre-existent thread manager (optional)
 	//! \return A negative value on error
@@ -867,46 +872,55 @@ extern "C"
 	//!
 	//! \see \ref doc_adv_multithread
 	AS_API int               asPrepareMultithread(asIThreadManager *externalMgr = 0);
+	//! \ingroup api_multithread_functions
 	//! \brief Frees resources prepared for multithreading
 	//!
 	//! If \ref asPrepareMultithread() has been called, then this function
 	//! should be called after the last engine has been released to free the
 	//! resources prepared for multithreading.
 	AS_API void              asUnprepareMultithread();
+	//! \ingroup api_multithread_functions
 	//! \brief Get the thread manager used by the application
 	//! \return The thread manager prepared with \ref asPrepareMultithread()
 	AS_API asIThreadManager *asGetThreadManager();
+	//! \ingroup api_multithread_functions
 	//! \brief Acquire an exclusive lock.
 	//!
 	//! This function will block the calling thread until there are no 
 	//! other threads that hold shared or exclusive locks.
 	AS_API void              asAcquireExclusiveLock();
+	//! \ingroup api_multithread_functions
 	//! \brief Release an exclusive lock.
 	//!
 	//! Releases the previously acquired exclusive lock.
 	AS_API void              asReleaseExclusiveLock();
+	//! \ingroup api_multithread_functions
 	//! \brief Acquire a shared lock.
 	//!
 	//! This function will block the calling thread until there are no 
 	//! other threads that hold exclusive locks. Other threads may hold
 	//! shared locks.
 	AS_API void              asAcquireSharedLock();
+	//! \ingroup api_multithread_functions
 	//! \brief Release a shared lock.
 	//!
 	//! Releases the previously acquired shared lock.
 	AS_API void              asReleaseSharedLock();
+	//! \ingroup api_multithread_functions
 	//! \brief Increments the value by one and returns the result as a single atomic instruction
 	//! \param[in] value A reference to the value that should be incremented
 	//! \return The incremented value
 	//!
 	//! This function is especially useful for implementing thread safe reference counters.
 	AS_API int               asAtomicInc(int &value);
+	//! \ingroup api_multithread_functions
 	//! \brief Decrements the value by one and returns the result as a single atomic instruction
 	//! \param[in] value A reference to the value that should be decremented
 	//! \return The decremented value
 	//!
 	//! This function is especially useful for implementing thread safe reference counters.
 	AS_API int               asAtomicDec(int &value);
+	//! \ingroup api_multithread_functions
 	//! \brief Cleans up memory allocated for the current thread.
 	//! \return A negative value on error.
 	//! \retval asCONTEXT_ACTIVE A context is still active.
@@ -918,6 +932,7 @@ extern "C"
 	AS_API int               asThreadCleanup();
 
 	// Memory management
+	//! \ingroup api_memory_functions
 	//! \brief Set the memory management functions that AngelScript should use.
 	//! \param[in] allocFunc The function that will be used to allocate memory.
 	//! \param[in] freeFunc The function that will be used to free the memory.
@@ -930,20 +945,24 @@ extern "C"
 	//! If not called, AngelScript will use the malloc and free functions from the
 	//! standard C library.
 	AS_API int   asSetGlobalMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
+	//! \ingroup api_memory_functions
 	//! \brief Remove previously registered memory management functions.
 	//! \return A negative value on error.
 	//!
 	//! Call this method to restore the default memory management functions.
 	AS_API int   asResetGlobalMemoryFunctions();
+	//! \ingroup api_memory_functions
 	//! \brief Allocate memory using the memory function registered with AngelScript
 	//! \param[in] size The size of the buffer to allocate
 	//! \return A pointer to the allocated buffer, or null on error.
 	AS_API void *asAllocMem(size_t size);
+	//! \ingroup api_memory_functions
 	//! \brief Deallocates memory using the memory function registered with AngelScript
 	//! \param[in] mem A pointer to the buffer to deallocate
 	AS_API void  asFreeMem(void *mem);
 
 	// Auxiliary
+	//! \ingroup api_multithread_functions
 	//! \brief Create a lockable shared boolean
 	//! \return A new lockable shared boolean.
 	//!
@@ -966,6 +985,7 @@ END_AS_NAMESPACE
 BEGIN_AS_NAMESPACE
 #endif
 
+//! \ingroup api_principal_functions
 //! \brief Returns the appropriate flags for use with RegisterObjectType.
 //! \tparam T The type for which the flags should be determined
 //! \return The flags necessary to register this type as a value type
@@ -1043,6 +1063,15 @@ asUINT asGetTypeTraits()
 
 // Interface declarations
 
+//! \defgroup api_principal_interfaces Principal interfaces
+//! \defgroup api_secondary_interfaces Secondary interfaces
+//! \defgroup api_auxiliary_interfaces Auxiliary interfaces
+//! \defgroup api_principal_functions Principal functions
+//! \defgroup api_memory_functions Memory functions
+//! \defgroup api_multithread_functions Multi-thread support functions
+//! \defgroup api_auxiliary_functions Auxiliary functions
+
+//! \ingroup api_principal_interfaces
 //! \brief The engine interface
 //!
 //! The engine is the central object. It is where the application 
@@ -2101,6 +2130,7 @@ protected:
 	virtual ~asIScriptEngine() {}
 };
 
+//! \ingroup api_secondary_interfaces
 //! \brief The interface for the string factory
 //!
 //! This interface is used to manage the string constants that the scripts
@@ -2149,6 +2179,7 @@ protected:
 };
 #endif
 
+//! \ingroup api_auxiliary_functions
 //! \brief The interface for the thread manager
 //!
 //! This interface is used to represent the internal thread manager
@@ -2163,6 +2194,7 @@ protected:
 	virtual ~asIThreadManager() {}
 };
 
+//! \ingroup api_principal_interfaces
 //! \brief The interface to the script modules
 //!
 //! A script module can be thought of a library of script functions, classes, and global variables. 
@@ -2654,6 +2686,7 @@ protected:
 	virtual ~asIScriptModule() {}
 };
 
+//! \ingroup api_principal_interfaces
 //! \brief The interface to the virtual machine
 //!
 //! The script context provides the interface for a single script execution. The object stores the call
@@ -3193,6 +3226,7 @@ protected:
 	virtual ~asIScriptContext() {}
 };
 
+//! \ingroup api_secondary_interfaces
 //! \brief The interface for the generic calling convention
 class asIScriptGeneric
 {
@@ -3363,6 +3397,7 @@ protected:
 	virtual ~asIScriptGeneric() {}
 };
 
+//! \ingroup api_secondary_interfaces
 //! \brief The interface for an instance of a script object
 class asIScriptObject
 {
@@ -3472,7 +3507,7 @@ protected:
 };
 
 
-
+//! \ingroup api_secondary_interfaces
 //! \brief The interface for describing types
 //! This interface is used to describe the types in the script engine. 
 //!
@@ -3772,6 +3807,7 @@ protected:
 	virtual ~asITypeInfo() {}
 };
 
+//! \ingroup api_secondary_interfaces
 //! \brief The interface for a script function description
 class asIScriptFunction
 {
@@ -3995,6 +4031,7 @@ protected:
 	virtual ~asIScriptFunction() {};
 };
 
+//! \ingroup api_auxiliary_interfaces
 //! \brief A binary stream interface.
 //!
 //! This interface is used when storing compiled bytecode to disk or memory, and then loading it into the engine again.
@@ -4022,6 +4059,7 @@ public:
 	virtual ~asIBinaryStream() {}
 };
 
+//! \ingroup api_auxiliary_interfaces
 //! \brief A lockable shared boolean.
 //!
 //! This interface represents a lockable shared boolean.
@@ -4267,6 +4305,7 @@ struct asSVMRegisters
 //! \see \ref doc_adv_jit
 typedef void (*asJITFunction)(asSVMRegisters *registers, asPWORD jitArg);
 
+//! \ingroup api_auxiliary_interfaces
 //! \brief The interface that AS use to interact with the JIT compiler
 //!
 //! This is the minimal interface that the JIT compiler must implement

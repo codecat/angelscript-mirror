@@ -153,7 +153,7 @@ all the modules that should be able to derive from the FooScripted class.
     FooScripted(const FooScripted &o)
     {
       // Create a new C++ instance and copy content
-      @m_obj = FooScripted_t();
+      \@m_obj = FooScripted_t();
       m_obj = o.m_obj; \n"
     }
 

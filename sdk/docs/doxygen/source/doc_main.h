@@ -214,11 +214,4 @@ for classes is similar to C++ and Java.
 
 
 
-\page doc_api The API reference
-
-This is the reference documentation for the AngelScript application programming interface.
-
- - \subpage doc_api_functions
- - \subpage doc_api_interfaces
-
 */
