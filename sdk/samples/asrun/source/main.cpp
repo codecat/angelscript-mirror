@@ -289,6 +289,18 @@ std::string DictionaryToString(void *obj, int expandMembers, CDebugger *dbg)
 	return s.str();
 }
 
+// This is the to-string callback for the dictionary type
+std::string DateTimeToString(void *obj, int expandMembers, CDebugger *dbg)
+{
+	CDateTime *dt = reinterpret_cast<CDateTime*>(obj);
+	
+	std::stringstream s;
+	s << "{" << dt->getYear() << "-" << dt->getMonth() << "-" << dt->getDay() << " ";
+	s << dt->getHour() << ":" << dt->getMinute() << ":" << dt->getSecond() << "}";
+	
+	return s.str(); 
+}
+
 // This function initializes the debugger and let's the user set initial break points
 void InitializeDebugger(asIScriptEngine *engine)
 {
@@ -303,6 +315,7 @@ void InitializeDebugger(asIScriptEngine *engine)
 	g_dbg->RegisterToStringCallback(engine->GetTypeInfoByName("string"), StringToString);
 	g_dbg->RegisterToStringCallback(engine->GetTypeInfoByName("array"), ArrayToString);
 	g_dbg->RegisterToStringCallback(engine->GetTypeInfoByName("dictionary"), DictionaryToString);
+	g_dbg->RegisterToStringCallback(engine->GetTypeInfoByName("datetime"), DateTimeToString);
 
 	// Allow the user to initialize the debugging before moving on
 	cout << "Debugging, waiting for commands. Type 'h' for help." << endl;
