@@ -230,6 +230,8 @@ logic shared between multiple scripts.
 
 \subsection doc_samples_asrun_funcs Global functions available to scripts
 
+\todo Move these functions to the \ref doc_script_stdlib "standard library" under a section for system functions
+
 Besides the \ref doc_script_stdlib "standard library", the following functions are also exposed to the scripts.
 
 <b>void print(const string &in line)</b>
@@ -244,10 +246,14 @@ Gets a line from the standard input.
 
 Gets the command line arguments as an array.
  
-<b>int exec(const string &in)</b>
+<b>int exec(const string &in cmd)</b>
+<b>int exec(const string &in cmd, string &out output)</b>
 
-Executes a system command.
+Executes a system command. 
 
+Returns -1 on error or raises an exception. On success returns the exit code from the system commmand.
+
+The second alternative allows to capture the stdout into a string, to be further processed.
 
 
 

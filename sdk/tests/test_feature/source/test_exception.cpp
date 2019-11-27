@@ -52,12 +52,48 @@ void ThrowException()
 	throw std::exception();
 }
 
+class Dummy
+{
+public:
+	Dummy() {refCount = 1;}
+	~Dummy() {};
+	void AddRef() {refCount++;}
+	void Release() { if( --refCount == 0 ) delete this; }
+	int refCount;
+	static Dummy *Factory() { asGetActiveContext()->SetException("...", true); return new Dummy(); }
+};
+
 bool Test()
 {
 	bool fail = false;
 	int r;
 	COutStream out;
 	CBufferedOutStream bout;
+
+	// Test script exception in registered factory function
+	// https://www.gamedev.net/forums/topic/704577-throwing-script-exception-from-factory-function/
+	SKIP_ON_MAX_PORT
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		engine->RegisterObjectType("Dummy", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("Dummy", asBEHAVE_FACTORY, "Dummy @f()", asFUNCTION(Dummy::Factory), asCALL_CDECL);
+		engine->RegisterObjectBehaviour("Dummy", asBEHAVE_ADDREF, "void f()", asMETHOD(Dummy, AddRef), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("Dummy", asBEHAVE_RELEASE, "void f()", asMETHOD(Dummy, Release), asCALL_THISCALL);
+
+		r = ExecuteString(engine, "Dummy D();");
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}	
+		
+		engine->ShutDownAndRelease();
+	}
 
 	// Test to make sure catching two exceptions in a row works
 	// https://www.gamedev.net/forums/topic/700622-catching-two-in-a-row/
