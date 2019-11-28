@@ -156,9 +156,7 @@ the application interface has been fully registered.
 
 <b>Path:</b> /sdk/samples/asrun/
 
-This samples gives a very basic command line runner for AngelScripts. It currently doesn't
-allow the user to do very much as it is just a sample, but serves as a good foundation for
-building a useful command line tool.
+This samples gives a very basic command line runner for AngelScripts.
 
 It also implements a fully functional command line debugger, with support for setting 
 breakpoints, stepping through the code, examining variables, etc.
@@ -175,8 +173,7 @@ breakpoints, stepping through the code, examining variables, etc.
  - \ref doc_addon_build
  - \ref doc_addon_helpers_try
  - \ref asIScriptEngine::SetContextCallbacks
- - Passing command line arguments to script
- - Executing system commands from script
+ - \ref doc_script_stdlib_system
  - Implementing a \#pragma callback
 
 \see \subpage doc_samples_asrun_manual
@@ -214,8 +211,7 @@ As entry point for executing the scripts, asrun looks for one of the functions <
 <tt>void main()</tt>. If neither of these functions are found an error will be reported.
 
 The scripts can use the full set of the script language and standard library described in 
-\ref doc_script "the script language" section of this manual. In addition to that a few functions 
-specific to asrun are available as described in \ref doc_samples_asrun_funcs "the next section".
+\ref doc_script "the script language" section of this manual.
 
 The script file informed as input on the command line may include additional files with the include
 directive <tt>\#include "<file name>"</tt>, so that the script files can be better organized and common
@@ -224,36 +220,6 @@ logic shared between multiple scripts.
 
 
 
-
-
-
-
-\subsection doc_samples_asrun_funcs Global functions available to scripts
-
-\todo Move these functions to the \ref doc_script_stdlib "standard library" under a section for system functions
-
-Besides the \ref doc_script_stdlib "standard library", the following functions are also exposed to the scripts.
-
-<b>void print(const string &in line)</b>
-
-Prints a line to the standard output.
- 
-<b>string getInput()</b>
-
-Gets a line from the standard input.
- 
-<b>array<string> \@getCommandLineArgs()</b>
-
-Gets the command line arguments as an array.
- 
-<b>int exec(const string &in cmd)</b>
-<b>int exec(const string &in cmd, string &out output)</b>
-
-Executes a system command. 
-
-Returns -1 on error or raises an exception. On success returns the exit code from the system commmand.
-
-The second alternative allows to capture the stdout into a string, to be further processed.
 
 
 

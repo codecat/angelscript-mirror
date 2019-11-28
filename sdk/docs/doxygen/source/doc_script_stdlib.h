@@ -17,6 +17,7 @@ manual for information on the API it exposes.
  - \subpage doc_script_stdlib_coroutine
  - \subpage doc_script_stdlib_file
  - \subpage doc_script_stdlib_filesystem
+ - \subpage doc_script_stdlib_system
  
 
 
@@ -955,5 +956,40 @@ Copies a file. Returns 0 on success.
 <b>int move(const string &in, const string &in)</b>
 
 Moves or renames a file or directory. Returns 0 on success.
+
+
+
+
+
+\page doc_script_stdlib_system System functions
+
+\note The system functions are only available in the scripts if the application \ref doc_samples_asrun "registers support for it".
+
+\section doc_script_stdlib_system_1 Functions
+
+<b>void print(const string &in line)</b>
+
+Prints a line to the standard output.
+ 
+<b>string getInput()</b>
+
+Gets a line from the standard input.
+ 
+<b>array<string> \@getCommandLineArgs()</b>
+
+Gets the command line arguments as an array.
+ 
+<b>int exec(const string &in cmd)</b><br>
+<b>int exec(const string &in cmd, string &out output)</b>
+
+Executes a system command. 
+
+Returns -1 on error or raises an exception. On success returns the exit code from the system commmand.
+
+The second alternative allows to capture the stdout into a string, to be further processed.
+
+
+
+
 
 */
