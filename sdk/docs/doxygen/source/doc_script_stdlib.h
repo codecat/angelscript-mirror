@@ -692,7 +692,9 @@ a rather low precision of seconds only.
 <b>datetime(const datetime &in other)</b><br>
 <b>datetime(uint y, uint m, uint d, uint h = 0, uint mi = 0, uint s = 0)</b><br>
  
-The default constructor initializes the object with the current system time.
+The default constructor initializes the object with the current system time in the universal time zone. If you need 
+to consider a specific timezone with or without daylight savings then remember to adjust the time accordingly by
+adding the number of seconds for the difference.
 
 The copy constructor copíes the content of the other object.
 
