@@ -61,6 +61,9 @@ public:
 	// Gets the date and time of the file/dir creation
 	CDateTime GetCreateDateTime(const std::string &path) const;
 
+	// Gets the date and time of the file/dir modification
+	CDateTime GetModifyDateTime(const std::string &path) const;
+
 protected:
 	~CScriptFileSystem();
 

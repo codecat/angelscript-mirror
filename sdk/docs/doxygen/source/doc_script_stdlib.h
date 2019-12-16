@@ -967,6 +967,14 @@ Returns the date and time of the file creation in UTC.
 
 Raises an exception if the file doesn't exist or cannot be accessed.
 
+<b>datetime getModifyDateTime(const string &in)</b>
+
+Returns the date and time of the last modification of the file in UTC. 
+
+Raises an exception if the file doesn't exist or cannot be accessed.
+
+
+
 
 
 \page doc_script_stdlib_system System functions
