@@ -186,9 +186,9 @@ int ConfigureEngine(asIScriptEngine *engine)
 	RegisterScriptArray(engine, false);
 	RegisterStdStringUtils(engine);
 	RegisterScriptDictionary(engine);
+	RegisterScriptDateTime(engine);
 	RegisterScriptFile(engine);
 	RegisterScriptFileSystem(engine);
-	RegisterScriptDateTime(engine);
 	RegisterExceptionRoutines(engine);
 
 	// Register a couple of extra functions for the scripts

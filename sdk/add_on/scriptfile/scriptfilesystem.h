@@ -10,6 +10,7 @@
 #include <stdio.h>
 
 #include "../scriptarray/scriptarray.h"
+#include "../datetime/datetime.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -56,6 +57,9 @@ public:
 
 	// Moves or renames a file or directory. Returns 0 on success
 	int Move(const std::string &source, const std::string &target);
+	
+	// Gets the date and time of the file/dir creation
+	CDateTime GetCreateDateTime(const std::string &path) const;
 
 protected:
 	~CScriptFileSystem();

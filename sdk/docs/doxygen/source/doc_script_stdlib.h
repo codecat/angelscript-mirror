@@ -692,7 +692,7 @@ a rather low precision of seconds only.
 <b>datetime(const datetime &in other)</b><br>
 <b>datetime(uint y, uint m, uint d, uint h = 0, uint mi = 0, uint s = 0)</b><br>
  
-The default constructor initializes the object with the current system time in the universal time zone. If you need 
+The default constructor initializes the object with the current system time in the universal time zone (UTC). If you need 
 to consider a specific timezone with or without daylight savings then remember to adjust the time accordingly by
 adding the number of seconds for the difference.
 
@@ -939,6 +939,8 @@ Returns true if the given path is a link.
 
 Returns the size of a file.
 
+Returns -1 if the file doesn't exist or cannot be accessed.
+
 <b>int makeDir(const string &in)</b>
 
 Creates a new directory. Returns 0 on success.
@@ -959,7 +961,11 @@ Copies a file. Returns 0 on success.
 
 Moves or renames a file or directory. Returns 0 on success.
 
+<b>datetime getCreateDateTime(const string &in)</b>
 
+Returns the date and time of the file creation in UTC. 
+
+Raises an exception if the file doesn't exist or cannot be accessed.
 
 
 
