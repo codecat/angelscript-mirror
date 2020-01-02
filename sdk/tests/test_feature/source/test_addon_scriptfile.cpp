@@ -1,6 +1,7 @@
 #include "utils.h"
 #include "../../../add_on/scriptfile/scriptfile.h"
 #include "../../../add_on/scriptfile/scriptfilesystem.h"
+#include "../../../add_on/datetime/datetime.h"
 
 namespace Test_Addon_ScriptFile
 {
@@ -21,6 +22,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterStdString(engine);
 		RegisterScriptArray(engine, false);
+		RegisterScriptDateTime(engine);
 		RegisterScriptFile(engine);
 		RegisterScriptFileSystem(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -66,6 +68,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		RegisterStdString(engine);
 		RegisterScriptArray(engine, false);
+		RegisterScriptDateTime(engine);
 		RegisterScriptFile(engine);
 		RegisterScriptFileSystem(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
