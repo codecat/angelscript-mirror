@@ -2,6 +2,7 @@
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
 #include "../../../add_on/scriptmath/scriptmathcomplex.h"
 #include <malloc.h> // gnuc: memalign
+#include "glm_vec2.h"
 
 namespace TestRegisterType
 {
@@ -226,6 +227,11 @@ static const asBehavior_t astrace_ObjectBehaviors[] =
 	{ } // this was failing due to missing default constr in asSFuncPtr
 };
 
+glm::vec2 testGlmVec2()
+{
+	return glm::vec2(4,2);
+}
+
 bool Test()
 {
 	bool fail = TestHelper();
@@ -236,6 +242,33 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
  	asIScriptEngine *engine;
+
+	// Test registering the glm::vec2 type
+	// https://www.gamedev.net/forums/topic/705135-x64-calling-convention-doesnt-make-room-for-return-value-in-rcx/5418741/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		r = engine->RegisterObjectType("vec2", sizeof(glm::vec2), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<glm::vec2>()); assert(r >= 0);
+		r = engine->RegisterObjectProperty("vec2", "float x", asOFFSET(glm::vec2, x)); assert(r >= 0);
+		r = engine->RegisterObjectProperty("vec2", "float y", asOFFSET(glm::vec2, y)); assert(r >= 0);
+
+		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterGlobalFunction("vec2 test()", asFUNCTION(testGlmVec2), asCALL_CDECL); assert( r >= 0 );
+		
+		r = ExecuteString(engine, "vec2 v; v = test(); assert( v.x == 4 && v.y == 2 );");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Using a registered non-pod value type without default constructor
 	// Reported by Phong Ba through e-mail on March 23rd, 2016
