@@ -480,8 +480,10 @@ void PrintString(const string &str)
 		// We're writing to a console window, so convert the UTF8 string to UTF16 and write with
 		// WriteConsoleW. Windows will then automatically display the characters correctly according
 		// to the user's settings
-		wchar_t bufUTF16[10000];
-		MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, bufUTF16, 10000);
+		// TODO: buffer size needs to be dynamic to handle large strings
+		//       must split the string correctly between UTF8 unicode sequences
+		wchar_t bufUTF16[100000];
+		MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, bufUTF16, 100000);
 		WriteConsoleW(console, bufUTF16, lstrlenW(bufUTF16), 0, 0);
 	}
 	else
