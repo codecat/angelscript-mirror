@@ -223,7 +223,9 @@ By default the \ref doc_generic "generic calling convention" treats the ref coun
 releases any handles passed to a function if they have been marked as auto handles, and increments the returned handle if it has 
 been marked as auto handle.
 
-If the behaviour used before 2.33.0 is desired for backwards compatibility, then set this property to 0.
+If the behaviour used before 2.33.0 is desired for backwards compatibility, then set this property to 0. In this case the 
+generic calling convention will always release references for handles received in arguments, and never increment references 
+for returned handles. 
 
 
 

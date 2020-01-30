@@ -34,6 +34,45 @@ public:
 	asIScriptFunction *func;
 };
 
+asIScriptFunction *cb = 0;
+void *cbo = 0;
+asITypeInfo *cbot = 0;
+void SetCB(asIScriptGeneric *gen)
+{
+	if( cb )
+		cb->Release();
+	if( cbo )
+	{
+		gen->GetEngine()->ReleaseScriptObject(cbo, cbot);
+		cbo = cbot = 0;
+	}
+	asIScriptFunction *f = (asIScriptFunction*)gen->GetArgAddress(0);
+	
+	// For 2.32.2 and earlier, the generic calling convention automatically released all 
+	// handles received, so to compensate for that it would be necessary to add a ref if 
+	// the handle should be kept
+	if( gen->GetEngine()->GetEngineProperty(asEP_GENERIC_CALL_MODE) == 0 )
+		f->AddRef();
+
+	if( f && f->GetFuncType() == asFUNC_DELEGATE )
+	{
+		cbo = f->GetDelegateObject();
+		cbot = f->GetDelegateObjectType();
+		cb = f->GetDelegateFunction();
+		
+		// Hold on to the objects
+		gen->GetEngine()->AddRefScriptObject(cbo, cbot);
+		cb->AddRef();
+		
+		// Release the delegate, which we don't need
+		f->Release();
+	}
+	else
+	{
+		cb = f;
+	}
+}
+
 bool Test()
 {
 	RET_ON_MAX_PORT
@@ -45,6 +84,57 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptContext *ctx;
 	CBufferedOutStream bout;
+	
+	// Test delegates as callbacks
+	// https://www.gamedev.net/forums/topic/705573-asassert-abort-on-delegate-early-destruction-after-release/5420521/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->SetEngineProperty(asEP_GENERIC_CALL_MODE, 1);
+		
+		engine->RegisterFuncdef("void CB()");
+		engine->RegisterGlobalFunction("void SetCB(CB @)", asFUNCTION(SetCB), asCALL_GENERIC);
+		
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+		"class Test { \n"
+		"  void cb() { \n"
+		"  } \n"
+		"  int cbCount = 0; \n"
+		"  Test() { \n"
+		"    SetCB(CB(cb)); \n"
+		"  } \n"
+		"} \n"
+		"Test t; \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		
+		if( cb == 0 || cbo == 0 || cbot == 0 )
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		ctx->Prepare(cb);
+		ctx->SetObject(cbo);
+		r = ctx->Execute();
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		ctx->Release();
+
+		if( cb )
+		{
+			cb->Release();
+			cb = 0;
+		}
+		
+		if( cbo )
+		{
+			engine->ReleaseScriptObject(cbo, cbot);
+			cbo = cbot = 0;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test funcdef and shared entitites
 	// http://www.gamedev.net/topic/681021-crash-on-closing-modules-with-shared-and-funcdef/
