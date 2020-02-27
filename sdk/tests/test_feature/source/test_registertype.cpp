@@ -249,6 +249,15 @@ bool Test()
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
+		
+		// Despite the glm::vec2 type being declared with '= default' for the constructor/copy constructor and 
+		// assignment operator it is expected to be registered with asOBJ_APP_CLASS_CAK
+		// TODO: On MSVC2019 (and possibly other compilers) it is not possible to distinguish a class with '= default' from a class with implicitly defined constructor and operators.
+		if( asGetTypeTraits<glm::vec2>() != asOBJ_APP_CLASS_CAK )
+		{
+			PRINTF("asGetTypeTraits<glm::vec2>() returned %X\n", asGetTypeTraits<glm::vec2>());
+			TEST_FAILED;
+		}
 
 		r = engine->RegisterObjectType("vec2", sizeof(glm::vec2), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<glm::vec2>()); assert(r >= 0);
 		r = engine->RegisterObjectProperty("vec2", "float x", asOFFSET(glm::vec2, x)); assert(r >= 0);
