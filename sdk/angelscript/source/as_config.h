@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2019 Andreas Jonsson
+   Copyright (c) 2003-2020 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -894,7 +894,7 @@
 				#endif
 
 				// Verify if soft-float or hard-float ABI is used
-				#if defined(__SOFTFP__) && __SOFTFP__ == 1
+				#if (defined(__SOFTFP__) && __SOFTFP__ == 1) || defined(__ARM_PCS)
 					// -ffloat-abi=softfp or -ffloat-abi=soft
 					#define AS_SOFTFP
 				#endif
