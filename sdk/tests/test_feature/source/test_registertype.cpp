@@ -250,10 +250,18 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 		
+#if GLM_CONFIG_DEFAULTED_FUNCTIONS == GLM_ENABLE
+#ifdef _MSC_VER
 		// Despite the glm::vec2 type being declared with '= default' for the constructor/copy constructor and 
 		// assignment operator it is expected to be registered with asOBJ_APP_CLASS_CAK
-		// TODO: On MSVC2019 (and possibly other compilers) it is not possible to distinguish a class with '= default' from a class with implicitly defined constructor and operators.
+		// TODO: On MSVC2019 (and possibly other versions) it is not possible to distinguish a class with '= default' from a class with implicitly defined constructor and operators.
 		if( asGetTypeTraits<glm::vec2>() != asOBJ_APP_CLASS_CAK )
+#else
+		if( asGetTypeTraits<glm::vec2>() != asOBJ_APP_CLASS )
+#endif
+#else	
+		if( asGetTypeTraits<glm::vec2>() != asOBJ_APP_CLASS_CAK )
+#endif
 		{
 			PRINTF("asGetTypeTraits<glm::vec2>() returned %X\n", asGetTypeTraits<glm::vec2>());
 			TEST_FAILED;
