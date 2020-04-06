@@ -9,6 +9,178 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptEngine *engine;
 	int r;
+	
+	// Test multiple modules with shared objects and inheritance
+	// https://www.gamedev.net/forums/topic/706321-angelscript-crash-using-disposed-script-function-that-was-loaded-from-bytecode/5424084/
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		CBytecodeStream stream1("1");
+		CBytecodeStream stream2("2");
+		CBytecodeStream stream3("3");
+		CBytecodeStream stream4("4");
+
+			//file for loading in some functions and disposing them to make room
+			//in the front of the script engine's function array
+			const char* file4 = " \
+			shared class Test4 { \
+				int function1() { return 0; }	\
+				int function2() { return 0; }	\
+				int function3() { return 0; }	\
+				int function4() { return 0; }	\
+				int function5() { return 0; }	\
+				int function6() { return 0; }	\
+				int function7() { return 0; }	\
+				int function8() { return 0; }	\
+				int function9() { return 0; }	\
+				int function10() { return 0; }	\
+			} \
+			";
+			asIScriptModule* mod4 = engine->GetModule("test4", asGM_ALWAYS_CREATE);
+			r = mod4->AddScriptSection("test4", file4, strlen(file4));
+			assert(r >= 0);
+			r = mod4->Build();
+			assert(r >= 0);
+
+			r = mod4->SaveByteCode(&stream4);
+			assert(r >= 0);
+
+			mod4->Discard();
+			engine->GarbageCollect();
+
+			//file for the first derived class
+			const char* file2 = " \
+				shared class Test2 : Test0 { \
+				} \
+				shared class Test0 { \
+					int function1() { return 0; } \
+				} \
+				";
+		
+			asIScriptModule* mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+			r = mod2->AddScriptSection("test2", file2, strlen(file2));
+			assert(r >= 0);
+			r = mod2->Build();
+			assert(r >= 0);
+
+			r = mod2->SaveByteCode(&stream2);
+			assert(r >= 0);
+
+			mod2->Discard();
+			engine->GarbageCollect();
+
+			//file for the base class
+			const char* file1 = " \
+			shared class Test0 { \
+			int function1() { return 0; } \
+			} \
+			";
+			
+			asIScriptModule* mod1 = engine->GetModule("test1", asGM_ALWAYS_CREATE);
+			r = mod1->AddScriptSection("test1", file1, strlen(file1));
+			assert(r >= 0);
+			r = mod1->Build();
+			assert(r >= 0);
+			r = mod1->SaveByteCode(&stream1);
+			assert(r >= 0);
+
+			//! module1 is not discarded before saving bytecode for module3 to produce a different bytecode !
+
+			//file for the second derived class
+			const char* file3 = " \
+			shared class Test3 : Test0 { \
+				int function1() { Test0::function1(); return 1; } \
+			} \
+			shared class Test0 { \
+				int function1() { return 0; } \
+			} \
+			";
+			
+			asIScriptModule* mod3 = engine->GetModule("test3", asGM_ALWAYS_CREATE);
+			r = mod3->AddScriptSection("test3", file3, strlen(file3));
+			assert(r >= 0);
+			r = mod3->Build(); // 4 m_scriptFunctions, 2 m_classTypes (int Test3::function1(), constructor Test3::Test3(), factory Test3 @Test3(), virtual Test0::function1())
+			assert(r >= 0);
+
+			r = mod3->SaveByteCode(&stream3);
+			assert(r >= 0);
+
+
+			mod1->Discard();
+			mod3->Discard();
+			engine->GarbageCollect();
+		
+
+		//load some functions to reserve thr front spaces of the script engine function array
+		mod4 = engine->GetModule("test4", asGM_ALWAYS_CREATE);
+		r = mod4->LoadByteCode(&stream4);
+		assert(r == 0);
+
+		//load a module with the base script class that should be the owning module of the shared base class functions
+		mod1 = engine->GetModule("test1", asGM_ALWAYS_CREATE);
+		r = mod1->LoadByteCode(&stream1);
+		assert(r == 0);
+
+		//make the front of the script engine function array available for use
+		mod4->Discard();
+		engine->GarbageCollect();
+
+		//load a derived class module with the base class definition being included afterthe derived class (important!)
+		//this will force new base class shared function creation
+		mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		//mod2->AddScriptSection("test2", file2, strlen(file2));
+		//r = mod2->Build();
+		r = mod2->LoadByteCode(&stream2);
+		assert( r >= 0 );
+
+		//load a derived class module that was compiled while another module that owned the base class existed (important!)
+		//this will result in slightly different bytecode that will do a function search in the script engine's function array
+		//(rather than the module's function array) and locate the new duplicate base class shared function introduced by module2
+		mod3 = engine->GetModule("test3", asGM_ALWAYS_CREATE);
+		r = mod3->LoadByteCode(&stream3);
+		assert(r == 0);
+
+		//get rid of module2. This will dispose the duplicate shared function because a new owner could not be located
+		mod2->Discard();
+		engine->GarbageCollect();
+
+		//try executing a function in module3 that calls a base class virtual function.
+		//this will crash doe to trying to use the function pointer from module2 rather than module1
+		auto test1TypeInfo = mod3->GetTypeInfoByName("Test3");
+		auto test1Func = test1TypeInfo->GetMethodByDecl("int function1()");
+		auto factoryFunc = test1TypeInfo->GetFactoryByIndex(0);
+		
+		auto context = engine->RequestContext();
+		context->Prepare(factoryFunc);
+		context->Execute();
+
+		asIScriptObject* scriptObj = (asIScriptObject*)context->GetReturnObject();
+		scriptObj->AddRef();
+		context->Prepare(test1Func);
+		context->SetObject(scriptObj);
+		context->Execute();   // <-- crashes here when calling function1 which is a shared function with id 37. 
+		                      // It should have objType set to Test0 as well as scriptData, but does not
+
+		scriptObj->Release();
+		engine->ReturnContext(context);
+
+
+		mod3->Discard();
+		engine->GarbageCollect();
+
+
+
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test external shared interface with inheritance
 	// https://www.gamedev.net/forums/topic/700203-asccontextcallscriptfunction-called-with-null/
@@ -132,7 +304,7 @@ bool Test()
 			TEST_FAILED;
 
 		asDWORD crc32 = ComputeCRC32(&bc1.buffer[0], asUINT(bc1.buffer.size()));
-		if (crc32 != 0x433EF007)
+		if (crc32 != 0xA617CEE5)
 		{
 			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 			TEST_FAILED;

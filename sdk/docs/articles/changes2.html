@@ -15,13 +15,14 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.35.0 WIP - 2020/01/20</h2>
+<h2>Version 2.35.0 WIP - 2020/04/06</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>asIScriptModule::GetGlobalVar was returning asSUCCESS when the given index was out of range
 <li>Compiler would give an error when compiling functions returning a reference to a type that cannot be instantiated
+<li>Fixed problem with LoadByteCode and shared classes (Thanks MrFloat)
 </ul>
 <li>Library
 <ul>
