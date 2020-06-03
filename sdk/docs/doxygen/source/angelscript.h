@@ -940,7 +940,7 @@ extern "C"
 	//!
 	//! Call this method to register the global memory allocation and deallocation
 	//! functions that AngelScript should use for memory management. This function
-	//! Should be called before \ref asCreateScriptEngine.
+	//! should be called before \ref asCreateScriptEngine.
 	//!
 	//! If not called, AngelScript will use the malloc and free functions from the
 	//! standard C library.
