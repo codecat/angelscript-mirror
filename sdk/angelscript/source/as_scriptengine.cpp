@@ -1495,7 +1495,9 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 	prop->isCompositeIndirect = isCompositeIndirect;
 	prop->accessMask          = defaultAccessMask;
 
-	CastToObjectType(dt.GetTypeInfo())->properties.PushLast(prop);
+	asCObjectType *ot = CastToObjectType(dt.GetTypeInfo());
+	asUINT idx = ot->properties.GetLength();
+	ot->properties.PushLast(prop);
 
 	// Add references to types so they are not released too early
 	if( type.GetTypeInfo() )
@@ -1509,7 +1511,8 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 
 	currentGroup->AddReferencesForType(this, type.GetTypeInfo());
 
-	return asSUCCESS;
+	// Return the index of the property to signal success
+	return idx;
 }
 
 // interface
@@ -2565,13 +2568,14 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 	prop->SetRegisteredAddress(pointer);
 	varAddressMap.Insert(prop->GetAddressOfValue(), prop);
 
-	registeredGlobalProps.Put(prop);
+	asUINT idx = registeredGlobalProps.Put(prop);
 	prop->AddRef();
 	currentGroup->globalProps.PushLast(prop);
 
 	currentGroup->AddReferencesForType(this, type.GetTypeInfo());
 
-	return asSUCCESS;
+	// Return the index of the property to signal success
+	return int(idx);
 }
 
 // internal

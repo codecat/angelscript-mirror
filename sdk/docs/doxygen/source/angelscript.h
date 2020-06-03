@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2019 Andreas Jonsson
+   Copyright (c) 2003-2020 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1250,7 +1250,7 @@ public:
 	//! \brief Registers a global property.
 	//! \param[in] declaration The declaration of the global property in script syntax.
 	//! \param[in] pointer The address of the property that will be used to access the property value.
-	//! \return A negative value on error.
+	//! \return The index of the property on success, or a negative value on error.
 	//! \retval asINVALID_DECLARATION The declaration has invalid syntax.
 	//! \retval asINVALID_TYPE The declaration is a reference.
 	//! \retval asINVALID_ARG The pointer is null.
@@ -1264,6 +1264,11 @@ public:
 	//! the actual value. The application must also make sure that this address
 	//! remains valid throughout the life time of this registration, i.e. until
 	//! the engine is released or the dynamic configuration group is removed.
+	//!
+	//! Upon success the function returns the index of the registered property  
+	//! that can be used to lookup the info with \ref GetGlobalPropertyByIndex.
+	//! Note that this index may not stay valid after a \ref doc_adv_dynamic_config "dynamic config group" has 
+	//! been removed, which would reorganize the internal structure.
 	virtual int    RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
 	//! \brief Returns the number of registered global properties.
 	//! \return The number of registered global properties.
@@ -1328,7 +1333,7 @@ public:
 	//! \param[in] byteOffset The offset into the memory block where this property is found.
 	//! \param[in] compositeOffset The offset to the composite object.
 	//! \param[in] isCompositeIndirect Set to false if the composite object is inline, and true if it is refered to by pointer.
-	//! \return A negative value on error.
+	//! \return The index of the property on success, or a negative value on error.
 	//! \retval asWRONG_CONFIG_GROUP The object type was registered in a different configuration group.
 	//! \retval asINVALID_OBJECT The \a obj does not specify an object type.
 	//! \retval asINVALID_TYPE The \a obj parameter has invalid syntax.
@@ -1347,6 +1352,9 @@ public:
 	//! In case the property to be registered is part of a composite member, then the compositeOffset should be used
 	//! to give the offset to the composite member, and byteOffset should be the offset to the property in that composite member.
 	//! If the composite member is inline then set isCompositeIndirect as false, else set it to true for proper indirection.
+	//!
+	//! The method returns the index of the property upon success. This can be used to look up the 
+	//! property in the object type with \ref asITypeInfo::GetProperty.
 	virtual int            RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset, int compositeOffset = 0, bool isCompositeIndirect = false) = 0;
 	//! \brief Registers a method for the object type.
 	//! \param[in] obj The name of the type.
