@@ -523,7 +523,7 @@ CDateTime CScriptFileSystem::GetCreateDateTime(const string &path) const
 	wchar_t bufUTF16[10000];
 	MultiByteToWideChar(CP_UTF8, 0, search.c_str(), -1, bufUTF16, 10000);
 
-	// Get the size of the file
+	// Get the create date/time of the file
 	FILETIME createTm;
 	HANDLE file = CreateFileW(bufUTF16, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 	BOOL success = GetFileTime(file, &createTm, 0, 0);
@@ -539,11 +539,17 @@ CDateTime CScriptFileSystem::GetCreateDateTime(const string &path) const
 	FileTimeToSystemTime(&createTm, &tm);
 	return CDateTime(tm.wYear, tm.wMonth, tm.wDay, tm.wHour, tm.wMinute, tm.wSecond);
 #else
-	// TODO: Add support for POSIX systems with a call to stat
-	asIScriptContext *ctx = asGetActiveContext();
-	if( ctx )
-		ctx->SetException("GetCreateDateTime is not yet implemented on this platform");
-	return CDateTime();
+	// Get the create date/time of the file
+	struct stat st;
+	if (stat(search.c_str(), &st) == -1)
+	{
+		asIScriptContext *ctx = asGetActiveContext();
+		if( ctx )
+			ctx->SetException("Failed to get file creation date/time");
+		return CDateTime();
+	}
+	tm *t = localtime(st.st_ctime);
+	return CDateTime(t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);	
 #endif
 }
 
@@ -560,10 +566,10 @@ CDateTime CScriptFileSystem::GetModifyDateTime(const string &path) const
 	wchar_t bufUTF16[10000];
 	MultiByteToWideChar(CP_UTF8, 0, search.c_str(), -1, bufUTF16, 10000);
 
-	// Get the size of the file
+	// Get the last modify date/time of the file
 	FILETIME modifyTm;
 	HANDLE file = CreateFileW(bufUTF16, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-	BOOL success = GetFileTime(file, 0, &modifyTm, 0);
+	BOOL success = GetFileTime(file, 0, 0, &modifyTm);
 	CloseHandle(file);
 	if( !success )
 	{
@@ -576,11 +582,17 @@ CDateTime CScriptFileSystem::GetModifyDateTime(const string &path) const
 	FileTimeToSystemTime(&modifyTm, &tm);
 	return CDateTime(tm.wYear, tm.wMonth, tm.wDay, tm.wHour, tm.wMinute, tm.wSecond);
 #else
-	// TODO: Add support for POSIX systems with a call to stat
-	asIScriptContext *ctx = asGetActiveContext();
-	if( ctx )
-		ctx->SetException("GetModifyDateTime is not yet implemented on this platform");
-	return CDateTime();
+	// Get the last modify date/time of the file
+	struct stat st;
+	if (stat(search.c_str(), &st) == -1)
+	{
+		asIScriptContext *ctx = asGetActiveContext();
+		if( ctx )
+			ctx->SetException("Failed to get file modify date/time");
+		return CDateTime();
+	}
+	tm *t = localtime(st.st_mtime);
+	return CDateTime(t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);	
 #endif
 }
 
