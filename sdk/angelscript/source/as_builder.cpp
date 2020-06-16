@@ -5136,7 +5136,9 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 			else
 			{
 				// The copy constructor needs to be marked for easy finding
-				if (parameterTypes.GetLength() == 1 && parameterTypes[0].GetTypeInfo() == objType)
+				if( parameterTypes.GetLength() == 1 && 
+				    parameterTypes[0].GetTypeInfo() == objType && 
+					(parameterTypes[0].IsReference() || parameterTypes[0].IsObjectHandle()) )
 				{
 					// Verify that there are not multiple options matching the copy constructor
 					// TODO: Need a better message, since the parameters can be slightly different, e.g. & vs @

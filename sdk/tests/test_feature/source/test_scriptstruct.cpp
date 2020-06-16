@@ -152,9 +152,47 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test invalid copy constructor (when the type is passed by value instead of by ref or handle)
+	// https://www.gamedev.net/forums/topic/707147-runtime-crash-with-non-ref-copy-constructor/5427594/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+	
+		mod = engine->GetModule("module", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Foo \n"
+			"{ \n"
+			"	Foo(){} \n"
+			"	Foo(Foo f){} \n"
+			"} \n"
+			"void Test(Foo f){} \n"
+			"void Main() \n"
+			"{ \n"
+			"	auto f = Foo(); \n"
+			"   Foo g(f); \n"
+			"	Test(f); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 ) 
+			TEST_FAILED;
+		
+		r = ExecuteString(engine, "Main();", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		
+		engine->ShutDownAndRelease();
+	}
+
 	// This test shows what happens if the application attempts to access the script
 	// object while the asCSriptObject destructor is cleaning up the members
-	fail = ProjectClover::Test_main();
+	fail |= ProjectClover::Test_main();
 
 	// Test explicit with save/load
 	{
