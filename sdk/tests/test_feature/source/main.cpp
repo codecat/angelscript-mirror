@@ -156,6 +156,7 @@ namespace TestThisCallMethod    { bool Test(); }
 namespace TestThisCallMethod_ConfigErrors { bool Test(); }
 namespace TestPropIntegerDivision { bool Test(); }
 namespace TestComposition       { bool Test(); }
+namespace Test_Native_DefaultFunc { bool Test(); }
 
 namespace Test_Addon_ScriptArray   { bool Test(); }
 namespace Test_Addon_ScriptHandle  { bool Test(); }
@@ -394,6 +395,9 @@ int allTests()
 		// stdcall
 		if( TestStdcall4Args()            ) goto failed; else PRINTF("-- TestStdcall4Args passed\n");
 		if( TestNotComplexStdcall()       ) goto failed; else PRINTF("-- TestNotComplexStdcall passed\n");
+
+		// Default functions
+		if( Test_Native_DefaultFunc::Test() ) goto failed; else PRINTF("-- Test_Native_DefaultFunc passed\n");
 	}
 
 	// This test uses ATL::CString thus it is turned off by default
