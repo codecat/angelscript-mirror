@@ -1,7 +1,8 @@
 # Test Framework MingW makefile
 
 CXX = g++
-CXXFLAGS = -ggdb -I../../../../angelscript/include
+CXXFLAGS ?= -ggdb 
+CXXFLAGS += -I../../../../angelscript/include
 SRCDIR = ../../source
 OBJDIR = obj
 
@@ -75,6 +76,7 @@ SRCNAMES = \
   test_module.cpp \
   test_multiassign.cpp \
   test_namespace.cpp \
+  test_native_defaultfunc.cpp \
   test_nested.cpp \
   test_nevervisited.cpp \
   test_notinitialized.cpp \
@@ -196,7 +198,7 @@ DELETER = del /f
 all: $(BIN)
 
 $(BIN): $(OBJ)
-	$(CXX) -o $(BIN) $(OBJ) -langelscript -L ../../../../angelscript/lib
+	$(CXX) -o $(BIN) $(OBJ) $(CXXFLAGS) -langelscript -L ../../../../angelscript/lib
 	@echo -------------------------------------------------------------------
 	@echo Done.
 
