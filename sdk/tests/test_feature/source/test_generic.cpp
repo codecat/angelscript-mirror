@@ -5,7 +5,9 @@
 #include <../../add_on/autowrapper/aswrappedcall.h>
 
 // From the scriptstdstring add-on
+BEGIN_AS_NAMESPACE
 extern void RegisterStdString_Generic(asIScriptEngine *engine);
+END_AS_NAMESPACE
 
 using std::string;
 

@@ -1,7 +1,9 @@
 #include "utils.h"
 #include "scriptmath3d.h"
 
+BEGIN_AS_NAMESPACE
 void RegisterStdString_Generic(asIScriptEngine *engine);
+END_AS_NAMESPACE
 
 namespace TestUnsafeRef
 {
