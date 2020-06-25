@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.35.0 WIP - 2020/06/24</h2>
+<h2>Version 2.35.0 WIP - 2020/06/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -24,6 +24,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Compiler would give an error when compiling functions returning a reference to a type that cannot be instantiated
 <li>Fixed problem with LoadByteCode and shared classes (Thanks MrFloat)
 <li>Fixed crash when using copy constructor declared as taking the object by value (Thanks Miss)
+<li>Fixed memory invasion in compiler when compiling initialization lists with expressions using default arguments (Thanks jsd1982)
 </ul>
 <li>Library
 <ul>

@@ -433,6 +433,7 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *bc, bool onlyDefaults
 		asCObjectProperty *prop = outFunc->objectType->properties[n];
 
 		// Check if the property has an initialization expression
+		asCParser parser(builder);
 		asCScriptNode *declNode = 0;
 		asCScriptNode *initNode = 0;
 		asCScriptCode *initScript = 0;
@@ -468,7 +469,6 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *bc, bool onlyDefaults
 				initScript = script;
 #else
 				// Re-parse the initialization expression as the parser now knows the types, which it didn't earlier
-				asCParser parser(builder);
 				int r = parser.ParseVarInit(initScript, initNode);
 				if( r < 0 )
 					continue;

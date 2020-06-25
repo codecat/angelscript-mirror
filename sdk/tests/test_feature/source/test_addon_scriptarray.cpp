@@ -227,13 +227,20 @@ bool Test()
 
 		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
-			"class Object {} \n"
+			"class Object { Object(Object @o = null) {} } \n"
+			"class List { \n"
+			"	array<Object@> @objects = { \n"
+			"	  @Object(), \n"
+			"	  @Object(), \n"
+			"	  @Object() \n"
+			"	}; \n"
+			"} \n"
 			"void main() { \n"
-			"  array<Object@> @objects = { @Object(), @Object(), @Object() }; \n"
-			"  assert( objects.length() == 3 ); \n"
-			"  assert( objects[0] !is null ); \n"
-			"  assert( objects[1] !is null ); \n"
-			"  assert( objects[2] !is null ); \n"
+			"  List@ list = List(); \n"
+			"  assert( list.objects.length() == 3 ); \n"
+			"  assert( list.objects[0] !is null ); \n"
+			"  assert( list.objects[1] !is null ); \n"
+			"  assert( list.objects[2] !is null ); \n"
 			"} \n");
 		r = mod->Build();
 		if (r < 0)
