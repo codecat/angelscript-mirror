@@ -2249,6 +2249,9 @@ int asCCompiler::CompileDefaultAndNamedArgs(asCScriptNode *node, asCArray<asCExp
 		if( func->defaultArgs[n] == 0 ) { anyErrors = true; continue; }
 
 		// Parse the default arg string
+		// TODO: The script node allocated by the parser is stored in the asCExprContext which is pushed onto the args array
+		//       The script node must be detached from the parser so that it isn't deallocated. But the asCExprContext must then be responsible for deallocating it later
+		//       Add a flag in asCExprContext to say if the scriptNode must be deallocated. In merge the script node is moved to another asCExprContext so it must also move this flag and clear the script node in the previous asCExprContext to avoid early deallocation
 		asCParser parser(builder);
 		asCScriptCode *code = builder->FindOrAddCode("default arg", func->defaultArgs[n]->AddressOf(), func->defaultArgs[n]->GetLength());
 		int r = parser.ParseExpression(code);
