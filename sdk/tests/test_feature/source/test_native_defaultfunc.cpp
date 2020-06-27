@@ -17,12 +17,10 @@ class Class1
 {
 public:
 	union {
-		struct
-		{
-			float x;
-			float y;
-		};
-		float data[2];
+		float x, s;
+	};
+	union {
+		float y, t;
 	};
 };
 
@@ -32,14 +30,13 @@ class Class2
 public:
 	Class2() { x = 0; y = 0; }
 	Class2(const Class2& o) { x = o.x; y = o.y; }
+	Class2(float x, float y) { this->x = x; this->y = y; }
 	Class2& operator=(const Class2& o) { x = o.x; y = o.y; return *this; }
 	union {
-		struct
-		{
-			float x;
-			float y;
-		};
-		float data[2];
+		float x, s;
+	};
+	union {
+		float y, t;
 	};
 };
 
@@ -51,12 +48,27 @@ public:
 	Class3(const Class3& o) = default;
 	Class3& operator=(const Class3& o) = default;
 	union {
-		struct
-		{
-			float x;
-			float y;
-		};
-		float data[2];
+		float x, s;
+	};
+	union {
+		float y, t;
+	};
+};
+
+// Class with defaulted constructors and operators plus an additional constructor
+class Class4
+{
+public:
+	Class4() = default;
+	Class4(const Class4& o) = default;
+	// The presence of the constructor with parameters, causes MSVC to return this class in memory
+	Class4(float x, float y) { this->x = x; this->y = y; }
+	Class4& operator=(const Class4& o) = default;
+	union {
+		float x, s;
+	};
+	union {
+		float y, t;
 	};
 };
 
@@ -78,10 +90,19 @@ Class2 retClass2(float a)
 	return c;
 }
 
-// On MSVC 2019 this is identical to retClass1 (i.e. returned in registers)
+// On MSVC 2019 this is identical to retClass1
 Class3 retClass3(float a)
 {
 	Class3 c;
+	c.x = a;
+	c.y = a + 1;
+	return c;
+}
+
+// On MSVC 2019 this is identical to retClass2 (i.e. returned in memory)
+Class4 retClass4(float a)
+{
+	Class4 c;
 	c.x = a;
 	c.y = a + 1;
 	return c;
@@ -127,6 +148,12 @@ float checkClass3(Class3 v)
 }
 
 // On MSVC 2019 this is passed on stack
+float checkClass4(Class4 v)
+{
+	return v.x + v.y;
+}
+
+// On MSVC 2019 this is passed on stack
 float checkGlmVec2(glm::vec2 v)
 {
 	return v.x + v.y;
@@ -152,7 +179,8 @@ bool Test()
 	asDWORD typeTraits1 = asGetTypeTraits<Class1>();
 	asDWORD typeTraits2 = asGetTypeTraits<Class2>();
 	asDWORD typeTraits3 = asGetTypeTraits<Class3>();
-	asDWORD typeTraits4 = asGetTypeTraits<glm::vec2>();
+	asDWORD typeTraits4 = asGetTypeTraits<Class4>();
+	asDWORD typeTraitsGlmVec2 = asGetTypeTraits<glm::vec2>();
 
 	if (typeTraits1 != asOBJ_APP_CLASS)
 		TEST_FAILED;
@@ -161,6 +189,8 @@ bool Test()
 	if (typeTraits3 != asOBJ_APP_CLASS)
 		TEST_FAILED;
 	if (typeTraits4 != asOBJ_APP_CLASS)
+		TEST_FAILED;
+	if (typeTraitsGlmVec2 != asOBJ_APP_CLASS)
 		TEST_FAILED;
 
 	// Test registering the Class1 type
@@ -238,6 +268,37 @@ bool Test()
 		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterGlobalFunction("vec2 test(float)", asFUNCTION(retClass3), asCALL_CDECL); assert(r >= 0);
 		r = engine->RegisterGlobalFunction("float test2(vec2)", asFUNCTION(checkClass3), asCALL_CDECL); assert(r >= 0);
+
+		r = ExecuteString(engine, "vec2 v; v = test(1); assert( v.x == 1 && v.y == 2 );");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "vec2 v; v.x = 1; v.y = 2; assert( test2(v) == 3 );");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test registering the Class4 type
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		r = engine->RegisterObjectType("vec2", sizeof(Class4), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Class4>()); assert(r >= 0);
+		r = engine->RegisterObjectProperty("vec2", "float x", asOFFSET(Class4, x)); assert(r >= 0);
+		r = engine->RegisterObjectProperty("vec2", "float y", asOFFSET(Class4, y)); assert(r >= 0);
+
+		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterGlobalFunction("vec2 test(float)", asFUNCTION(retClass4), asCALL_CDECL); assert(r >= 0);
+		r = engine->RegisterGlobalFunction("float test2(vec2)", asFUNCTION(checkClass4), asCALL_CDECL); assert(r >= 0);
 
 		r = ExecuteString(engine, "vec2 v; v = test(1); assert( v.x == 1 && v.y == 2 );");
 		if (r != asEXECUTION_FINISHED)
