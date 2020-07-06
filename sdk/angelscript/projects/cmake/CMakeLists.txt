@@ -165,8 +165,8 @@ if(BUILD_FRAMEWORK)
     )
 endif()
 
-if(MSVC)
-    set_target_properties(${ANGELSCRIPT_LIBRARY_NAME} PROPERTIES COMPILE_FLAGS "${MSVC_COMPILE_FLAGS}")
+if(MSVC AND MSVC_COMPILE_FLAGS)
+	target_compile_options(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE "${MSVC_COMPILE_FLAGS}")
 endif()
 
 # Don't override the default runtime output path to avoid conflicts when building for multiple target platforms
