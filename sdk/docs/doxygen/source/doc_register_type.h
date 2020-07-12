@@ -295,24 +295,26 @@ together with the asOBJ_VALUE flag.
 r = engine->RegisterObjectType("complex", sizeof(complex), asOBJ_VALUE | asGetTypeTraits<complex>()); assert( r >= 0 );
 \endcode
 
-On some platforms the native calling convention may require further knowledge about the class members that \ref asGetTypeTraits
-cannot determine in order to work properly; most notable are the Linux 64bit and Mac OSX 64bit systems with the GNUC compiler.
-On these systems small classes that do not have a destructor or a copy constructor will have different behaviours depending 
-on the type and order of their members.
+On some platforms the native calling convention may require further knowledge about the class and its members that \ref asGetTypeTraits
+cannot determine in order to work properly. Whether or not the flags are needed depends on the compiler and target platform, but if the flags
+are not needed AngelScript will simply ignore them so there is no harm in informing them.
 
 AngelScript lets the application give information that cover the most common variants, e.g. the class should be treated as 
-if all members are integers, or it should be treated as if all members are floats. 
+if all members are integers (or non-float primitives), or it should be treated as if all members are floats. It is also possible to inform if the class
+has more constructors than the traditional default and copy constructors. This last one normally only has importance if the default and copy constructors 
+are defaulted. 
 
 <table border=0 cellspacing=0 cellpadding=0>
-<tr><td>\ref asOBJ_APP_CLASS_ALLINTS   &nbsp; </td><td>The C++ class members can be treated as if all integers</td></tr>
-<tr><td>\ref asOBJ_APP_CLASS_ALLFLOATS &nbsp; </td><td>The C++ class members can be treated as if all floats or doubles</td></tr>
-<tr><td>\ref asOBJ_APP_CLASS_ALIGN8    &nbsp; </td><td>The C++ class contains members that may require 8byte alignment, e.g. a double.</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_MORE_CONSTRUCTORS &nbsp; </td><td>The C++ class has additional constructors beyond the default and copy constructors</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_ALLINTS           &nbsp; </td><td>The C++ class members can be treated as if all integers</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_ALLFLOATS         &nbsp; </td><td>The C++ class members can be treated as if all floats or doubles</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_ALIGN8            &nbsp; </td><td>The C++ class contains members that may require 8byte alignment, e.g. a double.</td></tr>
 </table>
 
-If these flags are not informed and AngelScript needs them on the platform, you'll get an error message like 
+If the flags that inform about the members are not informed and AngelScript needs them on the platform, you'll get an error message like 
 "Don't support passing/returning type 'MyType' by value to application in native calling convention on this platform". 
 
-It is difficult to explain when one or the other should be used as it requires in-depth knowledge of the ABI for the 
+It is difficult to explain exactly when one or the other should be used as it requires in-depth knowledge of the ABI for the 
 respective system, so if you find that you really need to use these flags, make sure you perform adequate testing 
 to guarantee that your functions are called correctly by the script engine. If neither of these flags work, and you're 
 not able to change the class to work without them, then the only other option is to use the generic calling convention,

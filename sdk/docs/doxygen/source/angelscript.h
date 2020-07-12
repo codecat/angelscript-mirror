@@ -63,7 +63,7 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.34.0
+//! Version 2.35.0
 #define ANGELSCRIPT_VERSION        23500
 #define ANGELSCRIPT_VERSION_STRING "2.35.0"
 
@@ -302,6 +302,8 @@ enum asEObjTypeFlags
 	asOBJ_APP_CLASS_AK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
 	//! The C++ type is a class with a copy constructor.
 	asOBJ_APP_CLASS_K                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	//! The C++ class has additional constructors beyond the default and copy constructors
+	asOBJ_APP_CLASS_MORE_CONSTRUCTORS = (1<<31),
 	//! The C++ type is a primitive type. Only valid for value types.
 	asOBJ_APP_PRIMITIVE              = (1<<13),
 	//! The C++ type is a float or double. Only valid for value types.
@@ -319,7 +321,7 @@ enum asEObjTypeFlags
 	//! The object is declared for implicit handle. Only valid for reference types.
 	asOBJ_IMPLICIT_HANDLE            = (1<<20),
 	//! This mask shows which flags are value for RegisterObjectType
-	asOBJ_MASK_VALID_FLAGS           = 0x1FFFFF,
+	asOBJ_MASK_VALID_FLAGS           = 0x801FFFFF,
 	// Internal flags
 	//! The object is a script class or an interface.
 	asOBJ_SCRIPT_OBJECT              = (1<<21),

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2019 Andreas Jonsson
+   Copyright (c) 2003-2020 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -195,6 +195,7 @@ enum asEObjTypeFlags
 	asOBJ_APP_CLASS_A                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT),
 	asOBJ_APP_CLASS_AK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
 	asOBJ_APP_CLASS_K                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	asOBJ_APP_CLASS_MORE_CONSTRUCTORS = (1<<31),
 	asOBJ_APP_PRIMITIVE              = (1<<13),
 	asOBJ_APP_FLOAT                  = (1<<14),
 	asOBJ_APP_ARRAY                  = (1<<15),
@@ -203,7 +204,7 @@ enum asEObjTypeFlags
 	asOBJ_NOCOUNT                    = (1<<18),
 	asOBJ_APP_CLASS_ALIGN8           = (1<<19),
 	asOBJ_IMPLICIT_HANDLE            = (1<<20),
-	asOBJ_MASK_VALID_FLAGS           = 0x1FFFFF,
+	asOBJ_MASK_VALID_FLAGS           = 0x801FFFFF,
 	// Internal flags
 	asOBJ_SCRIPT_OBJECT              = (1<<21),
 	asOBJ_SHARED                     = (1<<22),

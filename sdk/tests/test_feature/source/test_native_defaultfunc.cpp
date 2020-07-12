@@ -292,7 +292,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
-		r = engine->RegisterObjectType("vec2", sizeof(Class4), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Class4>()); assert(r >= 0);
+		r = engine->RegisterObjectType("vec2", sizeof(Class4), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Class4>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS); assert(r >= 0);
 		r = engine->RegisterObjectProperty("vec2", "float x", asOFFSET(Class4, x)); assert(r >= 0);
 		r = engine->RegisterObjectProperty("vec2", "float y", asOFFSET(Class4, y)); assert(r >= 0);
 
@@ -324,7 +324,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
-		r = engine->RegisterObjectType("vec2", sizeof(glm::vec2), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<glm::vec2>()); assert(r >= 0);
+		r = engine->RegisterObjectType("vec2", sizeof(glm::vec2), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<glm::vec2>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS); assert(r >= 0);
 		r = engine->RegisterObjectProperty("vec2", "float x", asOFFSET(glm::vec2, x)); assert(r >= 0);
 		r = engine->RegisterObjectProperty("vec2", "float y", asOFFSET(glm::vec2, y)); assert(r >= 0);
 
