@@ -84,6 +84,40 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptContext *ctx;
 	CBufferedOutStream bout;
+
+	// Test member funcdefs
+	// Reported by Polyak Istvan
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class C \n"
+			"{ \n"
+			"    funcdef void fd (); \n"
+			"    void f1 () \n"
+			"    { \n"
+			"    } \n"
+			"    void f2 () \n"
+			"    { \n"
+			"        fd @ fd1 = C::fd(f1); \n"
+			"        fd @ fd2 = fd(f1);  \n" // <- bug: without C:: the compiler don't find the funcdef
+			"    } \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 	
 	// Test delegates as callbacks
 	// https://www.gamedev.net/forums/topic/705573-asassert-abort-on-delegate-early-destruction-after-release/5420521/
