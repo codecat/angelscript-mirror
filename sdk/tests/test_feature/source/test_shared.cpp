@@ -10,6 +10,92 @@ bool Test()
 	asIScriptEngine *engine;
 	int r;
 	
+	// Test inheriting from shared base class, and then discard the module that compiled the base class
+	// https://www.gamedev.net/forums/topic/706321-angelscript-crash-using-disposed-script-function-that-was-loaded-from-bytecode/
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+const char* file1 = "					\
+	class Test1 : Test0 {						\
+		int function1() { return Test0::function1(); }	\
+	}									\
+	shared class Test0 {				\
+		int function1() { return 1; }	\
+	}									\
+	";
+
+const char* file2 = "					\
+	class Test2 : Test0 {				\
+	}									\
+	shared class Test0 {				\
+		int function1() { return 1; }	\
+	}									\
+	";
+	
+		asIScriptModule* mod1 = engine->GetModule("test1", asGM_ALWAYS_CREATE);
+		r = mod1->AddScriptSection("test1", file1, strlen(file1));
+		r = mod1->Build();
+		if( r < 0 )
+			TEST_FAILED;
+	
+		asIScriptModule* mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		r = mod2->AddScriptSection("test2", file2, strlen(file2));
+		r = mod2->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod1->Discard();
+		mod2->Discard();
+		engine->GarbageCollect();
+
+		mod1 = engine->GetModule("test1", asGM_ALWAYS_CREATE);
+		mod1->AddScriptSection("test1sec", file1, strlen(file1));
+		r = mod1->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		mod2->AddScriptSection("test2sec", file2, strlen(file2));
+		r = mod2->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		auto testTypeInfo = mod2->GetTypeInfoByName("Test2");
+		auto test1Func = testTypeInfo->GetMethodByDecl("int function1()");
+		auto factoryFunc = testTypeInfo->GetFactoryByIndex(0);
+
+		mod1->Discard();
+		engine->GarbageCollect();
+
+		auto context = engine->RequestContext();
+		context->Prepare(factoryFunc);
+		context->Execute();
+		asIScriptObject* scriptObj = (asIScriptObject*)context->GetReturnObject();
+		scriptObj->AddRef();
+
+		context->Prepare(test1Func);
+		context->SetObject(scriptObj);
+		int funcCall = context->Execute();
+		if( funcCall != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		scriptObj->Release();
+		engine->ReturnContext(context);
+
+		mod2->Discard();
+		engine->GarbageCollect();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+	
 	// Test multiple modules with shared objects and inheritance
 	// https://www.gamedev.net/forums/topic/706321-angelscript-crash-using-disposed-script-function-that-was-loaded-from-bytecode/5424084/
 	{
