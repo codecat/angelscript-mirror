@@ -332,14 +332,9 @@ bool Test()
 		r = engine->RegisterGlobalFunction("vec2 test(float)", asFUNCTION(retGlmVec2), asCALL_CDECL); assert(r >= 0);
 		r = engine->RegisterGlobalFunction("float test2(vec2)", asFUNCTION(checkGlmVec2), asCALL_CDECL); assert(r >= 0);
 
-		// On MSVC 2019 this fails when GLM_CONFIG_DEFAULTED_FUNCTIONS == GLM_ENABLE
-#if (_MSC_VER && GLM_CONFIG_DEFAULTED_FUNCTIONS == GLM_ENABLE)
-		PRINTF("Skipping test on returning glm::vec2 by value on MSVC\n");
-#else
 		r = ExecuteString(engine, "vec2 v; v = test(1); assert( v.x == 1 && v.y == 2 );");
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
-#endif
 
 		r = ExecuteString(engine, "vec2 v; v.x = 1; v.y = 2; assert( test2(v) == 3 );");
 		if (r != asEXECUTION_FINISHED)

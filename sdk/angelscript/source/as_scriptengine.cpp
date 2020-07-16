@@ -948,6 +948,23 @@ asCModule *asCScriptEngine::FindNewOwnerForSharedFunc(asCScriptFunction *in_func
 	if( in_func->module != in_mod)
 		return in_func->module;
 
+	if (in_func->objectType && in_func->objectType->module && 
+		in_func->objectType->module != in_func->module)
+	{
+		// The object type for the method has already been transferred to 
+		// another module, so transfer the method to the same module
+		in_func->module = in_func->objectType->module;
+
+		// Make sure the function is listed in the module
+		// The compiler may not have done this earlier, since the object
+		// type is shared and originally compiled from another module
+		if (in_func->module->m_scriptFunctions.IndexOf(in_func) < 0)
+		{
+			in_func->module->m_scriptFunctions.PushLast(in_func);
+			in_func->AddRefInternal();
+		}
+	}
+
 	for( asUINT n = 0; n < scriptModules.GetLength(); n++ )
 	{
 		// TODO: optimize: If the modules already stored the shared types separately, this would be quicker

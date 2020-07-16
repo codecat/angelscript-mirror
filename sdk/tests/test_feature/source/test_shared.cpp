@@ -47,26 +47,12 @@ const char* file2 = "					\
 			TEST_FAILED;
 
 		mod1->Discard();
-		mod2->Discard();
 		engine->GarbageCollect();
-
-		mod1 = engine->GetModule("test1", asGM_ALWAYS_CREATE);
-		mod1->AddScriptSection("test1sec", file1, strlen(file1));
-		r = mod1->Build();
-		if( r < 0 )
-			TEST_FAILED;
-
-		mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE);
-		mod2->AddScriptSection("test2sec", file2, strlen(file2));
-		r = mod2->Build();
-		if( r < 0 )
-			TEST_FAILED;
 
 		auto testTypeInfo = mod2->GetTypeInfoByName("Test2");
 		auto test1Func = testTypeInfo->GetMethodByDecl("int function1()");
 		auto factoryFunc = testTypeInfo->GetFactoryByIndex(0);
 
-		mod1->Discard();
 		engine->GarbageCollect();
 
 		auto context = engine->RequestContext();
