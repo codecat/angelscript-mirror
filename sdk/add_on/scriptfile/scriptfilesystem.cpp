@@ -548,7 +548,7 @@ CDateTime CScriptFileSystem::GetCreateDateTime(const string &path) const
 			ctx->SetException("Failed to get file creation date/time");
 		return CDateTime();
 	}
-	tm *t = localtime(st.st_ctime);
+	tm *t = localtime(&st.st_ctime);
 	return CDateTime(t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);	
 #endif
 }
@@ -591,7 +591,7 @@ CDateTime CScriptFileSystem::GetModifyDateTime(const string &path) const
 			ctx->SetException("Failed to get file modify date/time");
 		return CDateTime();
 	}
-	tm *t = localtime(st.st_mtime);
+	tm *t = localtime(&st.st_mtime);
 	return CDateTime(t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);	
 #endif
 }
