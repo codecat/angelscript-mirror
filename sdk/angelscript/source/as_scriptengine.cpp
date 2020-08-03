@@ -219,6 +219,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_SPARC
 		"AS_SPARC "
 #endif
+#ifdef AS_ARM64
+		"AS_ARM64 "
+#endif
 	;
 
 	return string;

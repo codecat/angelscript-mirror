@@ -386,7 +386,7 @@ typedef unsigned int   asUINT;
 #endif
 
 // Is the target a 64bit system?
-#if defined(__LP64__) || defined(__amd64__) || defined(__x86_64__) || defined(_M_X64)
+#if defined(__LP64__) || defined(__amd64__) || defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__) || defined(_M_ARM64)
 	#ifndef AS_64BIT_PTR
 		#define AS_64BIT_PTR
 	#endif
