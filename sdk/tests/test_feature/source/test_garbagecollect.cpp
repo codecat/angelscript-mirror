@@ -76,6 +76,59 @@ bool Test()
 	COutStream out;
 	int r;
 
+	// Test GC for circular ref between script class->array->delegate->script class
+	// https://www.gamedev.net/forums/topic/707725-gcreference-errors-when-adding-function-handle-delegates-to-array/5430136/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		
+		RegisterScriptArray(engine, false);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void FuncDef(int);\n"
+			"class script{\n"
+			"	array<FuncDef@> listeners;\n"
+			"	script(){\n"
+			"		listeners.insertLast(@FuncDef(this.class_method));\n"
+			"	}\n"
+			"	void class_method(int a) { }\n"
+			"}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "script s;", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		asUINT currentSize;
+		asUINT totalDestroyed;
+		asUINT totalDetected;
+		engine->GetGCStatistics(&currentSize, &totalDestroyed, &totalDetected);
+		if (currentSize != 3 ||
+			totalDestroyed != 0 ||
+			totalDetected != 0)
+		{
+			TEST_FAILED;
+			PRINTF("GC Stats: %d, %d, %d\n", currentSize, totalDestroyed, totalDetected);
+		}
+
+		engine->GarbageCollect();
+
+		engine->GetGCStatistics(&currentSize, &totalDestroyed, &totalDetected);
+		if (currentSize != 0 ||
+			totalDestroyed != 3 ||
+			totalDetected != 3)
+		{
+			TEST_FAILED;
+			PRINTF("GC Stats: %d, %d, %d\n", currentSize, totalDestroyed, totalDetected);
+		}
+	
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test GC callback on detecting circular reference
 	{
 		asIScriptEngine *engine = asCreateScriptEngine();
