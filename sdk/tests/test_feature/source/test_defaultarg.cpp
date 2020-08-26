@@ -14,6 +14,26 @@ bool ComplexTest( const Complex& c1, const Complex& c2 )
 	return true;
 }
 
+void *factory(int value, int offset) 
+{
+	assert(value == 123);
+	assert(offset == 5000);
+
+	return NULL;
+}
+
+int get_opIndex(int obj, int index) 
+{
+	assert(index == 10);
+
+	return 123;
+}
+
+int get_None(int obj) 
+{
+	return 123;
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -22,6 +42,58 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
+
+	// Reported by Phong Ba
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		r = engine->RegisterObjectType("vObj", sizeof(int), asOBJ_VALUE | asOBJ_POD); assert(r >= 0);
+		r = engine->RegisterObjectMethod("vObj", "int get_opIndex(int) const property", asFUNCTION(get_opIndex), asCALL_CDECL_OBJFIRST); assert(r >= 0);
+		r = engine->RegisterObjectMethod("vObj", "int get_Prop(int) const property", asFUNCTION(get_opIndex), asCALL_CDECL_OBJFIRST); assert(r >= 0);
+		r = engine->RegisterObjectMethod("vObj", "int get_None() const property", asFUNCTION(get_None), asCALL_CDECL_OBJFIRST); assert(r >= 0);
+		r = engine->RegisterObjectMethod("vObj", "int getValue(int) const", asFUNCTION(get_opIndex), asCALL_CDECL_OBJFIRST); assert(r >= 0);
+
+		r = engine->RegisterObjectType("rObj", 0, asOBJ_REF | asOBJ_NOCOUNT); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("rObj", asBEHAVE_FACTORY, "rObj@ f(int value, int offset = 5000)", asFUNCTION(factory), asCALL_CDECL); assert(r >= 0);
+
+		{
+			asIScriptModule  *mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+			asIScriptContext *ctx = engine->CreateContext(); assert(ctx != NULL);
+
+			r = mod->AddScriptSection("main", "void main() {vObj plain; rObj@ obj = rObj(plain.Prop[10]);}"); assert(r >= 0);
+			r = mod->Build(); assert(r >= 0); // Access violation reading location 0x0C005C44.
+
+			r = ctx->Prepare(engine->GetModule(0)->GetFunctionByDecl("void main()")); assert(r >= 0);
+			r = ctx->Execute(); assert(r == asEXECUTION_FINISHED);
+
+			ctx->Release();
+			mod->Discard();
+		}
+
+		{
+			asIScriptModule  *mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+			asIScriptContext *ctx = engine->CreateContext(); assert(ctx != NULL);
+
+			r = mod->AddScriptSection("main", "void main() {vObj plain; rObj@ obj = rObj(plain[10]);}"); assert(r >= 0);
+			r = mod->Build(); assert(r >= 0); // Access violation reading location 0x0C005B5C.
+
+			r = ctx->Prepare(engine->GetModule(0)->GetFunctionByDecl("void main()")); assert(r >= 0);
+			r = ctx->Execute(); assert(r == asEXECUTION_FINISHED);
+
+			ctx->Release();
+			mod->Discard();
+		}
+
+		r = engine->ShutDownAndRelease(); assert(r >= 0);
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
 
 	// default arg accessing member of global var
 	// Reported by Aaron Baker
