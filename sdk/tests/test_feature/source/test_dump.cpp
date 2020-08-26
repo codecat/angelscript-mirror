@@ -337,7 +337,7 @@ void DumpModule(asIScriptModule *mod)
 		" beh(12) void $beh12(int&in)\n"
 		" beh(13) void $beh13(int&in)\n"
 		" beh(8) bool $beh8(int&in, bool&out)\n"
-		" beh(4) T[]@ $beh4(int&in, int&in) { repeat T }\n"
+		" beh(4) T[]@ $list(int&in, int&in) { repeat T }\n"
 		" T& opIndex(uint)\n"
 		" const T& opIndex(uint) const\n"
 		" T[]& opAssign(const T[]&in)\n"

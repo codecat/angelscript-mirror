@@ -922,23 +922,17 @@ void asCReader::ReadUsedFunctions()
 								usedFunctions[n] = f;
 						}
 					}
-					else if( func.name == "$beh4" )
-					{
-						// This is a list factory, so check the return type's list factory
-						asCObjectType *objType = CastToObjectType(func.returnType.GetTypeInfo());
-						if( objType )
-						{
-							asCScriptFunction *f = engine->scriptFunctions[objType->beh.listFactory];
-							if( f && func.IsSignatureExceptNameAndObjectTypeEqual(f) )
-								usedFunctions[n] = f;
-						}
-					}
 					else if( func.name == "$dlgte" )
 					{
 						// This is the delegate factory
 						asCScriptFunction *f = engine->registeredGlobalFuncs.GetFirst(engine->nameSpaces[0], DELEGATE_FACTORY);
 						asASSERT( f && func.IsSignatureEqual(f) );
 						usedFunctions[n] = f;
+					}
+					else
+					{
+						// Must match one of the above cases
+						asASSERT(false);
 					}
 				}
 				else if( func.objectType == 0 )
