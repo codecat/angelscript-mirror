@@ -396,6 +396,43 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 
+	// Test bytecode loading with value type and list constructor
+	// Reported by Phong Ba
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+	
+		CBytecodeStream stream(__FILE__);
+
+		r = engine->RegisterObjectType("vObj", 1, asOBJ_VALUE | asOBJ_POD); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("vObj", asBEHAVE_LIST_CONSTRUCT, "void f(int &in) {repeat int}", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
+
+		{
+			asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+
+			r = mod->AddScriptSection("main", "void main() {vObj t = {1, 2, 3};}"); assert(r >= 0);
+			r = mod->Build(); assert(r >= 0);
+			r = mod->SaveByteCode(&stream); assert(r >= 0);
+			mod->Discard();
+		}
+
+		{
+			asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+
+			r = mod->LoadByteCode(&stream); assert(r >= 0);
+			mod->Discard();
+		}
+
+		if (bout.buffer != "") 
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = engine->ShutDownAndRelease(); assert(r >= 0);		
+	}
+
 	// Test crash with mismatched shared classes
 	// Reported by Julius Narvilas/MrFloat
 	{
