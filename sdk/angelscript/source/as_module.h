@@ -182,6 +182,7 @@ public:
 
 	int  CallInit(asIScriptContext *ctx);
 	void CallExit();
+	int  InitGlobalProp(asCGlobalProperty *prop, asIScriptContext *ctx);
 
 	void JITCompile();
 

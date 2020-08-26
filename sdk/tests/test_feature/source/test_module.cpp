@@ -14,6 +14,22 @@ bool Test()
 	COutStream out;
 	asIScriptContext *ctx;
 
+	// Test CompileGlobalVar with an array
+	// Reported by gmp3
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, false);
+		
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		r = mod->CompileGlobalVar(0,"array<int> a = {1,2,3};",0);
+		if( r < 0 )
+			TEST_FAILED;
+		
+		engine->ShutDownAndRelease();
+	}
+
 	// Test GetTypeInfoByName with namespaces
 	{
 		asIScriptEngine *engine = asCreateScriptEngine();

@@ -403,34 +403,71 @@ int asCModule::CallInit(asIScriptContext *myCtx)
 					break;
 			}
 
-			r = ctx->Prepare(desc->GetInitFunc());
-			if( r >= 0 )
+			r = InitGlobalProp(desc, ctx);
+		}
+	}
+
+	if( ctx && !myCtx )
+	{
+		m_engine->ReturnContext(ctx);
+		ctx = 0;
+	}
+
+	// Even if the initialization failed we need to set the
+	// flag that the variables have been initialized, otherwise
+	// the module won't free those variables that really were
+	// initialized.
+	m_isGlobalVarInitialized = true;
+
+	if( r != asEXECUTION_FINISHED )
+		return asINIT_GLOBAL_VARS_FAILED;
+
+	return asSUCCESS;
+}
+
+// internal
+// This function assumes the memory for the global property is already cleared
+int asCModule::InitGlobalProp(asCGlobalProperty *prop, asIScriptContext *myCtx)
+{
+	// Call the init function for each of the global variables
+	asIScriptContext *ctx = myCtx;
+	int r = asEXECUTION_FINISHED;
+	if( prop->GetInitFunc() )
+	{
+		if( ctx == 0 )
+		{
+			ctx = m_engine->RequestContext();
+			if( ctx == 0 )
+				return asERROR;
+		}
+
+		r = ctx->Prepare(prop->GetInitFunc());
+		if( r >= 0 )
+		{
+			r = ctx->Execute();
+			if( r != asEXECUTION_FINISHED )
 			{
-				r = ctx->Execute();
-				if( r != asEXECUTION_FINISHED )
+				asCString msg;
+				msg.Format(TXT_FAILED_TO_INITIALIZE_s, prop->name.AddressOf());
+				asCScriptFunction *func = prop->GetInitFunc();
+
+				m_engine->WriteMessage(func->scriptData->scriptSectionIdx >= 0 ? m_engine->scriptSectionNames[func->scriptData->scriptSectionIdx]->AddressOf() : "",
+									 func->GetLineNumber(0, 0) & 0xFFFFF,
+									 func->GetLineNumber(0, 0) >> 20,
+									 asMSGTYPE_ERROR,
+									 msg.AddressOf());
+
+				if( r == asEXECUTION_EXCEPTION )
 				{
-					asCString msg;
-					msg.Format(TXT_FAILED_TO_INITIALIZE_s, desc->name.AddressOf());
-					asCScriptFunction *func = desc->GetInitFunc();
+					const asIScriptFunction *function = ctx->GetExceptionFunction();
 
-					m_engine->WriteMessage(func->scriptData->scriptSectionIdx >= 0 ? m_engine->scriptSectionNames[func->scriptData->scriptSectionIdx]->AddressOf() : "",
-										 func->GetLineNumber(0, 0) & 0xFFFFF,
-										 func->GetLineNumber(0, 0) >> 20,
-										 asMSGTYPE_ERROR,
-										 msg.AddressOf());
+					msg.Format(TXT_EXCEPTION_s_IN_s, ctx->GetExceptionString(), function->GetDeclaration());
 
-					if( r == asEXECUTION_EXCEPTION )
-					{
-						const asIScriptFunction *function = ctx->GetExceptionFunction();
-
-						msg.Format(TXT_EXCEPTION_s_IN_s, ctx->GetExceptionString(), function->GetDeclaration());
-
-						m_engine->WriteMessage(function->GetScriptSectionName(),
-											 ctx->GetExceptionLineNumber(),
-											 0,
-											 asMSGTYPE_INFORMATION,
-											 msg.AddressOf());
-					}
+					m_engine->WriteMessage(function->GetScriptSectionName(),
+										   ctx->GetExceptionLineNumber(),
+										   0,
+										   asMSGTYPE_INFORMATION,
+										   msg.AddressOf());
 				}
 			}
 		}
@@ -1687,28 +1724,21 @@ int asCModule::CompileGlobalVar(const char *sectionName, const char *code, int l
 	m_engine->BuildCompleted();
 
 	// Initialize the variable
-	if( r >= 0 && m_engine->ep.initGlobalVarsAfterBuild )
+	if( r >= 0 )
 	{
 		// Clear the memory
 		asCGlobalProperty *prop = m_scriptGlobals.GetLast();
 		if( prop )
 		{
 			memset(prop->GetAddressOfValue(), 0, sizeof(asDWORD)*prop->type.GetSizeOnStackDWords());
+		}
 
-			if( prop->GetInitFunc() )
-			{
-				// Call the init function for the global variable
-				asIScriptContext *ctx = 0;
-				r = m_engine->CreateContext(&ctx, true);
-				if( r < 0 )
-					return r;
+		if( prop && m_engine->ep.initGlobalVarsAfterBuild )
+		{
+			// Flag that there are initialized global variables
+			m_isGlobalVarInitialized = true;
 
-				r = ctx->Prepare(prop->GetInitFunc());
-				if( r >= 0 )
-					r = ctx->Execute();
-
-				ctx->Release();
-			}
+			r = InitGlobalProp(prop, 0);
 		}
 	}
 
