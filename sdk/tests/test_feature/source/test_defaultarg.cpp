@@ -43,6 +43,7 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
+	// Test default arg after expression with index property accessor
 	// Reported by Phong Ba
 	{
 		engine = asCreateScriptEngine();
@@ -63,7 +64,7 @@ bool Test()
 			asIScriptContext *ctx = engine->CreateContext(); assert(ctx != NULL);
 
 			r = mod->AddScriptSection("main", "void main() {vObj plain; rObj@ obj = rObj(plain.Prop[10]);}"); assert(r >= 0);
-			r = mod->Build(); assert(r >= 0); // Access violation reading location 0x0C005C44.
+			r = mod->Build(); assert(r >= 0);
 
 			r = ctx->Prepare(engine->GetModule(0)->GetFunctionByDecl("void main()")); assert(r >= 0);
 			r = ctx->Execute(); assert(r == asEXECUTION_FINISHED);
@@ -77,7 +78,7 @@ bool Test()
 			asIScriptContext *ctx = engine->CreateContext(); assert(ctx != NULL);
 
 			r = mod->AddScriptSection("main", "void main() {vObj plain; rObj@ obj = rObj(plain[10]);}"); assert(r >= 0);
-			r = mod->Build(); assert(r >= 0); // Access violation reading location 0x0C005B5C.
+			r = mod->Build(); assert(r >= 0); 
 
 			r = ctx->Prepare(engine->GetModule(0)->GetFunctionByDecl("void main()")); assert(r >= 0);
 			r = ctx->Execute(); assert(r == asEXECUTION_FINISHED);

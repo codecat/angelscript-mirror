@@ -10979,6 +10979,10 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 			conv.Copy(args[0]);
 			asUINT cost = ImplicitConversion(&conv, dt, node->lastChild, asIC_EXPLICIT_VAL_CAST, false);
 
+			// Clean the property_arg in the temporary copy so 
+			// it isn't deleted when conv goes out of scope
+			conv.property_arg = 0;
+
 			// Don't use this if the cost is 0 because it would mean that nothing
 			// is done and the script wants a new value to be constructed
 			if( conv.type.dataType.IsEqualExceptRef(dt) && cost > 0 )

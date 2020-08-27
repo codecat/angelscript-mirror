@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.35.0 WIP - 2020/08/26</h2>
+<h2>Version 2.35.0 WIP - 2020/08/27</h2>
 
 <ul>
 <li>Bug fixes
@@ -32,6 +32,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Funcdefs are marked with asOBJ_GC as they can form circular references when used with delegates (Thanks cmann)
 <li>Fixed memory leak when using CompileGlobalVar to add a variable to a module with an object type (Thanks gmp3)
 <li>Fixed error when loading bytecode that is using a list constructor for a value type (Thanks Phong Ba)
+<li>Fixed memory invasion in compiler when compiling default argument after an argument with index operator (Thanks Phong Ba)
 </ul>
 <li>Library
 <ul>
