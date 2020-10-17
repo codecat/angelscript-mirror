@@ -1481,7 +1481,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 				realFunc = engine->scriptFunctions[func->objectType->methods[n]];
 				if( realFunc && realFunc->funcType == func->funcType && func->IsSignatureEqual(realFunc) )
 				{
-					assert( func->vfTableIdx == realFunc->vfTableIdx );
+					asASSERT( func->vfTableIdx == realFunc->vfTableIdx );
 					found = true;
 					break;
 				}

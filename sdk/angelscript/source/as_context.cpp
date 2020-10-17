@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2019 Andreas Jonsson
+   Copyright (c) 2003-2020 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -4815,6 +4815,9 @@ void asCContext::DetermineLiveObjects(asCArray<int> &liveObjects, asUINT stackLe
 								nested--;
 						}
 					}
+					break;
+				case asOBJ_VARDECL: // A variable was declared
+					// We don't really care about the variable declarations at this moment
 					break;
 				}
 			}
