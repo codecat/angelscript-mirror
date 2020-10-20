@@ -848,6 +848,10 @@ void asCModule::InternalReset()
 	}
 	m_scriptGlobals.Clear();
 
+	// Clear the type lookup
+	// The references were already released as the types were removed from the respective arrays
+	m_typeLookup.EraseAll();
+
 	asASSERT( IsEmpty() );
 }
 
@@ -1157,28 +1161,10 @@ asITypeInfo *asCModule::GetTypeInfoByName(const char *in_name) const
 		
 	while (ns)
 	{
-		for (asUINT n = 0; n < m_classTypes.GetLength(); n++)
+		asITypeInfo* info = GetType(name, ns);
+		if(info)
 		{
-			if (m_classTypes[n] &&
-				m_classTypes[n]->name == name &&
-				m_classTypes[n]->nameSpace == ns)
-				return m_classTypes[n];
-		}
-
-		for (asUINT n = 0; n < m_enumTypes.GetLength(); n++)
-		{
-			if (m_enumTypes[n] &&
-				m_enumTypes[n]->name == name &&
-				m_enumTypes[n]->nameSpace == ns)
-				return m_enumTypes[n];
-		}
-
-		for (asUINT n = 0; n < m_typeDefs.GetLength(); n++)
-		{
-			if (m_typeDefs[n] &&
-				m_typeDefs[n]->name == name &&
-				m_typeDefs[n]->nameSpace == ns)
-				return m_typeDefs[n];
+			return info;
 		}
 
 		// Recursively search parent namespace
@@ -1547,45 +1533,71 @@ int asCModule::UnbindAllImportedFunctions()
 }
 
 // internal
-asCTypeInfo *asCModule::GetType(const char *type, asSNameSpace *ns)
+void asCModule::AddClassType(asCObjectType* type)
 {
-	asUINT n;
+	m_classTypes.PushLast(type);
+	m_typeLookup.Insert({type->nameSpace, type->name}, type);
+}
 
-	// TODO: optimize: Improve linear search
-	for (n = 0; n < m_classTypes.GetLength(); n++)
-		if (m_classTypes[n]->name == type &&
-			m_classTypes[n]->nameSpace == ns)
-			return m_classTypes[n];
+// internal
+void asCModule::AddEnumType(asCEnumType* type)
+{
+	m_enumTypes.PushLast(type);
+	m_typeLookup.Insert({type->nameSpace, type->name}, type);
+}
 
-	for (n = 0; n < m_enumTypes.GetLength(); n++)
-		if (m_enumTypes[n]->name == type &&
-			m_enumTypes[n]->nameSpace == ns)
-			return m_enumTypes[n];
+// internal
+void asCModule::AddTypeDef(asCTypedefType* type)
+{
+	m_typeDefs.PushLast(type);
+	m_typeLookup.Insert({type->nameSpace, type->name}, type);
+}
 
-	for (n = 0; n < m_typeDefs.GetLength(); n++)
-		if (m_typeDefs[n]->name == type &&
-			m_typeDefs[n]->nameSpace == ns)
-			return m_typeDefs[n];
+// internal
+void asCModule::AddFuncDef(asCFuncdefType* type)
+{
+	m_funcDefs.PushLast(type);
+	m_typeLookup.Insert({type->nameSpace, type->name}, type);
+}
 
-	for (n = 0; n < m_funcDefs.GetLength(); n++)
-		if (m_funcDefs[n]->name == type &&
-			m_funcDefs[n]->nameSpace == ns)
-			return m_funcDefs[n];
+// internal
+void asCModule::ReplaceFuncDef(asCFuncdefType* type, asCFuncdefType* newType)
+{
+	int i = m_funcDefs.IndexOf(type);
+	if( i >= 0 )
+	{
+		m_funcDefs[i] = newType;
+		
+		// Replace it in the lookup map too
+		asSMapNode<asSNameSpaceNamePair, asCTypeInfo*>* result = nullptr;
+		if(m_typeLookup.MoveTo(&result, {type->nameSpace, type->name}))
+		{
+			asASSERT( result->value == type );
+			result->value = newType;
+		}
+	}
+}
 
+// internal
+asCTypeInfo *asCModule::GetType(const asCString &type, asSNameSpace *ns) const
+{
+	asSMapNode<asSNameSpaceNamePair, asCTypeInfo*>* result = nullptr;
+	if(m_typeLookup.MoveTo(&result, {ns, type}))
+	{
+		return result->value;
+	}
 	return 0;
 }
 
 // internal
-asCObjectType *asCModule::GetObjectType(const char *type, asSNameSpace *ns)
+asCObjectType *asCModule::GetObjectType(const char *type, asSNameSpace *ns) const
 {
-	asUINT n;
-
-	// TODO: optimize: Improve linear search
-	for( n = 0; n < m_classTypes.GetLength(); n++ )
-		if( m_classTypes[n]->name == type &&
-			m_classTypes[n]->nameSpace == ns )
-			return m_classTypes[n];
-
+	asSMapNode<asSNameSpaceNamePair, asCTypeInfo*>* result = nullptr;
+	if(m_typeLookup.MoveTo(&result, {ns, type}))
+	{
+		return CastToObjectType(result->value);
+	}
+ 
 	return 0;
 }
 
@@ -1837,7 +1849,7 @@ int asCModule::AddFuncDef(const asCString &funcName, asSNameSpace *ns, asCObject
 	func->module    = this;
 
 	asCFuncdefType *fdt = asNEW(asCFuncdefType)(m_engine, func);
-	m_funcDefs.PushLast(fdt); // The constructor set the refcount to 1
+	AddFuncDef(fdt); // The constructor set the refcount to 1
 
 	m_engine->funcDefs.PushLast(fdt); // doesn't increase refcount
 	func->id = m_engine->GetNextScriptFunctionId();

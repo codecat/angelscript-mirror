@@ -216,7 +216,7 @@ int asCReader::ReadInner()
 			// Set this module as the owner
 			et->module = module;
 		}
-		module->m_enumTypes.PushLast(et);
+		module->AddEnumType(et);
 
 		if (isExternal)
 			module->m_externalTypes.PushLast(et);
@@ -290,7 +290,7 @@ int asCReader::ReadInner()
 			// Set this module as the owner
 			ot->module = module;
 		}
-		module->m_classTypes.PushLast(ot);
+		module->AddClassType(ot);
 
 		if (isExternal)
 			module->m_externalTypes.PushLast(ot);
@@ -312,7 +312,7 @@ int asCReader::ReadInner()
 			asCFuncdefType *fdt = funcDef->funcdefType;
 			fdt->module = module;
 
-			module->m_funcDefs.PushLast(fdt);
+			module->AddFuncDef(fdt);
 			engine->funcDefs.PushLast(fdt);
 
 			// TODO: clean up: This is also done by the builder. It should probably be moved to a method in the module
@@ -334,7 +334,7 @@ int asCReader::ReadInner()
 						f2->funcdef->IsSignatureExceptNameEqual(funcDef) )
 					{
 						// Replace our funcdef for the existing one
-						module->m_funcDefs[module->m_funcDefs.IndexOf(fdt)] = f2;
+						module->ReplaceFuncDef(fdt, f2);
 						f2->AddRefInternal();
 
 						if (isExternal)
@@ -415,7 +415,7 @@ int asCReader::ReadInner()
 		bool isExternal = false;
 		ReadTypeDeclaration(td, 1, &isExternal);
 		td->module = module;
-		module->m_typeDefs.PushLast(td);
+		module->AddTypeDef(td);
 		ReadTypeDeclaration(td, 2);
 	}
 

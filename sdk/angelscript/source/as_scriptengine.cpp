@@ -5810,7 +5810,7 @@ asCFuncdefType *asCScriptEngine::FindMatchingFuncdef(asCScriptFunction *func, as
 			// Add the new funcdef to the module so it will
 			// be available when saving the bytecode
 			funcDef->module = module;
-			module->m_funcDefs.PushLast(funcDef); // the refCount was already accounted for in the constructor
+			module->AddFuncDef(funcDef); // the refCount was already accounted for in the constructor
 		}
 
 		// Observe, if the funcdef is created without informing a module a reference will be stored in the
@@ -5824,7 +5824,7 @@ asCFuncdefType *asCScriptEngine::FindMatchingFuncdef(asCScriptFunction *func, as
 		// be stored as part of the module for saving/loading bytecode
 		if (!module->m_funcDefs.Exists(funcDef))
 		{
-			module->m_funcDefs.PushLast(funcDef);
+			module->AddFuncDef(funcDef);
 			funcDef->AddRefInternal();
 		}
 		else
