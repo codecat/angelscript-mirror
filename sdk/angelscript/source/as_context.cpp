@@ -4404,7 +4404,23 @@ void asCContext::ExecuteNext()
 
 				// Call the method
 				m_callingSystemFunction = m_engine->scriptFunctions[i];
-				void *ptr = m_engine->CallObjectMethodRetPtr(obj, arg, m_callingSystemFunction);
+				void *ptr = 0;
+#ifdef AS_NO_EXCEPTIONS
+				ptr = m_engine->CallObjectMethodRetPtr(obj, arg, m_callingSystemFunction);
+#else
+				// This try/catch block is to catch potential exception that may 
+				// be thrown by the registered function. 
+				try
+				{
+					ptr = m_engine->CallObjectMethodRetPtr(obj, arg, m_callingSystemFunction);
+				}
+				catch (...)
+				{
+					// Convert the exception to a script exception so the VM can 
+					// properly report the error to the application and then clean up
+					HandleAppException();
+				}
+#endif
 				m_callingSystemFunction = 0;
 				*(asPWORD*)&m_regs.valueRegister = (asPWORD)ptr;
 			}

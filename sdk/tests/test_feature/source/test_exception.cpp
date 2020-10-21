@@ -52,6 +52,12 @@ void ThrowException()
 	throw std::exception();
 }
 
+class foo
+{
+	public:
+	int *opIndex_ThrowException(int) { throw std::exception(); return 0; }
+};
+
 class Dummy
 {
 public:
@@ -414,6 +420,36 @@ bool Test()
 
 		asIScriptContext *ctx = engine->CreateContext();
 		r = ExecuteString(engine, "ThrowException()", 0, ctx);
+		if (r != asEXECUTION_EXCEPTION)
+		{
+			TEST_FAILED;
+		}
+		if (ctx->GetExceptionString() == 0 || 
+			(string(ctx->GetExceptionString()) != "Unknown exception" && // msvc
+			 string(ctx->GetExceptionString()) != "std::exception"))      // gnuc
+		{
+			PRINTF("Exception: '%s'\n", ctx->GetExceptionString());
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test exception translation in opIndex(int) (asBC_Thiscall1)
+	// Reported by Quentin Cosendey
+	SKIP_ON_MAX_PORT
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->SetTranslateAppExceptionCallback(asFUNCTION(TranslateException), 0, asCALL_CDECL);
+
+		engine->RegisterObjectType("foo", sizeof(foo), asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterObjectMethod("foo", "int &opIndex(int)", asMETHOD(foo, opIndex_ThrowException), asCALL_THISCALL);
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "foo bar; bar[0]", 0, ctx);
 		if (r != asEXECUTION_EXCEPTION)
 		{
 			TEST_FAILED;
