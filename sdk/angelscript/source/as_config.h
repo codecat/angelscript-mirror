@@ -177,6 +177,14 @@
 // Oracle Solaris Studio (previously known as Sun CC compiler)
 // __SUNPRO_CC is defined
 
+// Local (or Little) C Compiler
+// __LCC__ is defined
+// __e2k__ is not defined
+
+// MCST eLbrus C Compiler
+// __LCC__ is defined
+// __e2k__ is defined
+
 
 
 //
@@ -229,6 +237,10 @@
 
 // AS_SPARC
 // Define this for SPARC CPU family
+
+// AS_E2K
+// Define this for MCST Elbrus 2000 CPU family
+
 
 
 
@@ -360,6 +372,14 @@
 
 // Not implemented by default. Undefined with tested platforms.
 #define AS_NO_THISCALL_FUNCTOR_METHOD
+
+
+// Emscripten compiler toolchain
+// ref: https://emscripten.org/
+#if defined(__EMSCRIPTEN__)
+  #define AS_MAX_PORTABILITY
+#endif
+
 
 
 // Embarcadero C++Builder
@@ -963,6 +983,17 @@
 			// although use 64bit PPC only uses 32bit pointers.
 			// TODO: Add support for native calling conventions on Linux with PPC 64bit
 			#define AS_MAX_PORTABILITY
+		#elif defined(__e2k__)
+			// 64bit MCST Elbrus 2000
+			// ref: https://en.wikipedia.org/wiki/Elbrus_2000
+			#define AS_E2K
+			// AngelScript currently doesn't support native calling
+			// for MCST Elbrus 2000 processor so it's necessary to turn on
+			// portability mode
+			#define AS_MAX_PORTABILITY
+			// STDCALL is not available on 64bit Linux
+			#undef STDCALL
+			#define STDCALL
 		#else
 			#define AS_MAX_PORTABILITY
 		#endif
