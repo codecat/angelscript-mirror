@@ -1092,6 +1092,30 @@ public:
 
 \see \ref doc_datatypes_dictionary "Dictionaries in the script language"
 
+\section doc_addon_dict_3 Example usage from C++
+
+Here's a skeleton for iterating over the entries in the dictionary. For brevity the code doesn't show how to interpret the values, 
+for more information on that see \ref asETypeIdFlags and \ref asIScriptEngine::GetTypeInfoById.
+
+\code
+void iterateDictionary(CScriptDictionary *dict)
+{
+	// Iterate over each entry
+	for (auto it : *dict)
+	{
+		// Determine the name of the key
+		std::string keyName = it.GetKey();
+		cout << "\"" << keyName << "\"" << " = ";
+		
+		// Get the type and address of the value
+		int typeId = it.GetTypeId();
+		const void *addressOfValue = it.GetAddressOfValue();
+
+		// Cast the value to the correct C++ type according to the typeId and then print it
+		...
+	}
+}
+\endcode
 
 
 
