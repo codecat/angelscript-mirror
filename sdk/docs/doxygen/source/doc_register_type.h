@@ -567,6 +567,8 @@ through \ref doc_script_class_prop "indexed property accessors" rather than atte
 C++ array type to a registered type in AngelScript. To do this you can create a couple of simple proxy functions
 that will translate to the array access.
 
+\note The behaviour of virtual properties can be customized with the engine property \ref doc_adv_custom_options_lang_mod "asEP_PROPERTY_ACCESSOR_MODE".
+
 \code
 struct MyStruct
 {
@@ -587,8 +589,8 @@ void MyStruct_set_array(unsigned int idx, int value, MyStruct *o)
 }
 
 // Register the proxy functions as member methods
-r = engine->RegisterObjectMethod("mytype", "int get_array(uint)", asFUNCTION(MyStruct_get_array), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-r = engine->RegisterObjectMethod("mytype", "void set_array(uint, int)", asFUNCTION(MyStruct_set_array), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+r = engine->RegisterObjectMethod("mytype", "int get_array(uint) property", asFUNCTION(MyStruct_get_array), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+r = engine->RegisterObjectMethod("mytype", "void set_array(uint, int) property", asFUNCTION(MyStruct_set_array), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 \endcode
 
 
