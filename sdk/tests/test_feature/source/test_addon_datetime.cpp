@@ -21,7 +21,6 @@ bool Test()
 	asIScriptEngine *engine;
 
 	// Test odd behaviour with 'datetime dt(2019,01,01);'
-	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
@@ -44,7 +43,6 @@ bool Test()
 	}
 
 	// Test returning the datetime object from script function
-	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
@@ -71,7 +69,6 @@ bool Test()
 	}
 
 	// Test the datetime object
-	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);

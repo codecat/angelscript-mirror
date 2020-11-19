@@ -45,6 +45,7 @@ bool Test()
 
 	// Test default arg after expression with index property accessor
 	// Reported by Phong Ba
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);

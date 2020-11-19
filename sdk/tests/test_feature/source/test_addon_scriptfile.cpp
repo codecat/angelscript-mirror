@@ -8,8 +8,6 @@ namespace Test_Addon_ScriptFile
 
 bool Test()
 {
-	RET_ON_MAX_PORT
-
 	bool fail = false;
 	COutStream out;
 	CBufferedOutStream bout;
