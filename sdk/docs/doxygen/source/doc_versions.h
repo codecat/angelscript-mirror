@@ -120,5 +120,20 @@ type of variables based on the initialization expression.
 
 Anonymous functions were first implemented in version 2.30.2.
 
+\subsection doc_versions_2016 2016 - Child funcdefs
+
+Funcdefs can be declared as members of classes as of version 2.31.0.
+
+\subsection doc_versions_2017 2017 - external keyword and anonymous initialization lists
+
+The <tt>external</tt> keyword was introduced in version 2.32.0 to explicitly include shared entities from a previously compiled module. This version also introduced anonymouus initialization lists for more compact scripts.
+
+\subsection doc_versions_2018 2018 - Try-catch statements and explicit constructors
+
+In version 2.33.0 the language was improved to support try-catch statements, and for flagging constructors as explicit for better control over what type conversions can happen implicitly.
+
+\subsection doc_versions_2019 2019 - Explicit property keyword
+
+With version 2.34.0 virtual property access must be explicitly flagged with the property keyword so that functions starting with get_ or set_ won't automatically be interpreted as virtual properties.
 
 */
