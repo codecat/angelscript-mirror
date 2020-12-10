@@ -1536,28 +1536,28 @@ int asCModule::UnbindAllImportedFunctions()
 void asCModule::AddClassType(asCObjectType* type)
 {
 	m_classTypes.PushLast(type);
-	m_typeLookup.Insert({type->nameSpace, type->name}, type);
+	m_typeLookup.Insert(asSNameSpaceNamePair(type->nameSpace, type->name), type);
 }
 
 // internal
 void asCModule::AddEnumType(asCEnumType* type)
 {
 	m_enumTypes.PushLast(type);
-	m_typeLookup.Insert({type->nameSpace, type->name}, type);
+	m_typeLookup.Insert(asSNameSpaceNamePair(type->nameSpace, type->name), type);
 }
 
 // internal
 void asCModule::AddTypeDef(asCTypedefType* type)
 {
 	m_typeDefs.PushLast(type);
-	m_typeLookup.Insert({type->nameSpace, type->name}, type);
+	m_typeLookup.Insert(asSNameSpaceNamePair(type->nameSpace, type->name), type);
 }
 
 // internal
 void asCModule::AddFuncDef(asCFuncdefType* type)
 {
 	m_funcDefs.PushLast(type);
-	m_typeLookup.Insert({type->nameSpace, type->name}, type);
+	m_typeLookup.Insert(asSNameSpaceNamePair(type->nameSpace, type->name), type);
 }
 
 // internal
@@ -1569,8 +1569,8 @@ void asCModule::ReplaceFuncDef(asCFuncdefType* type, asCFuncdefType* newType)
 		m_funcDefs[i] = newType;
 		
 		// Replace it in the lookup map too
-		asSMapNode<asSNameSpaceNamePair, asCTypeInfo*>* result = nullptr;
-		if(m_typeLookup.MoveTo(&result, {type->nameSpace, type->name}))
+		asSMapNode<asSNameSpaceNamePair, asCTypeInfo*>* result = 0;
+		if(m_typeLookup.MoveTo(&result, asSNameSpaceNamePair(type->nameSpace, type->name)))
 		{
 			asASSERT( result->value == type );
 			result->value = newType;
@@ -1581,8 +1581,8 @@ void asCModule::ReplaceFuncDef(asCFuncdefType* type, asCFuncdefType* newType)
 // internal
 asCTypeInfo *asCModule::GetType(const asCString &type, asSNameSpace *ns) const
 {
-	asSMapNode<asSNameSpaceNamePair, asCTypeInfo*>* result = nullptr;
-	if(m_typeLookup.MoveTo(&result, {ns, type}))
+	asSMapNode<asSNameSpaceNamePair, asCTypeInfo*>* result = 0;
+	if(m_typeLookup.MoveTo(&result, asSNameSpaceNamePair(ns, type)))
 	{
 		return result->value;
 	}
@@ -1592,8 +1592,8 @@ asCTypeInfo *asCModule::GetType(const asCString &type, asSNameSpace *ns) const
 // internal
 asCObjectType *asCModule::GetObjectType(const char *type, asSNameSpace *ns) const
 {
-	asSMapNode<asSNameSpaceNamePair, asCTypeInfo*>* result = nullptr;
-	if(m_typeLookup.MoveTo(&result, {ns, type}))
+	asSMapNode<asSNameSpaceNamePair, asCTypeInfo*>* result = 0;
+	if(m_typeLookup.MoveTo(&result, asSNameSpaceNamePair(ns, type)))
 	{
 		return CastToObjectType(result->value);
 	}
