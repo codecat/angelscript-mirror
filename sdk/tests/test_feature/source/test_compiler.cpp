@@ -180,6 +180,30 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test bytecode sequence on calling method on explicitly created temporary objects
+	// https://www.gamedev.net/forums/topic/708821-crash-on-temp-string-objects/5434393/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+
+		r = ExecuteString(engine, "string('aaaa').findFirst('v'); \n"
+		                          "string aaaa('aaaa'); \n"
+		                          "aaaa.findFirst('v'); \n");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test use of virtual property without get accessor causing assert failure
 	// Reported by Patrick Jeeves
 	SKIP_ON_MAX_PORT

@@ -4855,7 +4855,7 @@ void asCCompiler::PrepareTemporaryVariable(asCScriptNode *node, asCExprContext *
 		{
 			ctx->bc.Instr(asBC_PopPtr);
 			ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
-			ctx->type.dataType.MakeReference(true);
+			ctx->type.dataType.MakeReference(IsVariableOnHeap(ctx->type.stackOffset));
 		}
 
 		return;
