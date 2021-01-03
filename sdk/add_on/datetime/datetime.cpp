@@ -20,6 +20,7 @@ static tm time_point_to_tm(const std::chrono::time_point<std::chrono::system_clo
 #ifdef _MSC_VER
 	gmtime_s(&local, &t);
 #else
+	// TODO: gmtime is not threadsafe
 	local = *gmtime(&t);
 #endif
 	return local;
@@ -33,11 +34,13 @@ static bool tm_to_time_point(const tm &_tm, std::chrono::time_point<std::chrono:
 	// Do not rely on timezone, as it is not portable
 	// ref: https://stackoverflow.com/questions/38298261/why-there-is-no-inverse-function-for-gmtime-in-libc
 	// ref: https://stackoverflow.com/questions/8558919/mktime-and-tm-isdst
+	// TODO: mktime is not threadsafe
 	time_t t = mktime(&localTm);
 	if (t == -1)
 		return false;
 	
 	// Adjust the time_t since epoch with the difference of the local timezone to the universal timezone
+	// TODO: localtime, gmtime, and mktime are not threadsafe
 	t += (mktime(localtime(&t)) - mktime(gmtime(&t)));
 
 	tp = system_clock::from_time_t(t);
