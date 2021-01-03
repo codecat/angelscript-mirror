@@ -35,11 +35,18 @@ bool Test()
 		if (r < 0)
 			TEST_FAILED;
 
+		CDateTime* dt = reinterpret_cast<CDateTime*>(mod->GetAddressOfGlobalVar(0));
+		if (dt->getYear() != 2019 || dt->getMonth() != 1 || dt->getDay() != 1)
+		{
+			PRINTF("%d/%d/%d\n", dt->getYear(), dt->getMonth(), dt->getDay());
+			TEST_FAILED;
+		}
+
 		r = ExecuteString(engine, "assert(dt.year == 2019 && dt.month == 1 && dt.day == 1);", mod);
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
-		engine->Release();	
+		engine->Release();
 	}
 
 	// Test returning the datetime object from script function

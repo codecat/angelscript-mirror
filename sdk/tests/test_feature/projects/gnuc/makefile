@@ -80,6 +80,7 @@ SRCNAMES = \
   test_module.cpp \
   test_multiassign.cpp \
   test_namespace.cpp \
+  test_native_defaultfunc.cpp \
   test_nested.cpp \
   test_nevervisited.cpp \
   test_notinitialized.cpp \
