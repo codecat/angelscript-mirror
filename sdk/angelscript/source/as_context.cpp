@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2020 Andreas Jonsson
+   Copyright (c) 2003-2021 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -2882,7 +2882,8 @@ void asCContext::ExecuteNext()
 			m_regs.stackPointer      = l_sp;
 			m_regs.stackFramePointer = l_fp;
 
-			if( !(objType->flags & asOBJ_NOCOUNT) )
+			// Update ref counter for object types that require it
+			if( !(objType->flags & (asOBJ_NOCOUNT | asOBJ_VALUE)) )
 			{
 				// Release previous object held by destination pointer
 				if( *d != 0 && beh->release )
@@ -4141,7 +4142,8 @@ void asCContext::ExecuteNext()
 			m_regs.stackPointer      = l_sp;
 			m_regs.stackFramePointer = l_fp;
 
-			if( !(objType->flags & asOBJ_NOCOUNT) )
+			// Update ref counter for object types that require it
+			if( !(objType->flags & (asOBJ_NOCOUNT | asOBJ_VALUE)) )
 			{
 				// Release previous object held by destination pointer
 				if( *d != 0 && beh->release )
