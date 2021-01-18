@@ -103,7 +103,6 @@ bool Test()
 
 	// Test to make sure catching two exceptions in a row works
 	// https://www.gamedev.net/forums/topic/700622-catching-two-in-a-row/
-	SKIP_ON_MAX_PORT
 	{
 		asIScriptEngine *engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -183,7 +182,6 @@ bool Test()
 	
 	// Test to make sure stack unwind to catch block doesn't clean-up objects created before the try block
 	// Identified by Polyak Istvan
-	SKIP_ON_MAX_PORT
 	{
 		asIScriptEngine *engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -326,7 +324,6 @@ bool Test()
 	// Test catching an exception
 	// TODO: Test rethrowing exception in catch block
 	// TODO: Test use of try/catch in constructor to call base class' constructor
-	SKIP_ON_MAX_PORT
 	{
 		asIScriptEngine *engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
