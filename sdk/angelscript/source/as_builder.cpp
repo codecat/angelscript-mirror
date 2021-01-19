@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2020 Andreas Jonsson
+   Copyright (c) 2003-2021 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1602,8 +1602,29 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 	}
 
 #ifndef AS_NO_COMPILER
-	// Check against class types
+	// Check against interface types
 	asUINT n;
+	for (n = 0; n < interfaceDeclarations.GetLength(); n++)
+	{
+		if (interfaceDeclarations[n]->name == name &&
+			interfaceDeclarations[n]->typeInfo->nameSpace == ns)
+		{
+			if (code)
+			{
+				asCString str;
+				if (ns->name != "")
+					str = ns->name + "::" + name;
+				else
+					str = name;
+				str.Format(TXT_NAME_CONFLICT_s_INTF, str.AddressOf());
+				WriteError(str, code, node);
+			}
+
+			return -1;
+		}
+	}
+
+	// Check against class types
 	for( n = 0; n < classDeclarations.GetLength(); n++ )
 	{
 		if( classDeclarations[n]->name == name &&
@@ -2921,7 +2942,8 @@ void asCBuilder::CompileInterfaces()
 		// If any of the derived interfaces are found after this interface, then move this to the end of the list
 		for( asUINT m = n+1; m < interfaceDeclarations.GetLength(); m++ )
 		{
-			if( intfType->Implements(interfaceDeclarations[m]->typeInfo) )
+			if( intfType != interfaceDeclarations[m]->typeInfo &&
+				intfType->Implements(interfaceDeclarations[m]->typeInfo) )
 			{
 				interfaceDeclarations.RemoveIndex(n);
 				interfaceDeclarations.PushLast(intfDecl);

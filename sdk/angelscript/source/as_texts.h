@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2019 Andreas Jonsson
+   Copyright (c) 2003-2021 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -189,6 +189,7 @@
 #define TXT_NAME_CONFLICT_s_IS_MIXIN               "Name conflict. '%s' is a mixin class."
 #define TXT_NAME_CONFLICT_s_IS_VIRTPROP            "Name conflict. '%s' is a virtual property."
 #define TXT_NAME_CONFLICT_s_STRUCT                 "Name conflict. '%s' is a class."
+#define TXT_NAME_CONFLICT_s_INTF                   "Name conflict. '%s' is an interface."
 #define TXT_NAME_CONFLICT_s_OBJ_PROPERTY           "Name conflict. '%s' is an object property."
 #define TXT_NAME_CONFLICT_s_METHOD                 "Name conflict. '%s' is a class method."
 #define TXT_NAME_CONFLICT_s_ALREADY_USED           "Name conflict. '%s' is already used."

@@ -10,6 +10,31 @@ bool Test()
 	asIScriptEngine *engine;
 	int r;
 	
+	// Test with external shared interface and inhering from shared interface
+	// https://www.gamedev.net/forums/topic/707753-bug-when-importing-an-external-interface/5430255/
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"shared interface ITest {} \n"
+			"shared interface ITest2 : ITest {} \n"
+			"external shared interface ITest2; \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (3, 27) : Error   : Name conflict. 'ITest2' is an interface.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test inheriting from shared base class, and then discard the module that compiled the base class
 	// https://www.gamedev.net/forums/topic/706321-angelscript-crash-using-disposed-script-function-that-was-loaded-from-bytecode/
 	{
