@@ -58,6 +58,63 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test calling an imported function via a function pointer
+	// Reported by Phong Ba
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule* shareMod = NULL;
+
+		{ //Module 1 (Build this module as shared module)
+			shareMod = engine->GetModule("shared", asGM_ALWAYS_CREATE); assert(shareMod != NULL);
+
+			r = shareMod->AddScriptSection("main", "void InvokeSimple() {}"); assert(r >= 0);
+			r = shareMod->Build();
+			if (r < 0)
+				TEST_FAILED;
+		}
+
+		{ //Module 2 (Build this module and execute the main function) <== Error here
+			asIScriptModule* mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+			asIScriptContext* ctx = engine->CreateContext(); assert(ctx != NULL);
+
+			r = mod->AddScriptSection("main",
+				"funcdef void SimpleCallback(); \n"
+				"import  void InvokeSimple() from \"shared\"; \n"
+
+				"void main() \n"
+				"{ \n"
+				"	SimpleCallback@ cb = InvokeSimple; \n"
+				"	cb(); \n"
+				"} \n"); assert(r >= 0);
+			r = mod->Build();
+			if (r < 0)
+				TEST_FAILED;
+
+			mod->BindAllImportedFunctions();
+
+			r = ctx->Prepare(engine->GetModule(0)->GetFunctionByDecl("void main()")); assert(r >= 0);
+			r = ctx->Execute();
+			if (r != asEXECUTION_FINISHED)
+				TEST_FAILED;
+
+			ctx->Release();
+			mod->Discard();
+		}
+
+		shareMod->Discard();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = engine->ShutDownAndRelease(); assert(r >= 0);
+	}
+
 	// Test imports in namespaces
 	// http://www.gamedev.net/topic/656835-imports-in-namespace/
 	{

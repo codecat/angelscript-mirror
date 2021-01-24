@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.35.1 WIP - 2021/01/18</h2>
+<h2>Version 2.35.1 WIP - 2021/01/24</h2>
 
 <ul>
 <li>Bug fixes
@@ -28,9 +28,10 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Library can be compiled without C++11 support again (Thanks BaiYang)
 <li>Added config and cmake changes to make the library buildable for Mac M1 (Thanks David Carlier)
 </ul>
-<li>Library interface
+<li>Virtual machine
 <ul>
 <li>Changed asBC_REFCPY and asBC_RefCpyV to avoid reading from uninitialized memory when used for value types
+<li>asBC_CallPtr is now able to work with imported functions too (Thanks Phong Ba)
 </ul>
 <li>Add-ons &amp; Samples
 <ul>
