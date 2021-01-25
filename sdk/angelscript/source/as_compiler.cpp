@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2020 Andreas Jonsson
+   Copyright (c) 2003-2021 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -3163,7 +3163,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 		}
 		else
 		{
-			// Call the default constructur, then call the assignment operator
+			// Call the default constructor, then call the assignment operator
 			asCExprContext ctx(engine);
 
 			// Call the default constructor here
@@ -6482,7 +6482,7 @@ asUINT asCCompiler::ImplicitConvLambdaToFunc(asCExprContext *ctx, const asCDataT
 			name.Format("$%s$%d", outFunc->GetDeclaration(), numLambdas++);
 
 		// Register the lambda with the builder for later compilation
-		asCScriptFunction *func = builder->RegisterLambda(ctx->exprNode, script, funcDef, name, outFunc->nameSpace);
+		asCScriptFunction *func = builder->RegisterLambda(ctx->exprNode, script, funcDef, name, outFunc->nameSpace, outFunc->IsShared());
 		asASSERT( func == 0 || funcDef->IsSignatureExceptNameEqual(func) );
 		ctx->bc.InstrPTR(asBC_FuncPtr, func);
 

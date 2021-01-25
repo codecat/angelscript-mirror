@@ -409,7 +409,7 @@ bool Test()
 		r = engine->RegisterObjectBehaviour("vObj", asBEHAVE_LIST_CONSTRUCT, "void f(int &in) {repeat int}", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
 
 		{
-			asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+			mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
 
 			r = mod->AddScriptSection("main", "void main() {vObj t = {1, 2, 3};}"); assert(r >= 0);
 			r = mod->Build(); assert(r >= 0);
@@ -418,7 +418,7 @@ bool Test()
 		}
 
 		{
-			asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+			mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
 
 			r = mod->LoadByteCode(&stream); assert(r >= 0);
 			mod->Discard();
@@ -452,7 +452,7 @@ bool Test()
 				""
 				"}\n";
 
-			asIScriptModule* mod = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+			mod = engine->GetModule("test2", asGM_ALWAYS_CREATE);
 			r = mod->AddScriptSection("test2", file2, strlen(file2));
 			r = mod->Build();
 			if( r < 0 )
@@ -470,7 +470,7 @@ bool Test()
 				""
 				"}\n";
 
-			asIScriptModule* mod = engine->GetModule("test1", asGM_ALWAYS_CREATE);
+			mod = engine->GetModule("test1", asGM_ALWAYS_CREATE);
 			r = mod->AddScriptSection("test1", file1, strlen(file1));
 			r = mod->Build();
 			if( r < 0 )
@@ -694,6 +694,9 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
+		int called = 0;
+		engine->RegisterGlobalProperty("int called", &called);
+
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"shared funcdef void TestFunc(); \n"
@@ -707,8 +710,7 @@ bool Test()
 			"    { \n"
 			"      callfn( function() { called = 42; } ); \n"
 			"    } \n"
-			"}; \n"
-			"int called = 0; \n");
+			"}; \n");
 		r = mod->Build();
 		if (r < 0)
 			TEST_FAILED;
@@ -731,8 +733,9 @@ bool Test()
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
-		if( *reinterpret_cast<int*>(mod->GetAddressOfGlobalVar(0)) != 42 )
+		if( called != 42 )
 			TEST_FAILED;
+		called = 0;
 
 		CBytecodeStream bc1("test");
 		r = mod->SaveByteCode(&bc1); assert(r >= 0);
@@ -747,6 +750,7 @@ bool Test()
 		engine->ShutDownAndRelease();
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalProperty("int called", &called);
 
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&bc1);
@@ -768,7 +772,7 @@ bool Test()
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
-		if (*reinterpret_cast<int*>(mod->GetAddressOfGlobalVar(0)) != 42)
+		if( called != 42 )
 			TEST_FAILED;
 
 		engine->ShutDownAndRelease();

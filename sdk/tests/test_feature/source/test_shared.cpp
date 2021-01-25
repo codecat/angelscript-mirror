@@ -7,9 +7,88 @@ bool Test()
 {
 	bool fail = false;
 	CBufferedOutStream bout;
-	asIScriptEngine *engine;
+	asIScriptEngine* engine;
 	int r;
-	
+
+	// Test anonymous functions within shared functions
+	// Reported by Phong Ba
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		asIScriptModule* shareMod = NULL;
+
+		{ //Module 1 (Build this module as shared module)
+			shareMod = engine->GetModule("shared", asGM_ALWAYS_CREATE); assert(shareMod != NULL);
+
+			r = shareMod->AddScriptSection("main",
+				"shared funcdef void SimpleCallback(); \n"
+
+				"//shared void Simple() {} \n"
+
+				"shared void InvokeSimple() { \n"
+				"	//SimpleCallback@ cb = Simple; \n" //No error
+				"	SimpleCallback@ cb = function() {}; \n" //Error caused by the anonymous function
+
+				"	cb(); \n"
+				"} \n"); assert(r >= 0);
+			r = shareMod->Build();
+			if (r < 0)
+				TEST_FAILED;
+		}
+
+		{ //Module 2 (Build this module and discard) <== No error
+			asIScriptModule* mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+
+			r = mod->AddScriptSection("main",
+				"external shared void InvokeSimple(); \n"
+
+				"void main() \n"
+				"{ \n"
+				"	InvokeSimple(); \n"
+				"} \n"); assert(r >= 0);
+			r = mod->Build();
+			if (r < 0)
+				TEST_FAILED;
+
+			mod->Discard();
+		}
+
+		{ //Module 3 (Build this module and execute the main function) <== Error here
+			asIScriptModule* mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+			asIScriptContext* ctx = engine->CreateContext(); assert(ctx != NULL);
+
+			r = mod->AddScriptSection("main",
+				"external shared void InvokeSimple(); \n"
+
+				"void main() \n"
+				"{ \n"
+				"	InvokeSimple(); \n"
+				"} \n"); assert(r >= 0);
+			r = mod->Build();
+			if (r < 0)
+				TEST_FAILED;
+
+			r = ctx->Prepare(engine->GetModule(0)->GetFunctionByDecl("void main()")); assert(r >= 0);
+			r = ctx->Execute();
+			if (r != asEXECUTION_FINISHED)
+				TEST_FAILED;
+
+			ctx->Release();
+			mod->Discard();
+		}
+
+		shareMod->Discard();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = engine->ShutDownAndRelease(); assert(r >= 0);
+	}
+
 	// Test with external shared interface and inhering from shared interface
 	// https://www.gamedev.net/forums/topic/707753-bug-when-importing-an-external-interface/5430255/
 	{
