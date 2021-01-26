@@ -85,6 +85,54 @@ bool Test()
 	asIScriptContext *ctx;
 	CBufferedOutStream bout;
 
+	// Test anonymous functions in delegate
+	// Reported by Phong Ba
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		asIScriptModule* shareMod = NULL;
+
+		//Module 1 
+		shareMod = engine->GetModule("shared", asGM_ALWAYS_CREATE); assert(shareMod != NULL);
+
+		r = shareMod->AddScriptSection("main",
+			"funcdef void SimpleCallback(); \n"
+
+			"//shared void Simple() {} \n"
+
+			"void InvokeSimple() { \n"
+			"	//SimpleCallback@ cb = SimpleCallback(Simple); \n" //No error
+			"	SimpleCallback@ cb = SimpleCallback(function() {}); \n" //Error caused by the anonymous function
+
+			"	cb(); \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"	InvokeSimple(); \n"
+			"} \n"); assert(r >= 0);
+		r = shareMod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptContext* ctx = engine->CreateContext();
+		r = ctx->Prepare(shareMod->GetFunctionByDecl("void main()")); assert(r >= 0);
+		r = ctx->Execute(); assert(r == asEXECUTION_FINISHED);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		ctx->Release();
+
+		shareMod->Discard();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = engine->ShutDownAndRelease(); assert(r >= 0);
+	}
+
 	// Test member funcdefs
 	// Reported by Polyak Istvan
 	{

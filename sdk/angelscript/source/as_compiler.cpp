@@ -10988,7 +10988,8 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 			if( conv.type.dataType.IsEqualExceptRef(dt) && cost > 0 )
 			{
 				// Make sure the result is a reference, just as if to a local variable
-				dt.MakeReference(true);
+				if( !dt.IsFuncdef() )
+					dt.MakeReference(true);
 
 				// Make sure any property accessor is already evaluated
 				if( ProcessPropertyGetAccessor(args[0], args[0]->exprNode) < 0 )
