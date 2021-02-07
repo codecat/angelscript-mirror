@@ -5978,6 +5978,19 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 	{
 		if( n->tokenType == ttOpenBracket )
 		{
+			if (isImplicitHandle)
+			{
+				// Make the type a handle
+				if (dt.MakeHandle(true, acceptHandleForScope) < 0)
+				{
+					if (reportError)
+						WriteError(TXT_OBJECT_HANDLE_NOT_SUPPORTED, file, n);
+					if (isValid)
+						*isValid = false;
+				}
+				isImplicitHandle = false;
+			}
+
 			// Make sure the sub type can be instantiated
 			if( !dt.CanBeInstantiated() )
 			{
