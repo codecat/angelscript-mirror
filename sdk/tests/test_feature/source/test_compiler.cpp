@@ -1499,8 +1499,10 @@ bool Test()
 		class JitCompiler : public asIJITCompiler
 		{
 		public:
-			virtual int  CompileFunction(asIScriptFunction * /*function*/, asJITFunction * /*output*/) { return 0; }
+			JitCompiler() : invokeCount(0) {}
+			virtual int  CompileFunction(asIScriptFunction* /*function*/, asJITFunction* /*output*/) { invokeCount++; return 0; }
 			virtual void ReleaseJITFunction(asJITFunction /*func*/) { }
+			int invokeCount;
 		} jit;
 
 		engine->SetJITCompiler(&jit);
@@ -1516,6 +1518,13 @@ bool Test()
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
+
+		r = mod->CompileFunction("test2", "void func2() {}", 0, asCOMP_ADD_TO_MODULE, 0);
+		if (r < 0)
+			TEST_FAILED;
+
+		if (jit.invokeCount != 2)
+			TEST_FAILED;
 
 		engine->Release();
 	}

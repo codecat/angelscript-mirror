@@ -479,8 +479,6 @@ bool Test()
 
 	// TODO: It should be possible to serialize these dynamic functions
 
-	// TODO: The dynamic functions should also be JIT compiled
-
 	// TODO: What should happen if a function in the module scope references another function that has 
 	//       been removed from the scope but is still alive, and then the byte code for the module is saved?
 
