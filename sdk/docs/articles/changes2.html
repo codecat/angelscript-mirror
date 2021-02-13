@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.35.1 WIP - 2021/02/07</h2>
+<h2>Version 2.35.1 WIP - 2021/02/13</h2>
 
 <ul>
 <li>Bug fixes
@@ -25,6 +25,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed a problem with lambdas declared within shared functions not being considered shared (Thanks Phong Ba)
 <li>Fixed invalid bytecode sequence on creating a delegate from a lambda (Thanks Phong Ba)
 <li>Declaring arrays using the type[] syntax will now properly add implicit handle for the type when needed (Thanks Quentin Cosendey)
+<li>Fixed crash if attempting to call CreateScriptObjectCopy with an asITypeInfo for a script function (Thanks HoShiMin)
 </ul>
 <li>Library
 <ul>
