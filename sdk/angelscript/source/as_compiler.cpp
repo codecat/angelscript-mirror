@@ -8928,6 +8928,9 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asCExprContext *ctx)
 					// Release the old temporary variable
 					ReleaseTemporaryVariable(le.type, &ctx->bc);
 
+					// Process any deferred arguments in the expressions as these must not survive until after the condition returns
+					ProcessDeferredParams(ctx);
+
 					ctx->bc.InstrINT(asBC_JMP, afterLabel);
 
 					// Start of the right expression
@@ -8949,6 +8952,9 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asCExprContext *ctx)
 
 					// Release the old temporary variable
 					ReleaseTemporaryVariable(re.type, &ctx->bc);
+
+					// Process any deferred arguments in the expressions as these must not survive until after the condition returns
+					ProcessDeferredParams(ctx);
 
 					ctx->bc.Label((short)afterLabel);
 

@@ -5494,7 +5494,7 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 		// TODO: child funcdef: A scope can include a template type, e.g. array<ns::type>
 		int n = scope.FindLast("::");
 		asCString className = n >= 0 ? scope.SubString(n+2) : scope;
-		asCString nsName = n >= 0 ? scope.SubString(0, n) : "";
+		asCString nsName = n >= 0 ? scope.SubString(0, n) : asCString("");
 
 		// If a namespace was specifically defined, then this must be used
 		asSNameSpace *ns = 0;

@@ -83,13 +83,82 @@ bool StringEquals(const std::string& lhs, const std::string& rhs)
     return lhs == rhs;
 }
 
+static int newId_ = 0;
+static int countValueDestruct = 0;
+
 bool TestCondition()
 {
 	bool fail = false;
 	int r;
 	COutStream out;
 	CBufferedOutStream bout;
-	asIScriptEngine *engine;
+	asIScriptEngine* engine;
+
+	// Test that temporary objects allocated as arguments that are then deferred in ternary operands are properly handled
+	// Reported by Polyak Istvan
+	{
+		class Value
+		{
+		public:
+			Value(void) : id_(++newId_)
+			{
+			//	printf("Value (void)\n");
+			}
+			~Value()
+			{
+				countValueDestruct++;
+			//	printf("~Value ():%d\n", id_);
+			}
+			static void constructor(Value* val) {
+				new(val) Value();
+			}
+			static void destructor(Value* val) {
+				val->~Value();
+			}
+		private:
+			int id_;
+		};
+
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
+		engine->RegisterObjectType("Value", sizeof(Value), asOBJ_VALUE | asOBJ_APP_CLASS);
+		engine->RegisterObjectBehaviour("Value", asBEHAVE_CONSTRUCT, "void f ()", asFUNCTIONPR(Value::constructor, (Value*), void), asCALL_CDECL_OBJFIRST);
+		engine->RegisterObjectBehaviour("Value", asBEHAVE_DESTRUCT, "void f ()", asFUNCTIONPR(Value::destructor, (Value*), void), asCALL_CDECL_OBJFIRST);
+		engine->RegisterObjectMethod("Value", "Value & opAssign (const Value &in)", asMETHODPR(Value, operator=, (const Value&), Value&), asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int gi = 0; \n"
+			"int& f3(const Value & in v) \n"
+			"{ \n"
+			"	return gi; \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"	int i3 = false ? f3(Value()) : f3(Value()); \n"  // The temporary Value() must be destroyed within the operand itself
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (countValueDestruct != 1)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test anonymous initialization lists in conditional operator
 	// Reported by doctorgester
