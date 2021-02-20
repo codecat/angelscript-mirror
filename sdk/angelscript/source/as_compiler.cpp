@@ -9372,7 +9372,7 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 		// TODO: child funcdef: A scope can include a template type, e.g. array<ns::type>
 		int n = currScope.FindLast("::");
 		asCString typeName = n >= 0 ? currScope.SubString(n + 2) : currScope;
-		asCString nsName = n >= 0 ? currScope.SubString(0, n) : "";
+		asCString nsName = n >= 0 ? currScope.SubString(0, n) : asCString("");
 
 		// If the scope represents a type that the current class inherits
 		// from then that should be used instead of going through the namespaces
