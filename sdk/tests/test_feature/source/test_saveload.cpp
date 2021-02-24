@@ -396,6 +396,43 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 
+	// Test loading bytecode with invalid stream
+	// https://www.gamedev.net/forums/topic/709287-crash-when-loading-bytecode/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		class CBrokenStream : public asIBinaryStream
+		{
+			int Write(const void* ptr, asUINT size)
+			{
+				return 0;
+			}
+
+			int Read(void* ptr, asUINT size)
+			{
+				// noop, we don't write anything to ptr at all
+				return 0;
+			}
+		};
+
+		CBrokenStream stream;
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+		r = mod->LoadByteCode(&stream);
+		if (r >= 0)
+			TEST_FAILED;
+		mod->Discard();
+
+		if( bout.buffer != " (0, 0) : Error   : LoadByteCode failed. The bytecode is invalid. Number of bytes read from stream: 4\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = engine->ShutDownAndRelease();
+	}
+
 	// Test bytecode loading with value type and list constructor
 	// Reported by Phong Ba
 	{

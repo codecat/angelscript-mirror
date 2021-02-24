@@ -2696,7 +2696,6 @@ bool asCCompiler::CompileAutoType(asCDataType &type, asCExprContext &compiledCtx
 				
 			// For types that support handles auto should prefer handle 
 			// as it is more efficient than making a copy
-			// TODO: 'auto a = ...;' and 'auto @a = ...;' works the same in this case. Is this what we want?
 			if( newType.SupportHandles() )
 				newType.MakeHandle(true);
 
