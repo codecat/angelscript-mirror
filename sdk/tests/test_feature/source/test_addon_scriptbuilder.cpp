@@ -76,6 +76,41 @@ bool Test()
 
 	// TODO: Preprocessor directives should be alone on the line
 
+	// Test gathering metadata for class members when class has been declared with decorators
+	// https://www.gamedev.net/forums/topic/709284-property-accessors-in-mixins/5436118/?page=2
+#if AS_PROCESS_METADATA == 1
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		CScriptBuilder builder;
+		builder.StartNewModule(engine, 0);
+		builder.AddSectionFromMemory("test",
+			"shared class Foo \n"
+			"{ \n"
+			"	[replication] \n"
+			"	int bar; \n"
+			"} \n");
+		r = builder.BuildModule();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		int typeId = engine->GetModule(0)->GetTypeIdByDecl("Foo");
+		vector<string> metadata = builder.GetMetadataForTypeProperty(typeId, 0);
+		if (metadata[0] != "replication")
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+#endif
+
 	// Test gathering metadata for class methods with decorators
 	// (reported by Patrick Jeeves)
 #if AS_PROCESS_METADATA == 1
