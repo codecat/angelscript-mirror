@@ -3956,7 +3956,7 @@ void asCContext::ExecuteNext()
 					m_regs.programPointer++;
 					int funcId = m_engine->importedFunctions[func->id & ~FUNC_IMPORTED]->boundFunctionId;
 					if (funcId > 0)
-						m_currentFunction = m_engine->scriptFunctions[funcId];
+						CallScriptFunction(m_engine->scriptFunctions[funcId]);
 					else
 					{
 						// Tell the exception handler to clean up the arguments to this method

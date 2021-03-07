@@ -1543,6 +1543,7 @@ public:
 
   // Get metadata declared for a class method
   // Each metadata block, i.e. [...], is returned as a separate string
+  // Use the asIScriptFunction for the virtual method for lookup
   std::vector<std::string> GetMetadataStringForTypeMethod(int typeId, asIScriptFunction *method);
 
   // Get metadata declared for a class property

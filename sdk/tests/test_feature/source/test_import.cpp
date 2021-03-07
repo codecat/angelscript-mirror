@@ -58,6 +58,54 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test funcdef and imported functions
+	// Reported by Phong Ba
+	{
+		engine = asCreateScriptEngine();
+		asIScriptModule* shareMod = NULL;
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		{ //Module 1 (Build this module as shared module)
+			shareMod = engine->GetModule("shared", asGM_ALWAYS_CREATE); assert(shareMod != NULL);
+
+			r = shareMod->AddScriptSection("import", "int ImportValue(int val) {return val;}"); assert(r >= 0);
+			r = shareMod->Build(); assert(r >= 0);
+		}
+
+		{ //Module 2 (Build this module and execute the main function)
+			asIScriptModule* mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+			asIScriptContext* ctx = engine->CreateContext(); assert(ctx != NULL);
+
+			r = mod->AddScriptSection("main",
+				"funcdef int ValueCallback(int val); \n"
+
+				"import int ImportValue(int val) from \"shared\"; \n"
+				"int LocalValue(int val) { return val; } \n"
+
+				"void main() \n"
+				"{ \n"
+				"	assert( LocalValue(123) == 123 ); \n"
+				"	ValueCallback@ cb1 = LocalValue; assert( cb1(123) == 123 ); \n"
+				"   assert( ImportValue(123) == 123 ); \n"
+				"	ValueCallback@ cb = ImportValue; assert( cb(123) == 123 ); \n"
+				"} \n"); assert(r >= 0);
+			r = mod->Build(); assert(r >= 0);
+			r = mod->BindAllImportedFunctions(); assert(r >= 0);
+
+			r = ctx->Prepare(engine->GetModule(0)->GetFunctionByDecl("void main()")); assert(r >= 0);
+			r = ctx->Execute(); 
+			if (r != asEXECUTION_FINISHED)
+				TEST_FAILED;
+
+			ctx->Release();
+			mod->Discard();
+		}
+
+		shareMod->Discard();
+		r = engine->ShutDownAndRelease(); assert(r >= 0);
+	}
+
 	// Test calling an imported function via a function pointer
 	// Reported by Phong Ba
 	{
