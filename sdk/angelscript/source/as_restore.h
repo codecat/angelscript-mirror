@@ -76,8 +76,10 @@ protected:
 	void               ReadByteCode(asCScriptFunction *func);
 	asWORD             ReadEncodedUInt16();
 	asUINT             ReadEncodedUInt();
+	int                ReadEncodedInt();
 	asQWORD            ReadEncodedUInt64();
 	asUINT             SanityCheck(asUINT val, asUINT max);
+	int                SanityCheck(int val, asUINT max);
 
 	void ReadUsedTypeIds();
 	void ReadUsedFunctions();

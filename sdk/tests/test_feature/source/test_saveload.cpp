@@ -396,6 +396,91 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 
+	// test loading bytecode with function returning string by value
+	// reported by Quentin Cosendey
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+
+		CBytecodeStream stream(__FILE__);
+
+		{
+			mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+
+			r = mod->AddScriptSection("main", 
+				"class C { \n"
+				"		string m() { \n"
+				"		return 'yes'; \n"
+				"	} \n"
+				"} \n"
+				"void main() { \n"
+				"	//print('OK'); \n"
+				"} \n"); assert(r >= 0);
+			r = mod->Build(); assert(r >= 0);
+			r = mod->SaveByteCode(&stream); assert(r >= 0);
+			mod->Discard();
+		}
+
+		{
+			mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+
+			r = mod->LoadByteCode(&stream);
+			if (r < 0)
+				TEST_FAILED;
+			mod->Discard();
+		}
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = engine->ShutDownAndRelease(); assert(r >= 0);
+	}
+
+	// test loading bytecode with function returning object by value
+	// reported by Phong Ba
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		CBytecodeStream stream(__FILE__);
+
+		r = engine->RegisterObjectType("vObj", sizeof(int), asOBJ_VALUE | asOBJ_POD); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("vObj", asBEHAVE_CONSTRUCT, "void f()", NULL, asCALL_GENERIC);
+
+		{
+			mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+
+			r = mod->AddScriptSection("main", "class vClass { vObj abc() {return vObj();} }"); assert(r >= 0);
+			r = mod->Build(); assert(r >= 0);
+			r = mod->SaveByteCode(&stream); assert(r >= 0);
+			mod->Discard();
+		}
+
+		{
+			mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+
+			r = mod->LoadByteCode(&stream);
+			if (r < 0)
+				TEST_FAILED;
+			mod->Discard();
+		}
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = engine->ShutDownAndRelease(); assert(r >= 0);
+	}
+
 	// Test loading bytecode with invalid stream
 	// https://www.gamedev.net/forums/topic/709287-crash-when-loading-bytecode/
 	{
