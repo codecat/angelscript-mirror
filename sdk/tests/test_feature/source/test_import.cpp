@@ -58,6 +58,53 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test manually importing functions declared in namespaces
+	// Reported by Phong Ba
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		asIScriptModule* shareMod = NULL;
+		asIScriptModule* mod1 = NULL;
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		{ //Module 1 (Build this module as shared module)
+			shareMod = engine->GetModule("shared", asGM_ALWAYS_CREATE); assert(shareMod != NULL);
+
+			r = shareMod->AddScriptSection("import", "namespace foo { int ImportValue(int val) {return val;} }"); assert(r >= 0);
+			r = shareMod->Build(); assert(r >= 0);
+		}
+
+		{ //Module 2 (Build this module as shared module)
+			mod1 = engine->GetModule("shared2", asGM_ALWAYS_CREATE); assert(shareMod != NULL);
+
+			r = mod1->AddScriptSection("import", "namespace foo { import int ImportValue(int val) from 'shared'; }"); assert(r >= 0);
+			r = mod1->Build(); assert(r >= 0);
+		}
+
+		// Manually bind the imports
+		std::string str = mod1->GetImportedFunctionDeclaration(0);
+		if (str != "int foo::ImportValue(int)")
+			TEST_FAILED;
+		asIScriptFunction *func = shareMod->GetFunctionByDecl(str.c_str());
+		r = mod1->BindImportedFunction(0, func);
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "assert( foo::ImportValue(42) == 42 ); \n", mod1);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = engine->ShutDownAndRelease(); assert(r >= 0);
+	}
+
 	// Test funcdef and imported functions
 	// Reported by Phong Ba
 	{

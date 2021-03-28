@@ -215,6 +215,28 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// Test registering template specialization after registering the standard array add-on
+	// https://www.gamedev.net/forums/topic/709563-dictionary-addon-doesnt-work-with-uint-values/5437222/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, false);
+
+		r = engine->RegisterObjectType("array<int>", 0, asOBJ_REF);
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test array init list with object handles
 	// https://www.gamedev.net/forums/topic/707320-bug-cscriptarray-last-item-is-null-for-arrayltobjectgt-initialized-by-list-initalizer-syntax/
 	{

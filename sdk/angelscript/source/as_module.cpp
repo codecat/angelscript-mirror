@@ -1470,7 +1470,8 @@ const char *asCModule::GetImportedFunctionDeclaration(asUINT index) const
 	if( func == 0 ) return 0;
 
 	asCString *tempString = &asCThreadManager::GetLocalData()->string;
-	*tempString = func->GetDeclarationStr();
+	// TODO: Allow the application to decide if the parameter name should be included or not (requires change in the interface)
+	*tempString = func->GetDeclarationStr(true, true, false);
 
 	return tempString->AddressOf();
 }
