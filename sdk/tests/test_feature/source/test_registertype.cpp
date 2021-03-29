@@ -73,7 +73,7 @@ public:
 		*outRef = 0;
 
 		// Attempt a dynamic cast of the stored handle to the requested handle type
-		m_engine->RefCastObject(m_valueObj, heldType, m_engine->GetTypeInfoById(outTypeId), outRef);
+		m_engine->RefCastObject(m_valueObj, heldType, wantedType, outRef);
 	}
 
 	// AngelScript: used as int(var)
@@ -226,6 +226,68 @@ static const asBehavior_t astrace_ObjectBehaviors[] =
 	{ } // this was failing due to missing default constr in asSFuncPtr
 };
 
+// See doxygen ref doc_adv_class_hierarchy
+// The base class
+class base
+{
+public:
+	virtual void aMethod();
+
+	int aProperty;
+};
+
+// The derived class
+class derived : public base
+{
+public:
+	virtual void aNewMethod();
+	int aNewProperty;
+
+	// TODO: If derived type hides members of base type this pattern of registering members for the derived type cannot be used
+//private:
+//	using base::aMethod; // hide the base method of same name
+};
+
+// The code to register the classes
+// This is implemented as a template function, to support multiple inheritance
+template <class T>
+void RegisterBaseMembers(asIScriptEngine* engine, const char* type)
+{
+	int r;
+
+	r = engine->RegisterObjectMethod(type, "void aMethod()", asMETHOD(T, aMethod), asCALL_THISCALL); assert(r >= 0);
+
+	r = engine->RegisterObjectProperty(type, "int aProperty", asOFFSET(T, aProperty)); assert(r >= 0);
+}
+
+template <class T>
+void RegisterDerivedMembers(asIScriptEngine* engine, const char* type)
+{
+	int r;
+
+	// Register the inherited members by calling 
+	// the registration of the base members
+	RegisterBaseMembers<T>(engine, type);
+
+	// Now register the new members
+	r = engine->RegisterObjectMethod(type, "void aNewMethod()", asMETHOD(T, aNewMethod), asCALL_THISCALL); assert(r >= 0);
+
+	r = engine->RegisterObjectProperty(type, "int aNewProperty", asOFFSET(T, aNewProperty)); assert(r >= 0);
+}
+
+void RegisterTypes(asIScriptEngine* engine)
+{
+	int r;
+
+	// Register the base type
+	r = engine->RegisterObjectType("base", 0, asOBJ_REF); assert(r >= 0);
+	RegisterBaseMembers<base>(engine, "base");
+
+	// Register the derived type
+	r = engine->RegisterObjectType("derived", 0, asOBJ_REF); assert(r >= 0);
+	RegisterDerivedMembers<derived>(engine, "derived");
+}
+
 bool Test()
 {
 	bool fail = TestHelper();
@@ -236,6 +298,30 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
  	asIScriptEngine *engine;
+
+	// Test registering class hierarchies
+	// See doxygen ref doc_adv_class_hierarchy
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterTypes(engine);
+
+		asITypeInfo *type = engine->GetTypeInfoByName("derived");
+		if (type == 0)
+			TEST_FAILED;
+		if (type->GetMethodByName("aMethod") == 0)
+			TEST_FAILED;
+		if (type->GetMethodByName("aNewMethod") == 0)
+			TEST_FAILED;
+		if (std::string(type->GetPropertyDeclaration(0)) != "int aProperty")
+			TEST_FAILED;
+		if (std::string(type->GetPropertyDeclaration(1)) != "int aNewProperty")
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Using a registered non-pod value type without default constructor
 	// Reported by Phong Ba through e-mail on March 23rd, 2016
@@ -2114,7 +2200,7 @@ public:
 #if defined(_MSC_VER) && _MSC_VER < 1913 // Before MSVC 2017
 		__m128 v;
 #endif
-		struct {
+		struct v {
 			float x, y, z, w;
 		};
 	};

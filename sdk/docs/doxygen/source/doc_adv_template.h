@@ -174,6 +174,7 @@ the template specialization is registered so that to the script writer it is tra
 having different method names or behaviours for the template type and template specializations.
 
 With the exception of the type name, a template specialization is registered exactly like a \ref doc_register_type "normal type". 
+The template specialization must be registered in the same namespace as the template itself.
 
 \code
 // Register a template specialization for the float subtype
@@ -183,7 +184,7 @@ r = engine->RegisterObjectType("myTemplate<float>", 0, asOBJ_REF); assert( r >= 
 r = engine->RegisterObjectBehaviour("myTemplate<float>", asBEHAVE_FACTORY, "myTemplate<float>@ f()", asFUNCTIONPR(myTemplateFloatFactory, (), myTemplateFloat*), asCALL_CDECL); assert( r >= 0 );
 \endcode
 
-
+ 
 
 
 
