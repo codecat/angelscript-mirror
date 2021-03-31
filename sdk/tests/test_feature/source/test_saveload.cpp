@@ -509,7 +509,7 @@ bool Test()
 			TEST_FAILED;
 		mod->Discard();
 
-		if( bout.buffer != " (0, 0) : Error   : LoadByteCode failed. The bytecode is invalid. Number of bytes read from stream: 4\n" )
+		if( bout.buffer != " (0, 0) : Error   : LoadByteCode failed. The bytecode is invalid. Number of bytes read from stream: 9\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

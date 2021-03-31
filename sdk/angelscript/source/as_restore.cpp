@@ -2041,7 +2041,7 @@ int asCReader::ReadEncodedInt()
 asQWORD asCReader::ReadEncodedUInt64()
 {
 	asQWORD i = 0;
-	asBYTE b;
+	asBYTE b = 0xFF; // set to 0xFF to better catch if the stream doesn't update the value
 	ReadData(&b, 1);
 	bool isNegative = ( b & 0x80 ) ? true : false;
 	b &= 0x7F;
