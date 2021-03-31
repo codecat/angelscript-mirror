@@ -346,8 +346,8 @@ bool Test()
 
 		if( ctx ) ctx->Release();
 
-		CBufferedOutStream bout;
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, script6, strlen(script6), 0);
 		r = mod->Build();

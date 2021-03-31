@@ -299,6 +299,36 @@ bool Test()
 	COutStream out;
  	asIScriptEngine *engine;
 
+	// Test WRAP_MFN_PR on method without overload in derived class
+	// https://www.gamedev.net/forums/topic/708971-class-members-unregistering/5436764/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		struct Bas
+		{
+			void X() {}
+		};
+
+		struct Ch : public Bas
+		{
+		};
+
+		r = engine->RegisterObjectType("Bas", 0, asOBJ_REF | asOBJ_NOCOUNT); assert(r >= 0);
+		r = engine->RegisterObjectMethod("Bas", "void X()", WRAP_MFN_PR(Bas, X, (), void), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectType("Ch", 0, asOBJ_REF | asOBJ_NOCOUNT); assert(r >= 0);
+		r = engine->RegisterObjectMethod("Ch", "void X()", WRAP_MFN_PR(Ch, X, (), void), asCALL_GENERIC); assert(r >= 0);
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test registering class hierarchies
 	// See doxygen ref doc_adv_class_hierarchy
 	{
@@ -319,6 +349,12 @@ bool Test()
 			TEST_FAILED;
 		if (std::string(type->GetPropertyDeclaration(1)) != "int aNewProperty")
 			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
 		engine->ShutDownAndRelease();
 	}
@@ -2200,7 +2236,7 @@ public:
 #if defined(_MSC_VER) && _MSC_VER < 1913 // Before MSVC 2017
 		__m128 v;
 #endif
-		struct v {
+		struct {
 			float x, y, z, w;
 		};
 	};

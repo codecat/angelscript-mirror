@@ -56,6 +56,7 @@ public:
 class A {
 public:
 	int SomeWorkA(int a) {
+		UNUSED_VAR(a);
 	//	printf("A::SomeWorkA | %lx | %i\n", this, aa);
 		return aa;
 	}
@@ -64,6 +65,7 @@ public:
 class B {
 public:
 	int SomeWorkB(int b) {
+		UNUSED_VAR(b);
 	//	printf("B::SomeWorkB | %lx | %i\n", this, bb);
 		return bb;
 	}
@@ -141,7 +143,7 @@ bool Test()
 
 	// It must not be possible to register without the object pointer
 	{
-		asIScriptEngine *engine = asCreateScriptEngine();
+		engine = asCreateScriptEngine();
 		bout.buffer = "";
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		r = engine->RegisterGlobalFunction("void Fail()", asMETHOD(Class1, TestMe), asCALL_THISCALL_ASGLOBAL, 0);

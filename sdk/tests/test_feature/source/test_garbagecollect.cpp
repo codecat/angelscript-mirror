@@ -66,6 +66,7 @@ void ExitScript(asIScriptGeneric *)
 std::string typeFound;
 void CircularRefDetected(asITypeInfo *type, const void *obj, void * /* user param */)
 {
+	UNUSED_VAR(obj);
 	if (typeFound != "") typeFound += ",";
 	typeFound += type->GetName();
 }

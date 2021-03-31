@@ -130,7 +130,7 @@ int main()
 	"#define WRAP_OBJ_LAST(name)       (::gw::id(name).TMPL ol< name >())\n"
 	"\n"
 	"#define WRAP_FN_PR(name, Parameters, ReturnType)             asFUNCTION((::gw::Wrapper<ReturnType (*)Parameters>::TMPL f< name >))\n"
-	"#define WRAP_MFN_PR(ClassType, name, Parameters, ReturnType) asFUNCTION((::gw::Wrapper<ReturnType (ClassType::*)Parameters>::TMPL f< &ClassType::name >))\n"
+	"#define WRAP_MFN_PR(ClassType, name, Parameters, ReturnType) asFUNCTION((::gw::Wrapper<ReturnType (ClassType::*)Parameters>::TMPL f< AS_METHOD_AMBIGUITY_CAST(ReturnType (ClassType::*)Parameters)(&ClassType::name) >))\n"
 	"#define WRAP_OBJ_FIRST_PR(name, Parameters, ReturnType)      asFUNCTION((::gw::ObjFirst<ReturnType (*)Parameters>::TMPL f< name >))\n"
 	"#define WRAP_OBJ_LAST_PR(name, Parameters, ReturnType)       asFUNCTION((::gw::ObjLast<ReturnType (*)Parameters>::TMPL f< name >))\n"
 	"\n"
