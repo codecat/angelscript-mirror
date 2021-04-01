@@ -1469,7 +1469,7 @@ Swizzle operators return a complex value with the ordering of the real and imagi
 <b>Path:</b> /sdk/add_on/scriptbuilder/
 
 This class is a helper class for loading and building scripts, with a basic pre-processor 
-that supports conditional compilation, include directives, and metadata declarations.
+that supports conditional compilation, include directives, pragma directives, and metadata declarations.
 
 By default the script builder resolves include directives by loading the included file 
 from the relative directory of the file it is included from. If you want to do this in another
@@ -1477,6 +1477,13 @@ way, then you should implement the \ref doc_addon_build_1_1 "include callback" w
 let you process the include directive in a custom way, e.g. to load the included file from 
 memory, or to support multiple search paths. The include callback should call the AddSectionFromFile or
 AddSectionFromMemory to include the section in the current build.
+
+If the application should to support pragma directives, it must register the \ref doc_addon_build_1_2 "pragma callback"
+to process the text provided for the pragma directive. Without the callback the script builder will give an error 
+when encountering a pragma directive.
+
+The script builder will also remove any lines that start with <tt>#!</tt> as comments. This is done 
+to support shebang interpreter directives often used on Linux and UNIX based operative systems.
 
 If you do not want process metadata then you can compile the add-on with the define 
 AS_PROCESS_METADATA 0, which will exclude the code for processing this. This define

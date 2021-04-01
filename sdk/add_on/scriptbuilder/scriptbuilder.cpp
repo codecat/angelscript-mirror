@@ -452,31 +452,31 @@ int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length
 			int start = pos++;
 
 			t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
-			if( t == asTC_IDENTIFIER )
+			if (t == asTC_IDENTIFIER)
 			{
 				token.assign(&modifiedScript[pos], len);
-				if( token == "include" )
+				if (token == "include")
 				{
 					pos += len;
 					t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
-					if( t == asTC_WHITESPACE )
+					if (t == asTC_WHITESPACE)
 					{
 						pos += len;
 						t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
 					}
 
-					if( t == asTC_VALUE && len > 2 && (modifiedScript[pos] == '"' || modifiedScript[pos] == '\'') )
+					if (t == asTC_VALUE && len > 2 && (modifiedScript[pos] == '"' || modifiedScript[pos] == '\''))
 					{
 						// Get the include file
 						string includefile;
-						includefile.assign(&modifiedScript[pos+1], len-2);
+						includefile.assign(&modifiedScript[pos + 1], len - 2);
 						pos += len;
 
 						// Store it for later processing
 						includes.push_back(includefile);
 
 						// Overwrite the include directive with space characters to avoid compiler error
-						OverwriteCode(start, pos-start);
+						OverwriteCode(start, pos - start);
 					}
 				}
 				else if (token == "pragma")
@@ -496,6 +496,19 @@ int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length
 					}
 
 					// Overwrite the pragma directive with space characters to avoid compiler error
+					OverwriteCode(start, pos - start);
+				}
+			}
+			else
+			{
+				// Check for lines starting with #!, e.g. shebang interpreter directive. These will be treated as comments and removed by the preprocessor
+				if (modifiedScript[pos] == '!')
+				{
+					// Read until the end of the line
+					pos += len;
+					for (; pos < modifiedScript.size() && modifiedScript[pos] != '\n'; pos++);
+
+					// Overwrite the directive with space characters to avoid compiler error
 					OverwriteCode(start, pos - start);
 				}
 			}

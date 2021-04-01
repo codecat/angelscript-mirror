@@ -187,7 +187,8 @@ the system to read and write files, and execute other system commands.
 
 On Windows it can be associated, for example with the file extension .as, to allow scripts to be 
 executed directly from the file browser with a double click. This makes it a handy tool even without
-a terminal for command-line input.
+a terminal for command-line input. On Linux and UNIX based systems the shebang interpreter directive 
+can be added as the first line on the script to make the script files executable.
 
 
 

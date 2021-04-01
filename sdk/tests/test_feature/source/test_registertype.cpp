@@ -302,7 +302,7 @@ bool Test()
 	// Test WRAP_MFN_PR on method without overload in derived class
 	// https://www.gamedev.net/forums/topic/708971-class-members-unregistering/5436764/
 #if defined(__GNUC__)
-	PRINTF("Skipping test for WRAP_MFN_PR on GNUC because it doesn't work");
+	PRINTF("Skipping test for WRAP_MFN_PR on GNUC because it doesn't work\n");
 #else
 	{
 		engine = asCreateScriptEngine();
@@ -321,7 +321,7 @@ bool Test()
 		r = engine->RegisterObjectType("Bas", 0, asOBJ_REF | asOBJ_NOCOUNT); assert(r >= 0);
 		r = engine->RegisterObjectMethod("Bas", "void X()", WRAP_MFN_PR(Bas, X, (), void), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterObjectType("Ch", 0, asOBJ_REF | asOBJ_NOCOUNT); assert(r >= 0);
-		r = engine->RegisterObjectMethod("Ch", "void X()", WRAP_MFN_PR(Ch, X, (), void), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectMethod("Ch", "void X()", WRAP_MFN_PR(Ch, X, (), void), asCALL_GENERIC); assert(r >= 0); // WRAP_MFN_PR fails to compile on gnuc
 
 		if (bout.buffer != "")
 		{

@@ -10,6 +10,8 @@ namespace Test_Addon_ScriptBuilder
 {
 
 const char *script =
+// shebang directive is removed by preprocessor
+"#!asrun\n"
 // Global functions can have meta data
 "[ my meta data test ] /* separated by comment */ [second data] void func1() {} \n"
 // meta data strings can contain any tokens, and can use nested []
