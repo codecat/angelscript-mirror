@@ -677,8 +677,7 @@ bool Test()
 			TEST_FAILED;
 
 		if (bout.buffer != "test (4, 1) : Info    : Compiling void f()\n"
-						   "test (5, 9) : Error   : Can't implicitly convert from 'g@' to 'f@&'.\n"
-						   "test (5, 2) : Error   : Both expressions must have the same type\n")
+						   "test (5, 2) : Error   : Can't find unambiguous implicit conversion to make both expressions have the same type\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

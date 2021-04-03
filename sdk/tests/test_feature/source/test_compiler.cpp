@@ -3697,7 +3697,7 @@ bool Test()
 		if (r >= 0)
 			TEST_FAILED;
 		if (bout.buffer != "script (4, 1) : Info    : Compiling void assert()\n"
-			"script (6, 4) : Error   : Both expressions must have the same type\n")
+			"script (6, 4) : Error   : Can't find unambiguous implicit conversion to make both expressions have the same type\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

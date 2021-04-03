@@ -37,6 +37,10 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>asIScriptModule::CompileFunction now also invokes JIT compiler if set (Thanks gjl)
 <li>asIScriptModule::GetImportedFunctionDeclaration now includes the namespace (Thanks Phong Ba)
 </ul>
+<li>Script language
+<ul>
+<li>Ternary condition operator is now able to implicitly convert the types in the expressions to a common type (Thanks _Vicious_)
+</ul>
 <li>Virtual machine
 <ul>
 <li>Changed asBC_REFCPY and asBC_RefCpyV to avoid reading from uninitialized memory when used for value types
