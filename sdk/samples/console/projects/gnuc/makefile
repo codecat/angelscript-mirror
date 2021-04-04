@@ -8,7 +8,7 @@ OBJDIR = obj
 SRCNAMES = \
   main.cpp
 
-OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) obj/scriptstdstring.o obj/scripthelper.o
+OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) obj/scriptarray.o obj/scriptstdstring.o obj/scripthelper.o
 BIN = ../../bin/console
 DELETER = rm -f
 
