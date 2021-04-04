@@ -15,11 +15,14 @@ DELETER = rm -f
 all: $(BIN)
 
 $(BIN): $(OBJ)
-	$(CXX) -o $(BIN) $(OBJ) -static -langelscript -dynamic -L ../../../../angelscript/lib
+	$(CXX) -o $(BIN) $(OBJ) -static -langelscript -dynamic -lpthread -L ../../../../angelscript/lib
 	@echo -------------------------------------------------------------------
 	@echo Done.
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/scriptarray.o: ../../../../add_on/scriptarray/scriptarray.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/scriptstdstring.o: ../../../../add_on/scriptstdstring/scriptstdstring.cpp
