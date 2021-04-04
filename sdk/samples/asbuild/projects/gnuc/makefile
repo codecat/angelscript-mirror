@@ -1,6 +1,6 @@
 # GCC Makefile
 CXX = g++
-CXXFLAGS = -g -I../../../../angelscript/include -D_LINUX_
+CXXFLAGS = -g -I../../../../angelscript/include
 SRCDIR = ../../source
 OBJDIR = obj
 
@@ -14,7 +14,7 @@ DELETER = rm -f
 all: $(BIN)
 
 $(BIN): $(OBJ)
-	$(CXX) -o $(BIN) $(OBJ) -langelscript -lpthread -L ../../../../angelscript/lib
+	$(CXX) -o $(BIN) $(OBJ) -static -langelscript -dynamic -lpthread -L ../../../../angelscript/lib
 	@echo -------------------------------------------------------------------
 	@echo Done.
 
