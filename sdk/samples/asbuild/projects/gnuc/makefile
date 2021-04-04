@@ -1,13 +1,13 @@
 # GCC Makefile
 CXX = g++
-CXXFLAGS = -g -I../../../../angelscript/include
+CXXFLAGS = -std=c++11 -ggdb -I../../../../angelscript/include
 SRCDIR = ../../source
 OBJDIR = obj
 
 SRCNAMES = \
   main.cpp
 
-OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) obj/asbuild.o
+OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) obj/scriptbuilder.o obj/scripthelper.o
 BIN = ../../bin/asbuild
 DELETER = rm -f
 
@@ -21,7 +21,10 @@ $(BIN): $(OBJ)
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
-obj/asbuild.o: ../../../../add_on/scriptbuilder/scriptbuilder.cpp
+obj/scripthelper.o: ../../../../add_on/scripthelper/scripthelper.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/scriptbuilder.o: ../../../../add_on/scriptbuilder/scriptbuilder.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 clean:

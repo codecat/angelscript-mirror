@@ -1,7 +1,7 @@
 # Tutoral GCC Makefile
 
 CXX = g++
-CXXFLAGS = -ggdb -I../../../../angelscript/include
+CXXFLAGS = -std=c++11 -ggdb -I../../../../angelscript/include
 SRCDIR = ../../source
 OBJDIR = obj
 
