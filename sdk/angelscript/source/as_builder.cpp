@@ -2101,10 +2101,12 @@ int asCBuilder::RegisterMixinClass(asCScriptNode *node, asCScriptCode *file, asS
 
 	asCScriptNode *n = cl->firstChild;
 
-	// Skip potential 'final' and 'shared' tokens
+	// Skip potential decorator tokens
 	while( n->tokenType == ttIdentifier &&
 		   (file->TokenEquals(n->tokenPos, n->tokenLength, FINAL_TOKEN) ||
-		    file->TokenEquals(n->tokenPos, n->tokenLength, SHARED_TOKEN)) )
+		    file->TokenEquals(n->tokenPos, n->tokenLength, SHARED_TOKEN) ||
+			file->TokenEquals(n->tokenPos, n->tokenLength, ABSTRACT_TOKEN) ||
+			file->TokenEquals(n->tokenPos, n->tokenLength, EXTERNAL_TOKEN)) )
 	{
 		// Report error, because mixin class cannot be final or shared
 		asCString msg;
