@@ -951,12 +951,16 @@ asCModule *asCScriptEngine::FindNewOwnerForSharedFunc(asCScriptFunction *in_func
 	if( in_func->module != in_mod)
 		return in_func->module;
 
-	if (in_func->objectType && in_func->objectType->module && 
-		in_func->objectType->module != in_func->module)
+	// Check if this is a class method or class factory for a type that has already been moved to a different module
+	if ((in_func->objectType && in_func->objectType->module && in_func->objectType->module != in_func->module) ||
+		(in_func->IsFactory() && in_func->returnType.GetTypeInfo()->module && in_func->returnType.GetTypeInfo()->module != in_func->module))
 	{
 		// The object type for the method has already been transferred to 
 		// another module, so transfer the method to the same module
-		in_func->module = in_func->objectType->module;
+		if (in_func->objectType)
+			in_func->module = in_func->objectType->module;
+		else
+			in_func->module = in_func->returnType.GetTypeInfo()->module;
 
 		// Make sure the function is listed in the module
 		// The compiler may not have done this earlier, since the object

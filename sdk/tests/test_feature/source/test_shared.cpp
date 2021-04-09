@@ -10,6 +10,125 @@ bool Test()
 	asIScriptEngine* engine;
 	int r;
 
+	// Test discarding a shared class with default factory
+	// https://www.gamedev.net/forums/topic/709671-shared-class-invalidates-when-1-of-the-modules-is-discarded/
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule* mod1 = engine->GetModule("mod1", asGM_ALWAYS_CREATE);
+		mod1->AddScriptSection("test",
+			"shared class Foo\n"
+			"{\n"
+			"	void MethodInFoo(int b) { bar = b; }\n"
+			"	int bar;\n"
+			"}\n"
+			"void Main()\n"
+			"{\n"
+			"	Foo@ f = Foo(); \n"
+			"}\n");
+		r = mod1->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptModule* mod2 = engine->GetModule("mod2", asGM_ALWAYS_CREATE);
+		mod2->AddScriptSection("test",
+			"shared class Foo\n"
+			"{\n"
+			"	void MethodInFoo(int b) { bar = b; }\n"
+			"	int bar;\n"
+			"}\n"
+			"void Main()\n"
+			"{\n"
+			"}\n");
+		r = mod2->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		mod1->Discard();
+		mod1 = engine->GetModule("mod1", asGM_ALWAYS_CREATE);
+		mod1->AddScriptSection("test",
+			"shared class Foo\n"
+			"{\n"
+			"	void MethodInFoo(int b) { bar = b; }\n"
+			"	int bar;\n"
+			"}\n"
+			"void Main()\n"
+			"{\n"
+			"	Foo@ f = Foo(); \n"
+			"}\n");
+		r = mod1->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = engine->ShutDownAndRelease(); assert(r >= 0);
+	}
+
+	// Test using shared class after the original module has been discarded
+	// https://www.gamedev.net/forums/topic/709671-shared-class-invalidates-when-1-of-the-modules-is-discarded/
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule* mod1 = engine->GetModule("mod1", asGM_ALWAYS_CREATE);
+		mod1->AddScriptSection("test",
+			"shared class Foo\n"
+			"{\n"
+			"	void MethodInFoo(int b) { bar = b; }\n"
+			"	int bar;\n"
+			"}\n"
+			"void Main()\n"
+			"{\n"
+			"	Foo@ f = Foo(); \n"
+			"}\n");
+		r = mod1->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptModule* mod2 = engine->GetModule("mod2", asGM_ALWAYS_CREATE);
+		mod2->AddScriptSection("test",
+			"shared class Foo\n"
+			"{\n"
+			"	void MethodInFoo(int b) { bar = b; }\n"
+			"	int bar;\n"
+			"}\n"
+			"void Main()\n"
+			"{\n"
+			"	while (true) {\n"
+			"		Foo@ f = Foo();\n"
+			"		break;\n"
+			"	}\n"
+			"}\n");
+		r = mod2->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		mod1->Discard();
+
+		asIScriptContext* ctx = engine->CreateContext();
+		ctx->Prepare(mod2->GetFunctionByName("Main"));
+		r = ctx->Execute();
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		ctx->Release();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = engine->ShutDownAndRelease(); assert(r >= 0);
+	}
+
 	// Test anonymous functions within shared functions
 	// Reported by Phong Ba
 	{
