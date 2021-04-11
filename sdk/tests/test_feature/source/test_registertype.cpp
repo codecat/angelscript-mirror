@@ -255,7 +255,11 @@ void RegisterBaseMembers(asIScriptEngine* engine, const char* type)
 {
 	int r;
 
+#ifdef AS_MAX_PORTABILITY
+	r = engine->RegisterObjectMethod(type, "void aMethod()", WRAP_MFN(T, aMethod), asCALL_GENERIC); assert(r >= 0);
+#else
 	r = engine->RegisterObjectMethod(type, "void aMethod()", asMETHOD(T, aMethod), asCALL_THISCALL); assert(r >= 0);
+#endif
 
 	r = engine->RegisterObjectProperty(type, "int aProperty", asOFFSET(T, aProperty)); assert(r >= 0);
 }
@@ -270,7 +274,11 @@ void RegisterDerivedMembers(asIScriptEngine* engine, const char* type)
 	RegisterBaseMembers<T>(engine, type);
 
 	// Now register the new members
+#ifdef AS_MAX_PORTABILITY
+	r = engine->RegisterObjectMethod(type, "void aNewMethod()", WRAP_MFN(T, aNewMethod), asCALL_GENERIC); assert(r >= 0);
+#else
 	r = engine->RegisterObjectMethod(type, "void aNewMethod()", asMETHOD(T, aNewMethod), asCALL_THISCALL); assert(r >= 0);
+#endif
 
 	r = engine->RegisterObjectProperty(type, "int aNewProperty", asOFFSET(T, aNewProperty)); assert(r >= 0);
 }
