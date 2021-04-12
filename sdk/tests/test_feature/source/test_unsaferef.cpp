@@ -52,6 +52,54 @@ public:
 
 CStrFactory strFactory;
 
+template<typename Type> void constructor(Type* mem)
+{
+	new (mem) Type;
+}
+template<typename P, typename Type> void constructor(Type* mem, P p)
+{
+	new (mem) Type(p);
+}
+template<typename Type> void copyConstructor(Type* mem, const Type& other)
+{
+	new (mem) Type(other);
+}
+template<typename Type> void destructor(Type* obj)
+{
+	obj->~Type();
+}
+
+class C1
+{
+public:
+	C1(void) : m1_(0)
+	{
+	}
+	C1(int m) : m1_(m)
+	{
+	}
+	~C1()
+	{
+	}
+
+	C1& operator= (const C1&)
+	{
+		return *this;
+	}
+	bool operator== (const C1&) const
+	{
+		return true;
+	}
+
+	bool f(void) const
+	{
+		return true;
+	}
+
+private:
+	int m1_;
+};
+
 bool Test()
 {
 	bool fail = false;
@@ -60,6 +108,63 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 	asIScriptEngine *engine;
+
+	// Test problem with small types and unsafe references
+	// Reported by Polyak Istvan
+	{
+		engine = asCreateScriptEngine();
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		const char* typeName = "C1";
+
+		r = engine->RegisterObjectType(typeName, sizeof(C1), asOBJ_VALUE | asOBJ_APP_CLASS); assert(r >= 0 && "RegisterObjectType");
+		r = engine->RegisterObjectBehaviour(typeName, asBEHAVE_CONSTRUCT, "void f ()", asFUNCTIONPR(constructor, (C1*), void), asCALL_CDECL_OBJFIRST); assert(r >= 0 && "asBEHAVE_CONSTRUCT");
+		r = engine->RegisterObjectBehaviour(typeName, asBEHAVE_CONSTRUCT, "void f (int)", asFUNCTIONPR(constructor, (C1*, int), void), asCALL_CDECL_OBJFIRST); assert(r >= 0 && "asBEHAVE_CONSTRUCT");
+		r = engine->RegisterObjectBehaviour(typeName, asBEHAVE_DESTRUCT, "void f ()", asFUNCTIONPR(destructor, (C1*), void), asCALL_CDECL_OBJFIRST); assert(r >= 0 && "asBEHAVE_DESTRUCT");
+		r = engine->RegisterObjectMethod(typeName, "C1 & opAssign (const C1 &in)", asMETHODPR(C1, operator=, (const C1&), C1&), asCALL_THISCALL); assert(r >= 0 && "opAssign");
+		r = engine->RegisterObjectMethod(typeName, "bool opEquals (const C1 &in) const", asMETHODPR(C1, operator==, (const C1&) const, bool), asCALL_THISCALL); assert(r >= 0 && "opAssign");
+		r = engine->RegisterObjectMethod(typeName, "bool f () const", asMETHODPR(C1, f, (void) const, bool), asCALL_THISCALL); assert(r >= 0 && "opAssign");
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"class C2\n"
+			"{\n"
+			"	C2(const C1& in c1)\n"
+			"	{\n"
+			"		c1_ = c1; \n"
+			"	}\n"
+			"	bool opEquals(const C2& in other) const\n"
+			"	{ \n"
+			"		c1_ == other.c1_; \n"  // before the fix this code produced a refcpy that overwrote the this pointer, thus causing null pointer access in the next statement
+			"		c1_.f(); \n"
+			"		return true; \n"
+			"	}\n"
+			"	private C1 c1_; \n"
+			"}\n"
+			"void main()\n"
+			"{ \n"
+			"	C2 a(C1(1)); \n"
+			"	C2 b(C1(1)); \n"
+			"	a == b; \n"
+			"}\n");
+ 		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptContext* ctx = engine->CreateContext();
+		ctx->Prepare(mod->GetFunctionByName("main"));
+		r = ctx->Execute();
+		if (r != asEXECUTION_FINISHED)
+		{
+			if (r == asEXECUTION_EXCEPTION)
+				PRINTF("%s\n", GetExceptionInfo(ctx, true).c_str());
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test chained operations with global variables and with unsafe ref turned on
 	{

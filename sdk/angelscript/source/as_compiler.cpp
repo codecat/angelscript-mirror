@@ -5272,7 +5272,7 @@ int asCCompiler::AllocateVariable(const asCDataType &type, bool isTemporary, boo
 
 	bool isOnHeap = true;
 	if( t.IsPrimitive() ||
-		(t.GetTypeInfo() && (t.GetTypeInfo()->GetFlags() & asOBJ_VALUE) && !forceOnHeap) )
+		(t.GetTypeInfo() && (t.GetTypeInfo()->GetFlags() & asOBJ_VALUE) && !forceOnHeap && !asReference) )
 	{
 		// Primitives and value types (unless overridden) are allocated on the stack
 		isOnHeap = false;
