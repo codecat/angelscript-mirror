@@ -8048,17 +8048,28 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 			// Verify if it is possible
 			if( to.GetSizeInMemoryBytes() == 1 )
 			{
-				if( asBYTE(from->type.GetConstantDW()) != from->type.GetConstantDW() )
+				if( (from->type.dataType.GetSizeInMemoryBytes() == 2 && asBYTE(from->type.GetConstantW()) != from->type.GetConstantW()) ||
+					(from->type.dataType.GetSizeInMemoryBytes() == 4 && asBYTE(from->type.GetConstantDW()) != from->type.GetConstantDW()) ||
+					(from->type.dataType.GetSizeInMemoryBytes() == 8 && asBYTE(from->type.GetConstantQW()) != from->type.GetConstantQW()) )
 					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
-				from->type.SetConstantB(asCDataType::CreatePrimitive(to.GetTokenType(), true), asBYTE(from->type.GetConstantDW()));
+				if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
+					from->type.SetConstantB(asCDataType::CreatePrimitive(to.GetTokenType(), true), asBYTE(from->type.GetConstantW()));
+				else if (from->type.dataType.GetSizeInMemoryBytes() == 4)
+					from->type.SetConstantB(asCDataType::CreatePrimitive(to.GetTokenType(), true), asBYTE(from->type.GetConstantDW()));
+				else if (from->type.dataType.GetSizeInMemoryBytes() == 8)
+					from->type.SetConstantB(asCDataType::CreatePrimitive(to.GetTokenType(), true), asBYTE(from->type.GetConstantQW()));
 			}
 			else if( to.GetSizeInMemoryBytes() == 2 )
 			{
-				if( asWORD(from->type.GetConstantDW()) != from->type.GetConstantDW())
+				if( (from->type.dataType.GetSizeInMemoryBytes() == 4 && asWORD(from->type.GetConstantDW()) != from->type.GetConstantDW()) ||
+					(from->type.dataType.GetSizeInMemoryBytes() == 8 && asWORD(from->type.GetConstantQW()) != from->type.GetConstantQW()) )
 					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
-				from->type.SetConstantW(asCDataType::CreatePrimitive(to.GetTokenType(), true), asWORD(from->type.GetConstantDW()));
+				if (from->type.dataType.GetSizeInMemoryBytes() == 4)
+					from->type.SetConstantW(asCDataType::CreatePrimitive(to.GetTokenType(), true), asWORD(from->type.GetConstantDW()));
+				else if (from->type.dataType.GetSizeInMemoryBytes() == 8)
+					from->type.SetConstantW(asCDataType::CreatePrimitive(to.GetTokenType(), true), asWORD(from->type.GetConstantQW()));
 			}
 			else if (to.GetSizeInMemoryBytes() == 4)
 			{

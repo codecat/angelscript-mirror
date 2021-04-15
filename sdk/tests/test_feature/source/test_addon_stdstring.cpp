@@ -11,6 +11,12 @@ using namespace std;
 
 namespace Test_Addon_StdString
 {
+	std::string g_buf;
+	void print(const std::string& s)
+	{
+		g_buf += s + "\n";
+	}
+
 	bool Test()
 	{
 		bool fail = false;
@@ -18,6 +24,54 @@ namespace Test_Addon_StdString
 
 		COutStream out;
 		CBufferedOutStream bout;
+
+		// Test concatenation with constants
+		// https://www.gamedev.net/forums/topic/709682-failed-assertion-due-to-implicit-cast-with-overloaded-functions/
+		{
+			asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+			engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+			RegisterStdString(engine);
+			engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_CDECL);
+			bout.buffer = "";
+
+			asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+			mod->AddScriptSection("test", 
+				"void test(uint8 x) { print('test 8: ' + x); }\n"
+				"void test(uint16 x) { print('test 16: ' + x); }\n"
+				"void test(uint32 x) { print('test 32: ' + x); }\n"
+				"void test(uint64 x) { print('test 64: ' + x); }\n"
+				"void Main()\n"
+				"{ \n"
+				"	test(uint8(0xFF)); \n"
+				"	test(uint16(0xFFFF)); \n"
+				"	test(uint32(0xFFFFFFFF)); \n"
+				"	test(uint64(0xFFFFFFFFFFFFFFFF)); \n"
+				"}\n");
+			r = mod->Build();
+			if (r < 0)
+				TEST_FAILED;
+
+			if (bout.buffer != "")
+			{
+				PRINTF("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
+
+			r = ExecuteString(engine, "Main()", mod);
+			if (r != asEXECUTION_FINISHED)
+				TEST_FAILED;
+
+			if (g_buf != "test 8: 255\n"
+						 "test 16: 65535\n"
+						 "test 32: 4294967295\n"
+						 "test 64: 18446744073709551615\n")
+			{
+				PRINTF("%s", g_buf.c_str());
+				TEST_FAILED;
+			}
+
+			engine->ShutDownAndRelease();
+		}
 
 		// Test sending a string literal to a function expecting &out
 		// Problem reported by Jordan Verner
