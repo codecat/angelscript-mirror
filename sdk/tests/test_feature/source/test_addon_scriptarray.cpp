@@ -8,144 +8,150 @@
 namespace Test_Addon_ScriptArray
 {
 
-static const char *TESTNAME = "Test_Addon_ScriptArray";
+static const char* TESTNAME = "Test_Addon_ScriptArray";
 
-static const char *script1 =
-"array<string> b;                                \n"
-"array<int> g_a(3);                              \n"
-"void TestArray()                                \n"
-"{                                               \n"
-"   array<string> a(5);                          \n"
-"   Assert(a.length() == 5);                     \n"
-"   a.resize(10);                                \n"
-"   a.resize(5);                                 \n"
-"   a[0] = \"Hello\";                            \n"
-"   Assert(a[0] == \"Hello\");                   \n"
-"   uint n = 0;                                  \n"
-"   Assert(a[n] == \"Hello\");                   \n"
-"   n++;                                         \n"
-"   Assert(a[n] == \"\");                        \n"
-"   b = a;                                       \n"
-"   Assert(b.length() == 5);                     \n"
-"   Assert(b[0] == \"Hello\");                   \n"
-"   b[0] = \"Goodbye\";                          \n"
-"   Assert(a[0] != \"Goodbye\");                 \n"
-"   array<int> ia = TestArray4();                \n"
-"   TestArray2(ia);                              \n"
-"   TestArray3(ia);                              \n"
-"   ia = array<int>(3);                          \n"
-"   Assert(ia.length() == 3);                    \n"
-"   ia[0] = 1;                                   \n"
-"   array<int> ib = ia;                          \n"
-"   Assert(ib.length() == ia.length());          \n"
-"   Assert(ib[0] == ia[0]);                      \n"
-"}                                               \n"
-"void TestArray2(array<int> &inout a)            \n"
-"{                                               \n"
-"   Assert(a[0] == 1);                           \n"
-"   Assert(a[1] == 2);                           \n"
-"   Assert(a[2] == 3);                           \n"
-"}                                               \n"
-"void TestArray3(array<int> a)                   \n"
-"{                                               \n"
-"   Assert(a[0] == 1);                           \n"
-"   Assert(a[1] == 2);                           \n"
-"   Assert(a[2] == 3);                           \n"
-"}                                               \n"
-"array<int> TestArray4()                         \n"
-"{                                               \n"
-"   array<int> ia(3);                            \n"
-"   ia[0] = 1;                                   \n"
-"   ia[1] = 2;                                   \n"
-"   ia[2] = 3;                                   \n"
-"   return ia;                                   \n"
-"}                                               \n";
+static const char* script1 =
+	"array<string> b;                                \n"
+	"array<int> g_a(3);                              \n"
+	"void TestArray()                                \n"
+	"{                                               \n"
+	"   array<string> a(5);                          \n"
+	"   Assert(a.length() == 5);                     \n"
+	"   a.resize(10);                                \n"
+	"   a.resize(5);                                 \n"
+	"   a[0] = \"Hello\";                            \n"
+	"   Assert(a[0] == \"Hello\");                   \n"
+	"   uint n = 0;                                  \n"
+	"   Assert(a[n] == \"Hello\");                   \n"
+	"   n++;                                         \n"
+	"   Assert(a[n] == \"\");                        \n"
+	"   b = a;                                       \n"
+	"   Assert(b.length() == 5);                     \n"
+	"   Assert(b[0] == \"Hello\");                   \n"
+	"   b[0] = \"Goodbye\";                          \n"
+	"   Assert(a[0] != \"Goodbye\");                 \n"
+	"   array<int> ia = TestArray4();                \n"
+	"   TestArray2(ia);                              \n"
+	"   TestArray3(ia);                              \n"
+	"   ia = array<int>(3);                          \n"
+	"   Assert(ia.length() == 3);                    \n"
+	"   ia[0] = 1;                                   \n"
+	"   array<int> ib = ia;                          \n"
+	"   Assert(ib.length() == ia.length());          \n"
+	"   Assert(ib[0] == ia[0]);                      \n"
+	"}                                               \n"
+	"void TestArray2(array<int> &inout a)            \n"
+	"{                                               \n"
+	"   Assert(a[0] == 1);                           \n"
+	"   Assert(a[1] == 2);                           \n"
+	"   Assert(a[2] == 3);                           \n"
+	"}                                               \n"
+	"void TestArray3(array<int> a)                   \n"
+	"{                                               \n"
+	"   Assert(a[0] == 1);                           \n"
+	"   Assert(a[1] == 2);                           \n"
+	"   Assert(a[2] == 3);                           \n"
+	"}                                               \n"
+	"array<int> TestArray4()                         \n"
+	"{                                               \n"
+	"   array<int> ia(3);                            \n"
+	"   ia[0] = 1;                                   \n"
+	"   ia[1] = 2;                                   \n"
+	"   ia[2] = 3;                                   \n"
+	"   return ia;                                   \n"
+	"}                                               \n";
 
-static const char *script2 = 
-"void TestArrayException()                       \n"
-"{                                               \n"
-"   array<string> a;                             \n"
-"   a[0] == \"Hello\";                           \n"
-"}                                               \n";
+static const char* script2 =
+	"void TestArrayException()                       \n"
+	"{                                               \n"
+	"   array<string> a;                             \n"
+	"   a[0] == \"Hello\";                           \n"
+	"}                                               \n";
 
 // Must be possible to declare array of arrays
-static const char *script3 = 
-"void TestArrayMulti()                           \n"
-"{                                               \n"
-"   array<array<int>> a(2);                      \n"
-"   array<int> b(2);                             \n"
-"   a[0] = b;                                    \n"
-"   a[1] = b;                                    \n"
-"                                                \n"
-"   a[0][0] = 0;                                 \n"
-"   a[0][1] = 1;                                 \n"
-"   a[1][0] = 2;                                 \n"
-"   a[1][1] = 3;                                 \n"
-"                                                \n"
-"   Assert(a[0][0] == 0);                        \n"
-"   Assert(a[0][1] == 1);                        \n"
-"   Assert(a[1][0] == 2);                        \n"
-"   Assert(a[1][1] == 3);                        \n"
-"}                                               \n";
+static const char* script3 =
+	"void TestArrayMulti()                           \n"
+	"{                                               \n"
+	"   array<array<int>> a(2);                      \n"
+	"   array<int> b(2);                             \n"
+	"   a[0] = b;                                    \n"
+	"   a[1] = b;                                    \n"
+	"                                                \n"
+	"   a[0][0] = 0;                                 \n"
+	"   a[0][1] = 1;                                 \n"
+	"   a[1][0] = 2;                                 \n"
+	"   a[1][1] = 3;                                 \n"
+	"                                                \n"
+	"   Assert(a[0][0] == 0);                        \n"
+	"   Assert(a[0][1] == 1);                        \n"
+	"   Assert(a[1][0] == 2);                        \n"
+	"   Assert(a[1][1] == 3);                        \n"
+	"}                                               \n";
 
-static const char *script4 = 
-"void TestArrayChar()                            \n"
-"{                                               \n"
-"   array<int8> a(2);                            \n"
-"   a[0] = 13;                                   \n"
-"   a[1] = 19;                                   \n"
-"                                                \n"
-"   int8 a0 = a[0];                              \n"
-"   int8 a1 = a[1];                              \n"
-"   Assert(a[0] == 13);                          \n"
-"   Assert(a[1] == 19);                          \n"
-"}                                               \n";
+static const char* script4 =
+	"void TestArrayChar()                            \n"
+	"{                                               \n"
+	"   array<int8> a(2);                            \n"
+	"   a[0] = 13;                                   \n"
+	"   a[1] = 19;                                   \n"
+	"                                                \n"
+	"   int8 a0 = a[0];                              \n"
+	"   int8 a1 = a[1];                              \n"
+	"   Assert(a[0] == 13);                          \n"
+	"   Assert(a[1] == 19);                          \n"
+	"}                                               \n";
 
-static const char *script5 = 
-"array<int> g = {1,2,3};                         \n"
-"void TestArrayInitList()                        \n"
-"{                                               \n"
-"   Assert(g.length() == 3);                     \n"
-"   Assert(g[2] == 3);                           \n"
-"   array<int> a = {,2,};                        \n"
-"   Assert(a.length() == 3);                     \n"
-"   Assert(a[1] == 2);                           \n"
-"   array<string> b = {\"test\", \"3\"};         \n"
-"   Assert(b.length() == 2);                     \n"
-"   Assert(b[0] == \"test\");                    \n"
-"   Assert(b[1] == \"3\");                       \n"
-"   array<array<int>> c = {,{23},{23,4},};       \n"
-"   Assert(c.length() == 4);                     \n"
-"   Assert(c[2].length() == 2);                  \n"
-"   Assert(c[2][1] == 4);                        \n"
-"   const array<int> d = {0,1,2};                \n"
-"   Assert(d.length() == 3);                     \n"
-"   Assert(d[2] == 2);                           \n"
-"}                                               \n";
+static const char* script5 =
+	"array<int> g = {1,2,3};                         \n"
+	"void TestArrayInitList()                        \n"
+	"{                                               \n"
+	"   Assert(g.length() == 3);                     \n"
+	"   Assert(g[2] == 3);                           \n"
+	"   array<int> a = {,2,};                        \n"
+	"   Assert(a.length() == 3);                     \n"
+	"   Assert(a[1] == 2);                           \n"
+	"   array<string> b = {\"test\", \"3\"};         \n"
+	"   Assert(b.length() == 2);                     \n"
+	"   Assert(b[0] == \"test\");                    \n"
+	"   Assert(b[1] == \"3\");                       \n"
+	"   array<array<int>> c = {,{23},{23,4},};       \n"
+	"   Assert(c.length() == 4);                     \n"
+	"   Assert(c[2].length() == 2);                  \n"
+	"   Assert(c[2][1] == 4);                        \n"
+	"   const array<int> d = {0,1,2};                \n"
+	"   Assert(d.length() == 3);                     \n"
+	"   Assert(d[2] == 2);                           \n"
+	"}                                               \n";
 
-static const char *script6 =
-"void Test()                                     \n"
-"{                                               \n"
-"   array<int>@ e = {2,5};                       \n"
-"   array<int> f = {,{23}};                      \n"
-"}                                               \n";
+static const char* script6 =
+	"void Test()                                     \n"
+	"{                                               \n"
+	"   array<int>@ e = {2,5};                       \n"
+	"   array<int> f = {,{23}};                      \n"
+	"}                                               \n";
 
-static const char *script7 =
-"class TestC                                     \n"
-"{                                               \n"
-"  TestC() {count++; s = \"test\";}              \n"
-"  string s;                                     \n"
-"}                                               \n"
-"int count = 0;                                  \n"
-"void Test()                                     \n"
-"{                                               \n"
-"  TestC t;                                      \n"
-"  Assert(count == 1);                           \n"
-"  array<TestC> arr(5);                          \n"
-"  Assert(count == 6);                           \n"
-"}                                               \n";
+static const char* script7 =
+	"class TestC                                     \n"
+	"{                                               \n"
+	"  TestC() {count++; s = \"test\";}              \n"
+	"  string s;                                     \n"
+	"}                                               \n"
+	"int count = 0;                                  \n"
+	"void Test()                                     \n"
+	"{                                               \n"
+	"  TestC t;                                      \n"
+	"  Assert(count == 1);                           \n"
+	"  array<TestC> arr(5);                          \n"
+	"  Assert(count == 6);                           \n"
+	"}                                               \n";
 
 bool Test2();
+
+std::string g_printBuf;
+void printStr(const std::string& val)
+{
+	g_printBuf += val;
+}
 
 class ClassExceptionInConstructor
 {
@@ -214,6 +220,94 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
+
+	// Test sorting array of handles where objects are garbage collectable
+	// https://www.gamedev.net/forums/topic/709910-objects-with-handle-member-can-get-garbage-collected-after-array-sort/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, false);
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(printStr), asCALL_CDECL);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Bar {} \n"
+			"class Foo \n"
+			"{ \n"
+			"	int m_i; \n"
+			"	Bar@ m_bar;  \n"// comment this out to make the problem disappear
+
+			"	Foo(int i) { m_i = i; } \n"
+			"	~Foo() { print('dtor ' + m_i + '\\n'); } \n"
+			"} \n"
+
+			"bool SortFunc(const Foo@ & in a, const Foo@ & in b) \n"
+			"{ \n"
+			"	return b.m_i % 7 == 0; \n"
+			"} \n"
+
+			"array<Foo@> g_arr; \n"
+
+			"void main() \n"
+			"{ \n"
+			"	print('start of main\\n'); \n"
+
+			"	for (int i = 0; i < 500; i++) { \n"
+			"		g_arr.insertLast(Foo(i)); \n"
+			"	} \n"
+
+			"	g_arr.sort(SortFunc); \n"
+
+			"	print('end of main\\n'); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// No instances of Foo should have been destroyed so far
+		if (g_printBuf != "start of main\n"
+						  "end of main\n")
+		{
+			PRINTF("%s", g_printBuf.c_str());
+			TEST_FAILED;
+		}
+
+		asUINT currSize, totDestr, totDetect;
+		engine->GetGCStatistics(&currSize, &totDestr, &totDetect);
+		if (currSize != 501)
+			TEST_FAILED;
+		if (totDestr != 0)
+			TEST_FAILED;
+		if (totDetect != 0)
+			TEST_FAILED;
+
+		mod->Discard();
+
+		engine->GarbageCollect();
+
+		engine->GetGCStatistics(&currSize, &totDestr, &totDetect);
+		if (currSize != 0)
+			TEST_FAILED;
+		if (totDestr != 501)
+			TEST_FAILED;
+		if (totDetect != 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test registering template specialization after registering the standard array add-on
 	// https://www.gamedev.net/forums/topic/709563-dictionary-addon-doesnt-work-with-uint-values/5437222/
@@ -329,7 +423,7 @@ bool Test()
 			TEST_FAILED;
 		}
 		
-		engine->ShutDownAndRelease();		
+		engine->ShutDownAndRelease();
 	}
 	
 	// Test initialization of array as default arg
@@ -455,7 +549,7 @@ bool Test()
 			"	Test(int x1) { x = x1; } \n"
 			"	int value { get const { return x + 10; } } \n"
 			"} \n"
-			"bool less(const Test @&in a, const Test @&in b) { print(a); \n"
+			"bool less(const Test @&in a, const Test @&in b) { //print(a); \n"
 			"		return a.value<b.value; } \n"
 			"void main() { \n"
 			"	array<const Test@> a = { \n"
@@ -470,6 +564,11 @@ bool Test()
 			"	print(Test(9)); \n"
 			"	a.sort(less); \n"
 			"	print(a[0]); \n"
+			"	print(a[1]); \n"
+			"	print(a[2]); \n"
+			"	print(a[3]); \n"
+			"	print(a[4]); \n"
+			"	print(a[5]); \n"
 			"} \n");
 		r = mod->Build();
 		if (r < 0)
@@ -485,7 +584,7 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		if (printResult.str() != "18\n19\n14\n15\n15\n10\n10\n10\n17\n17\n11\n11\n11\n11\n11\n10\n")
+		if (printResult.str() != "18\n19\n10\n11\n14\n15\n17\n18\n")
 		{
 			PRINTF("Wrong result, got: \n");
 			PRINTF("%s", printResult.str().c_str());
@@ -528,10 +627,15 @@ bool Test()
 			"	print(a[0]); \n"
 			"	print(Test(9)); \n"
 			"	a.sort(function(a, b) { \n"
-			"		print(a); \n"
+			"		//print(a); \n"
 			"		return a.value<b.value; \n"
 			"	}); \n"
 			"	print(a[0]); \n"
+			"	print(a[1]); \n"
+			"	print(a[2]); \n"
+			"	print(a[3]); \n"
+			"	print(a[4]); \n"
+			"	print(a[5]); \n"
 			"} \n");
 		r = mod->Build();
 		if (r < 0)
@@ -547,7 +651,7 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		if (printResult.str() != "18\n19\n14\n15\n15\n10\n10\n10\n17\n17\n11\n11\n11\n11\n11\n10\n")
+		if (printResult.str() != "18\n19\n10\n11\n14\n15\n17\n18\n")
 		{
 			PRINTF("Wrong result, got: \n");
 			PRINTF("%s", printResult.str().c_str());

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.35.1 WIP - 2021/04/15</h2>
+<h2>Version 2.35.1 WIP - 2021/05/17</h2>
 
 <ul>
 <li>Bug fixes
@@ -63,6 +63,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Script builder now removes lines starting with #! to support shebang interpreter directives
 <li>Fixed the samples concurrent and events on Linux (Thanks Dantrell B)
 <li>Fixed WRAP_MFN on gnuc when used within templated functions (Thanks vballDrummer)
+<li>Fixed issue in array::sort with callback that could cause objects in the array to be destroyed by gc (Thanks Miss)
 </ul>
 <li>Project
 <ul>

@@ -1332,6 +1332,19 @@ void CScriptArray::Copy(void *dst, void *src)
 
 
 // internal
+// Swap two elements
+// Even in arrays of objects the objects are allocated on 
+// the heap and the array stores the pointers to the objects.
+void CScriptArray::Swap(void* a, void* b)
+{
+	asBYTE tmp[16];
+	Copy(tmp, a);
+	Copy(a, b);
+	Copy(b, tmp);
+}
+
+
+// internal
 // Return pointer to array item (object handle or primitive value)
 void *CScriptArray::GetArrayItemPointer(int index)
 {
@@ -1574,32 +1587,31 @@ void CScriptArray::Sort(asIScriptFunction *func, asUINT startAt, asUINT count)
 	if (cmpContext == 0)
 		cmpContext = objType->GetEngine()->RequestContext();
 
-	// Insertion sort
-	asBYTE tmp[16];
-	for (asUINT i = start + 1; i < end; i++)
+	// TODO: Security issue: If the array is accessed from the callback while the sort is going on the result may be unpredictable
+	//       For example, the callback resizes the array in the middle of the sort
+	//       Possible solution: set a lock flag on the array, and prohibit modifications while the lock flag is set
+
+	// Bubble sort
+	// TODO: optimize: Use an efficient sort algorithm
+	for (asUINT i = start; i+1 < end; i++)
 	{
-		Copy(tmp, GetArrayItemPointer(i));
-
-		asUINT j = i - 1;
-
-		while (j != 0xFFFFFFFF && j >= start )
+		asUINT best = i;
+		for (asUINT j = i + 1; j < end; j++)
 		{
 			cmpContext->Prepare(func);
-			cmpContext->SetArgAddress(0, GetDataPointer(tmp));
-			cmpContext->SetArgAddress(1, At(j));
+			cmpContext->SetArgAddress(0, At(j));
+			cmpContext->SetArgAddress(1, At(best));
 			int r = cmpContext->Execute();
 			if (r != asEXECUTION_FINISHED)
 				break;
 			if (*(bool*)(cmpContext->GetAddressOfReturnValue()))
-			{
-				Copy(GetArrayItemPointer(j + 1), GetArrayItemPointer(j));
-				j--;
-			}
-			else
-				break;
+				best = j;
 		}
 
-		Copy(GetArrayItemPointer(j + 1), tmp);
+		// With Swap we guarantee that the array always sees all references
+		// if the GC calls the EnumReferences in the middle of the sorting
+		if( best != i )
+			Swap(GetArrayItemPointer(i), GetArrayItemPointer(best));
 	}
 
 	if (cmpContext)
