@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.35.1 WIP - 2021/05/17</h2>
+<h2>Version 2.35.1 WIP - 2021/05/19</h2>
 
 <ul>
 <li>Bug fixes
@@ -33,6 +33,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash when instantiating shared class after original module was discarded (Thanks Miss)
 <li>Fixed problem on 64bit platforms with unsafe references and value types smaller than 8 bytes (Thanks Polyak Istvan)
 <li>Fixed assert failure in compiler on implicit conversion between unsigned integer types of different sizes (Thanks Miss)
+<li>Fixed invalid bytecode sequence in initialization lists with value types whose opAssign returns void (Thanks jiandingzhe)
 </ul>
 <li>Library
 <ul>

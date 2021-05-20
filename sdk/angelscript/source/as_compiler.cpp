@@ -3811,7 +3811,7 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 				asCExprContext ctx(engine);
 				DoAssignment(&ctx, &lctx, &rctx, valueNode, valueNode, ttAssignment, valueNode);
 
-				if( !lctx.type.dataType.IsPrimitive() )
+				if( !ctx.type.dataType.IsPrimitive() )
 					ctx.bc.Instr(asBC_PopPtr);
 
 				// Release temporary variables used by expression
@@ -3903,7 +3903,7 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 						asCExprContext ctx(engine);
 						DoAssignment(&ctx, &lctx, &rctx, valueNode, valueNode, ttAssignment, valueNode);
 
-						if( !lctx.type.dataType.IsPrimitive() )
+						if( !ctx.type.dataType.IsPrimitive() )
 							ctx.bc.Instr(asBC_PopPtr);
 
 						// Release temporary variables used by expression
