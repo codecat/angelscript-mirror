@@ -205,6 +205,27 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test asBEHAVE_LIST_CONSTRUCTOR with repeat T pattern on template value type
+	// Reported by Suedwest
+	{
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterObjectType("MyValue<class T>", 1, asOBJ_VALUE | asOBJ_TEMPLATE);
+		r = engine->RegisterObjectBehaviour("MyValue<T>", asBEHAVE_LIST_CONSTRUCT, "void f(int&in type, int&in list) {repeat T}", asFUNCTION(0), asCALL_GENERIC);
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Template specialization with child funcdef
 	// https://www.gamedev.net/forums/topic/701578-problem-with-child-funcdef-registration/
 	{
@@ -232,7 +253,7 @@ bool Test()
 			TEST_FAILED;
 		}
 		
-		engine->Release();	
+		engine->Release();
 	}
 	
 	// Test template bug when using multiple modules

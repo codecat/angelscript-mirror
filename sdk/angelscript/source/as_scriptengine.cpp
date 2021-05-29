@@ -2160,7 +2160,9 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		}
 
 		// Verify the parameters
-		if( func.parameterTypes.GetLength() != 1 || !func.parameterTypes[0].IsReference() )
+		// The templates take a hidden parameter with the object type
+		if( (!(objectType->flags & asOBJ_TEMPLATE) && (func.parameterTypes.GetLength() != 1 || !func.parameterTypes[0].IsReference())) || 
+			((objectType->flags & asOBJ_TEMPLATE) && (func.parameterTypes.GetLength() != 2 || !func.parameterTypes[0].IsReference() || !func.parameterTypes[1].IsReference())) )
 		{
 			if( listPattern )
 				listPattern->Destroy(this);
