@@ -13,9 +13,35 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test multiple nested namespaces in same statement
+	// Contributed by Stefan Koch
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "namespace A::B::C { void foo() {} }");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptFunction *func = mod->GetFunctionByDecl("void A::B::C::foo()");
+		if (func == 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test GetGlobalPropertyIndexByName with namespaces
 	{
-		asIScriptEngine *engine = asCreateScriptEngine();
+		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		engine->SetDefaultNamespace("A");
@@ -52,12 +78,12 @@ bool Test()
 		if( r < 0 || string(name) != "var" || string(ns) != "A" )
 			TEST_FAILED;
 
-		engine->ShutDownAndRelease();	
+		engine->ShutDownAndRelease();
 	}
-	
+
 	// Test GetTypeInfoByName with namespaces
 	{
-		asIScriptEngine *engine = asCreateScriptEngine();
+		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		engine->SetDefaultNamespace("A");
@@ -68,16 +94,14 @@ bool Test()
 		if( r < 0 ) TEST_FAILED;
 		engine->SetDefaultNamespace("");
 
-		
-		const char *name = 0, *ns = 0;
 		asITypeInfo *info = engine->GetTypeInfoByName("A::Foo");
 		if( info == 0 || string(info->GetName()) != "Foo" || string(info->GetNamespace()) != "A" )
 			TEST_FAILED;
-			
+
 		info = engine->GetTypeInfoByName("B::Foo");
 		if( info == 0 || string(info->GetName()) != "Foo" || string(info->GetNamespace()) != "B" )
 			TEST_FAILED;
-						
+
 		engine->SetDefaultNamespace("B");
 		info = engine->GetTypeInfoByName("Foo");
 		if( info == 0 || string(info->GetName()) != "Foo" || string(info->GetNamespace()) != "B" )
