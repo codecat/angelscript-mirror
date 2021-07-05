@@ -621,6 +621,12 @@ bool Test()
 		engine->RegisterObjectBehaviour("rect", asBEHAVE_FACTORY, "rect @f()", asFUNCTION(0), asCALL_GENERIC);
 		engine->RegisterObjectBehaviour("rect", asBEHAVE_LIST_FACTORY, "rect @f(int&in) {repeat {repeat_same int}}", asFUNCTION(0), asCALL_GENERIC);
 
+		// Test that it is possible to find the factory function even without knowing the name of it
+		asITypeInfo* type = engine->GetTypeInfoByDecl("rect");
+		asIScriptFunction *func = type->GetFactoryByDecl("rect @blah()");
+		if (func == 0)
+			TEST_FAILED;
+
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"void main() \n"

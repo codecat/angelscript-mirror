@@ -1374,7 +1374,9 @@ int asCScriptEngine::GetFactoryIdByDecl(const asCObjectType *ot, const char *dec
 	for( asUINT n = 0; n < ot->beh.factories.GetLength(); n++ )
 	{
 		asCScriptFunction *f = scriptFunctions[ot->beh.factories[n]];
-		if( f->IsSignatureEqual(&func) )
+
+		// We don't really care if the name of the function is correct
+		if( f->IsSignatureExceptNameEqual(&func) )
 		{
 			id = ot->beh.factories[n];
 			break;

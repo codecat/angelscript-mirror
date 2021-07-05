@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.35.1 WIP - 2021/06/05</h2>
+<h2>Version 2.35.1 WIP - 2021/07/04</h2>
 
 <ul>
 <li>Bug fixes
@@ -43,6 +43,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added config and cmake changes to make the library buildable for Mac M1 (Thanks David Carlier)
 <li>asIScriptModule::CompileFunction now also invokes JIT compiler if set (Thanks gjl)
 <li>asIScriptModule::GetImportedFunctionDeclaration now includes the namespace (Thanks Phong Ba)
+<li>asITypeInfo::GetFactoryByDecl now matches the factory even if the informed function name is different (Thanks Yauheni Akhotnikau)
 </ul>
 <li>Script language
 <ul>
