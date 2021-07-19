@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.35.1 WIP - 2021/07/04</h2>
+<h2>Version 2.35.1 WIP - 2021/07/19</h2>
 
 <ul>
 <li>Bug fixes
@@ -36,6 +36,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed invalid bytecode sequence in initialization lists with value types whose opAssign returns void (Thanks jiandingzhe)
 <li>Fixed registering asBEHAVE_LIST_CONSTRUCT on value type templates (Thanks Suedwest)
 <li>Fixed compiler error in as_symboltable.h on GCC 11 (Thanks shirubax)
+<li>Compiler no longer silently accepts implicit conversion from null handle to object type registered with ASHANDLE if there is no matching implicit constructor (Thanks Patrick Jeeves)
 </ul>
 <li>Library
 <ul>
@@ -69,6 +70,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed the samples concurrent and events on Linux (Thanks Dantrell B)
 <li>Fixed WRAP_MFN on gnuc when used within templated functions (Thanks vballDrummer)
 <li>Fixed issue in array::sort with callback that could cause objects in the array to be destroyed by gc (Thanks Miss)
+<li>weakref now has its constructor that takes a handle marked as explicit
 </ul>
 <li>Project
 <ul>

@@ -637,7 +637,12 @@ can be used in place of the handle where the reference to the object is needed b
 
 \section doc_datatypes_weakref_addon Supporting weakref object
 
+\subsection doc_datatypes_weakref_addon_construct Constructors
 
+<b>weakref<T></b>()<br>
+<b>weakref<T></b>(T@) explicit<br>
+<b>const_weakref<T></b>()<br>
+<b>const_weakref<T></b>(const T@) explicit<br>
 
 \subsection doc_datatypes_weakref_addon_ops Operators
 

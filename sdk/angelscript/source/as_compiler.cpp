@@ -1513,7 +1513,8 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 			else if( ctx->type.dataType.IsNullHandle() )
 			{
 				// Make sure the argument type can support handles (or is itself a handle)
-				if( !dt.SupportHandles() && !dt.IsObjectHandle() )
+				// Don't allow null handle to be converted to an object type of ASHANDLE here, that would require more logic to call the constructor (which should be handled in ImplicitConversion)
+				if( (!dt.SupportHandles() && !dt.IsObjectHandle()) || (dt.GetTypeInfo() && (dt.GetTypeInfo()->GetFlags() & asOBJ_ASHANDLE)) )
 				{
 					asCString str;
 					str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format(outFunc->nameSpace).AddressOf(), param.Format(outFunc->nameSpace).AddressOf());
@@ -7173,11 +7174,22 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 	asUINT cost = ImplicitConvObjectRef(ctx, to, node, convType, generateCode);
 
 	// If the desired type is an asOBJ_ASHANDLE then we'll assume it is allowed to implicitly
-	// construct the object through any of the available constructors
+	// construct the object through any of the available constructors (except those marked as explicit)
 	if( to.GetTypeInfo() && (to.GetTypeInfo()->flags & asOBJ_ASHANDLE) && to.GetTypeInfo() != ctx->type.dataType.GetTypeInfo() && allowObjectConstruct )
 	{
 		asCArray<int> funcs;
 		funcs = CastToObjectType(to.GetTypeInfo())->beh.constructors;
+
+		// Don't allow use of explicit constructors/factories in implicit conversions
+		if (convType == asIC_IMPLICIT_CONV)
+		{
+			for (asUINT n = 0; n < funcs.GetLength(); n++)
+			{
+				asCScriptFunction* desc = builder->GetFunctionDescription(funcs[n]);
+				if (desc->IsExplicit())
+					funcs.RemoveIndex(n--);
+			}
+		}
 
 		asCArray<asCExprContext *> args;
 		args.PushLast(ctx);
