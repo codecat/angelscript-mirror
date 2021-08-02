@@ -175,11 +175,11 @@ as <tt>expr.opCall(arglist)</tt> and compile that instead.
 <tr><td>cast&lt;<i>type</i>>(<i>expr</i>)</td><td>opCast, opImplCast</td></tr>
 </table>
 
-When the expression <tt>type(expr)</tt> is compiled and type doesn't have a constructor that take an argument with 
+When the expression <tt>type(expr)</tt> is compiled and type doesn't have a \ref doc_script_class_construct "conversion constructor" that take an argument with 
 the type of the expression, the compiler will try to rewrite it as <tt>expr.opConv()</tt>. The compiler will then chose
 the opConv that returns the desired type. 
 
-For implicit conversions, the compiler will look for a constructor of the target type that take a 
+For implicit conversions, the compiler will look for a conversion constructor of the target type that take a 
 matching argument, and isn't flagged as explicit. If it doesn't find one, it will try to call the 
 opImplConv on the source type that returns the target type.
 

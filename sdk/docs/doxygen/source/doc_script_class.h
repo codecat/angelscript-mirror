@@ -4,33 +4,19 @@
 \page doc_script_class_desc Script class overview
 
 With classes the script writer can declare new data types that hold groups
-of properties and methods to manipulate them. 
+of properties and \ref doc_script_class_methods "methods" to manipulate them. 
 
 Script classes are reference types, which means that multiple references 
 or \ref doc_script_handle "handles" can be held for the same object instance.
 The classes uses automatic memory management so the object instances are only
 destroyed when the last reference to the instance is cleared.
 
-The class methods are implemented the same way as \ref doc_script_func "global functions", 
-with the addition that the class method can access the class instance properties through either
-directly or through the 'this' keyword in the case a local variable has the same name.
-
 <pre>
   // The class declaration
   class MyClass
   {
     // A class method
-    void DoSomething()
-    {
-      // The class properties can be accessed directly
-      a *= 2;
-
-      // The declaration of a local variable may hide class properties
-      int b = 42;
-
-      // In this case the class property have to be accessed explicitly
-      this.b = b;
-    }
+    void DoSomething() {}
 
     // Class properties
     int a;
@@ -52,11 +38,11 @@ implement \ref doc_global_interface "interfaces".
 
 
 
-\section doc_script_class_construct Class constructors
+\page doc_script_class_construct Class constructors
 
 Class constructors are specific methods that will be used to create new instances
 of the class. It is not required for a class to declare constructors, but doing
-so may make it easier to use the class as it will not be necessary to first instanciate
+so may make it easier to use the class as it will not be necessary to first instantiate
 the class and then manually set the properties.
 
 The constructors are declared without a return type, and must have the same name as
@@ -80,14 +66,24 @@ implemented for different forms of initializations.
     // Implement other constructors with different parameter lists
     MyClass(int a, string b) {}
     MyClass(float x, float y, float z) {}
+
+    // Implement conversion constructors 
+    // The second can only be used explicitly
+    MyClass(int a) {}
+    MyClass(string a) explicit {}
   }
 </pre>
 
 The copy constructor is a specific constructor that the compiler can use to build
 more performatic code when copies of an object must be made. Without the copy 
-constructor the compiler will be forced to first instanciate the copy using the 
+constructor the compiler will be forced to first instantiate the copy using the 
 default constructor, and then copy the attributes with the 
 \ref doc_script_class_prop "opAssign" method.
+
+A constructor that takes a single argument can be used in \ref conversion "type conversions". 
+By default the compiler can use these to perform the conversion implicitly when necessary. 
+If that is not desired, then it is possible to prohibit this by adding the <tt>explicit</tt> 
+decorator after the constructor. 
 
 One constructor cannot call another constructor. If you wish to share 
 implementations in the constructors you should use a specific method for that.
@@ -102,13 +98,13 @@ How the members shall be initialized can also be defined directly in the declara
 members. When this is done the initialization expression will automatically be compiled in the 
 constructor without the need to write the initialization again. 
 
-\see \ref doc_script_class_memberinit
+\see \ref doc_script_class_memberinit, \ref doc_script_class_conv
 
 
 
 
 
-\section doc_script_class_destruct Class destructor
+\page doc_script_class_destruct Class destructor
 
 It is normally not necessary to implement the class destructor as AngelScript
 will by default free up any resources the objects holds when it is destroyed. 
@@ -139,6 +135,35 @@ directly invoke the cleanup, then you should implement a public method for that.
 
 
 
+
+\page doc_script_class_methods Class methods
+
+The class methods are implemented the same way as \ref doc_script_func "global functions", 
+with the addition that the class method can access the class instance properties either
+directly or through the 'this' keyword in the case a local variable has the same name.
+
+<pre>
+  // The class declaration
+  class MyClass
+  {
+    // A class method
+    void DoSomething()
+    {
+      // The class properties can be accessed directly
+      a *= 2;
+
+      // The declaration of a local variable may hide class properties
+      int b = 42;
+
+      // In this case the class property have to be accessed explicitly
+      this.b = b;
+    }
+
+    // Class properties
+    int a;
+    int b;
+  }
+</pre>
 
 \section doc_script_class_const Const methods
 
