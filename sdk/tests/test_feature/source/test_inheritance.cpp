@@ -781,7 +781,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	if( d->GetFactoryCount() != 2 )
 		TEST_FAILED;
 	asIScriptFunction *fid = d->GetFactoryByDecl("Derived@ Derived(int)");
-	if( fid < 0 )
+	if( fid == 0 )
 		TEST_FAILED;
 	if( fid != d->GetFactoryByIndex(1) )
 		TEST_FAILED;

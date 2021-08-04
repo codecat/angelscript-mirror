@@ -1276,7 +1276,7 @@ const char* file2 = "					\
 		if( t1 >= 0 )
 		{
 			asIScriptFunction *fact1 = engine->GetTypeInfoById(t1)->GetFactoryByIndex(0);
-			if( fact1 < 0 )
+			if( fact1 == 0 )
 				TEST_FAILED;
 		
 			asIScriptModule *mod2 = engine->GetModule("2", asGM_ALWAYS_CREATE);
