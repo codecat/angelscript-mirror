@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.35.1 WIP - 2021/07/19</h2>
+<h2>Version 2.35.1 WIP - 2021/08/11</h2>
 
 <ul>
 <li>Bug fixes
@@ -37,6 +37,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed registering asBEHAVE_LIST_CONSTRUCT on value type templates (Thanks Suedwest)
 <li>Fixed compiler error in as_symboltable.h on GCC 11 (Thanks shirubax)
 <li>Compiler no longer silently accepts implicit conversion from null handle to object type registered with ASHANDLE if there is no matching implicit constructor (Thanks Patrick Jeeves)
+<li>Fixed problem in native calling convention on arm64 when function returned a reference to a class with asOBJ_APP_CLASS_ALLFLOATS (Thanks Max Waine)
 </ul>
 <li>Library
 <ul>
