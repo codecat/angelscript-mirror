@@ -1091,30 +1091,40 @@
 		#undef COMPLEX_RETURN_MASK
 		#define COMPLEX_RETURN_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR | asOBJ_APP_ARRAY)
 
-		#if (defined(_ARM_) || defined(__arm__))
+		#if (defined(_ARM_) || defined(__arm__) || defined(__aarch64__) || defined(__AARCH64EL__))
 			// Android ARM
-
-			// TODO: The stack unwind on exceptions currently fails due to the assembler code in as_callfunc_arm_gcc.S
-			#define AS_NO_EXCEPTIONS
 
 			#undef THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
 			#undef CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
 			#undef STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
-
-			#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
-			#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
-			#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
 
 			// The stdcall calling convention is not used on the arm cpu
 			#undef STDCALL
 			#define STDCALL
 
 			#undef GNU_STYLE_VIRTUAL_METHOD
-
-			#define AS_ARM
 			#undef AS_NO_THISCALL_FUNCTOR_METHOD
-			#define AS_SOFTFP
-			#define AS_CALLEE_DESTROY_OBJ_BY_VAL
+
+			#if (!defined(__LP64__))
+				// TODO: The stack unwind on exceptions currently fails due to the assembler code in as_callfunc_arm_gcc.S
+				#define AS_NO_EXCEPTIONS
+
+				#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+				#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+				#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+
+				#define AS_ARM
+				#define AS_SOFTFP
+				#define AS_CALLEE_DESTROY_OBJ_BY_VAL
+			#elif (defined(__LP64__) || defined(__aarch64__))
+				#define AS_ARM64
+
+				#define HAS_128_BIT_PRIMITIVES
+
+				#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 5
+				#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE    5
+				#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE  5
+			#endif
 		#elif (defined(i386) || defined(__i386) || defined(__i386__)) && !defined(__LP64__)
 			// Android Intel x86 (same config as Linux x86). Tested with Intel x86 Atom System Image.
 
