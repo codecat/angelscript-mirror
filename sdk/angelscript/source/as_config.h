@@ -252,26 +252,27 @@
 // compiler is the same for both, when this is so these flags are used to produce the
 // right code.
 
-// AS_WIN       - Microsoft Windows
-// AS_LINUX     - Linux
-// AS_MAC       - Apple Macintosh
-// AS_BSD       - BSD based OS (FreeBSD, DragonFly, OpenBSD, etc)
-// AS_XBOX      - Microsoft XBox
-// AS_XBOX360   - Microsoft XBox 360
-// AS_PSP       - Sony Playstation Portable
-// AS_PSVITA    - Sony Playstation Vita
-// AS_PS2       - Sony Playstation 2
-// AS_PS3       - Sony Playstation 3
-// AS_DC        - Sega Dreamcast
-// AS_GC        - Nintendo GameCube
-// AS_WII       - Nintendo Wii
-// AS_WIIU      - Nintendo Wii U
-// AS_IPHONE    - Apple IPhone
-// AS_ANDROID   - Android
-// AS_HAIKU     - Haiku
-// AS_ILLUMOS   - Illumos like (OpenSolaris, OpenIndiana, NCP, etc)
-// AS_MARMALADE - Marmalade cross platform SDK (a layer on top of the OS)
-// AS_SUN       - Sun UNIX
+// AS_WIN            - Microsoft Windows
+// AS_LINUX          - Linux
+// AS_MAC            - Apple Macintosh
+// AS_BSD            - BSD based OS (FreeBSD, DragonFly, OpenBSD, etc)
+// AS_XBOX           - Microsoft XBox
+// AS_XBOX360        - Microsoft XBox 360
+// AS_PSP            - Sony Playstation Portable
+// AS_PSVITA         - Sony Playstation Vita
+// AS_PS2            - Sony Playstation 2
+// AS_PS3            - Sony Playstation 3
+// AS_DC             - Sega Dreamcast
+// AS_GC             - Nintendo GameCube
+// AS_WII            - Nintendo Wii
+// AS_WIIU           - Nintendo Wii U
+// AS_NINTENDOSWITCH - Nintendo Switch
+// AS_IPHONE         - Apple IPhone
+// AS_ANDROID        - Android
+// AS_HAIKU          - Haiku
+// AS_ILLUMOS        - Illumos like (OpenSolaris, OpenIndiana, NCP, etc)
+// AS_MARMALADE      - Marmalade cross platform SDK (a layer on top of the OS)
+// AS_SUN            - Sun UNIX
 
 
 
@@ -655,6 +656,37 @@
 
 		// Native calling conventions are not yet supported
 		#define AS_MAX_PORTABILITY
+
+	// Nintendo Switch
+	// Note, __SWITCH__ is not an official define in the Nintendo dev kit. 
+	// You need to manually add this to the project when compiling for Switch.
+	#elif defined(__SWITCH__)
+		#define AS_NINTENDOSWITCH
+
+		#if (!defined(__LP64__))
+			#error write me
+		#else
+			#define AS_ARM64
+			#undef STDCALL
+			#define STDCALL
+
+			#undef GNU_STYLE_VIRTUAL_METHOD
+			#undef AS_NO_THISCALL_FUNCTOR_METHOD
+
+			#define HAS_128_BIT_PRIMITIVES
+
+			#define CDECL_RETURN_SIMPLE_IN_MEMORY
+			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+			#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+
+			#undef THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+			#undef CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+			#undef STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+
+			#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 5
+			#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE    5
+			#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE  5
+		#endif
 
 	// Marmalade is a cross platform SDK. It uses g++ to compile for iOS and Android
 	#elif defined(__S3E__)
