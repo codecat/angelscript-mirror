@@ -111,6 +111,7 @@ bool Test()
 
 	// Test problem with small types and unsafe references
 	// Reported by Polyak Istvan
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine();
 		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);

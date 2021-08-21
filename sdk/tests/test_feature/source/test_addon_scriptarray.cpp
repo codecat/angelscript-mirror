@@ -148,9 +148,10 @@ static const char* script7 =
 bool Test2();
 
 std::string g_printBuf;
-void printStr(const std::string& val)
+void printStr(asIScriptGeneric *gen)
 {
-	g_printBuf += val;
+	std::string *val = (std::string *)gen->GetArgAddress(0);
+	g_printBuf += *val;
 }
 
 class ClassExceptionInConstructor
@@ -230,7 +231,7 @@ bool Test()
 
 		RegisterScriptArray(engine, false);
 		RegisterStdString(engine);
-		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(printStr), asCALL_CDECL);
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(printStr), asCALL_GENERIC);
 
 		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",

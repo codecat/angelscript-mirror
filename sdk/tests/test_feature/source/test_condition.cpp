@@ -152,6 +152,7 @@ bool TestCondition()
 
 	// Test that temporary objects allocated as arguments that are then deferred in ternary operands are properly handled
 	// Reported by Polyak Istvan
+	SKIP_ON_MAX_PORT
 	{
 		class Value
 		{

@@ -12,9 +12,10 @@ using namespace std;
 namespace Test_Addon_StdString
 {
 	std::string g_buf;
-	void print(const std::string& s)
+	void print(asIScriptGeneric *gen)
 	{
-		g_buf += s + "\n";
+		std::string* s = (std::string*)gen->GetArgAddress(0);
+		g_buf += *s + "\n";
 	}
 
 	bool Test()
@@ -31,7 +32,7 @@ namespace Test_Addon_StdString
 			asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 			engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 			RegisterStdString(engine);
-			engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_CDECL);
+			engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_GENERIC);
 			bout.buffer = "";
 
 			asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);

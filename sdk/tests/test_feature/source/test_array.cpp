@@ -1,9 +1,14 @@
 #include "utils.h"
 
 // From scriptstdstring.cpp
+BEGIN_AS_NAMESPACE
 class CStdStringFactory;
 extern CStdStringFactory* GetStdStringFactorySingleton();
+END_AS_NAMESPACE
 using namespace std;
+#ifdef AS_USE_NAMESPACE
+using namespace AngelScript;
+#endif
 
 namespace TestArray
 {
@@ -176,6 +181,7 @@ bool Test()
 
 	// Test initializing list with value type and opAssign returning void
 	// https://www.gamedev.net/forums/topic/709865-build-a-script-containing-array-of-string-failed-with-corrupted-vm-stack/
+	SKIP_ON_MAX_PORT
 	{
 		asIScriptEngine* engine = asCreateScriptEngine();
 		bout.buffer = "";
