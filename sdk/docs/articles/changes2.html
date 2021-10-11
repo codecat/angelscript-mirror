@@ -15,6 +15,15 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
+<h2>Version 2.36.0 WIP - 2021/10/10</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>Fixed 32bit/64bit compatibility of saved bytecode with unsafe references enabled (Thanks Alexander Orefkov)
+</ul>
+</ul>
+
 <h2>Version 2.35.1 - 2021/09/27</h2>
 
 <ul>
@@ -67,7 +76,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added gnuc makefile for asrun sample
 <li>Added generic calling convention bindings for script exception routines add-on (Thanks gjl)
 <li>Fixed problem in script builder that caused it to fail to recognize meta data on members of shared classes (Thanks noizex)
-<li>Script builder can not gather meta data on members of interfaces too
+<li>Script builder can now gather meta data on members of interfaces too
 <li>Fixed WRAP_MFN_PR when used with method without overload in derived class on MSVC (Thanks 1vanK)
 <li>Script builder now removes lines starting with #! to support shebang interpreter directives
 <li>Fixed the samples concurrent and events on Linux (Thanks Dantrell B)

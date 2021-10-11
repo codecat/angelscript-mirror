@@ -396,6 +396,79 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 
+	// test 32bit and 64bit compatibility when using unsafe references and the bytecode has a local temporary reference to a value type
+	// https://www.gamedev.net/forums/topic/710948-crash-on-running-bytecode-from-32bit-on-64bit/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
+		engine->SetEngineProperty(asEP_ALLOW_IMPLICIT_HANDLE_TYPES, 1);
+		engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, 1);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+
+		CBytecodeStream stream((string("AS_DEBUG/bc_") + (sizeof(void*) == 4 ? "32" : "64")).c_str());
+
+		const char *script = 
+			"class ProductCoins : Purchase, ProductInfo, Purcheseable, PurchaseUpdate, ProductUILinkImpl { \n"
+			"	uint count; \n"
+			"	string _token; \n"
+			"	ProductCoins(uint c) { \n"
+			"		count = c; \n"
+			"		_sku = \"coins\" + c; \n"
+			"	} \n"
+			"} \n"
+			"mixin class Purchase { \n"
+			"	string _sku; \n"
+			"	bool purchased = false; \n"
+			"	bool _isSubs = false; \n"
+			"	PurchaseData@ info; \n"
+			"} \n"
+			"interface ProductInfo { \n"
+			"} \n"
+			"interface Purcheseable { \n"
+			"} \n"
+			"interface PurchaseUpdate { \n"
+			"} \n"
+			"mixin class ProductUILinkImpl : ProductUILink { \n"
+			"	ProductItem@ _pi; \n"
+			"} \n"
+			"interface ProductUILink { \n"
+			"} \n"
+			"class PurchaseData {} \n"
+			"class ProductItem {} \n"
+			"ProductCoins coins(100); \n";
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+		r = mod->AddScriptSection("main", script); assert(r >= 0);
+		r = mod->Build(); assert(r >= 0);
+		r = mod->SaveByteCode(&stream); assert(r >= 0);
+		mod->Discard();
+
+		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
+		if (crc32 != 0xAD6550E)
+		{
+			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
+			TEST_FAILED;
+		}
+		
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+
+		r = mod->LoadByteCode(&stream);
+		if (r < 0)
+			TEST_FAILED;
+		mod->Discard();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = engine->ShutDownAndRelease(); assert(r >= 0);
+	}
+
 	// test loading bytecode with function returning string by value
 	// reported by Quentin Cosendey
 	{
@@ -490,12 +563,12 @@ bool Test()
 
 		class CBrokenStream : public asIBinaryStream
 		{
-			int Write(const void* ptr, asUINT size)
+			int Write(const void* /*ptr*/, asUINT /*size*/)
 			{
 				return 0;
 			}
 
-			int Read(void* ptr, asUINT size)
+			int Read(void* /*ptr*/, asUINT /*size*/)
 			{
 				// noop, we don't write anything to ptr at all
 				return 0;
