@@ -94,6 +94,51 @@ bool TestCondition()
 	CBufferedOutStream bout;
 	asIScriptEngine* engine;
 
+	// Test condition with different primitive types. Should follow the same cast priority as for function overrides
+	// https://www.gamedev.net/forums/topic/711022-ternary-operators-stopped-paying-attention-to-expected-return-type/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		// C++ code for comparison
+		auto a = true ? 1 : 1.;
+		auto b = true ? 1 : asUINT(1);
+		auto c = true ? 1 : asINT16(1);
+		auto d = true ? 1 : 1.f;
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"auto a = true ? 1 : 1.; \n"
+			"auto b = true ? 1 : uint(1); \n"
+			"auto c = true ? 1 : int16(1); \n"
+			"auto d = true ? 1 : 1.f; \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		int typeId = 0;
+		mod->GetGlobalVar(mod->GetGlobalVarIndexByName("a"), 0, 0, &typeId, 0);
+		if (typeId != asTYPEID_DOUBLE)
+			TEST_FAILED;
+		mod->GetGlobalVar(mod->GetGlobalVarIndexByName("b"), 0, 0, &typeId, 0);
+		if (typeId != asTYPEID_UINT32)
+			TEST_FAILED;
+		mod->GetGlobalVar(mod->GetGlobalVarIndexByName("c"), 0, 0, &typeId, 0);
+		if (typeId != asTYPEID_INT32)
+			TEST_FAILED;
+		mod->GetGlobalVar(mod->GetGlobalVarIndexByName("d"), 0, 0, &typeId, 0);
+		if (typeId != asTYPEID_FLOAT)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 	// Test condition with enum and int as operands. Should convert the enum to int
 	// ref: for c++ https://stackoverflow.com/questions/32251419/c-ternary-operator-conditional-operator-and-its-implicit-type-conversion-r
 	// https://www.gamedev.net/forums/topic/708198-implicit-conversion-from-enum-to-int-in-ternary-op/5431934/
@@ -122,7 +167,7 @@ bool TestCondition()
 		engine->ShutDownAndRelease();
 	}
 
-	// Test condition with float and int as operands. Ambiguous case, shouldn't implicitly convert
+	// Test condition with float and int as operands
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -137,11 +182,11 @@ bool TestCondition()
 			"	int val = true ? a : b; \n"
 			"} \n");
  		r = mod->Build();
-		if (r >= 0)
+		if (r < 0)
 			TEST_FAILED;
 
 		if (bout.buffer != "test (3, 1) : Info    : Compiling void test()\n"
-			               "test (5, 12) : Error   : Can't find unambiguous implicit conversion to make both expressions have the same type\n")
+						   "test (5, 12) : Warning : Float value truncated in implicit conversion to integer\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -582,7 +627,6 @@ bool TestCondition()
 	}
 
 	// Test condition operator and implicit cast
-	// Observe that AngelScript does NOT follow the same rules as C++ for this operator
 	// http://www.gamedev.net/topic/648406-implicit-conversion-of-value-is-not-exact/
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -613,12 +657,11 @@ bool TestCondition()
 		}
 
 		bout.buffer = "";
-		r = ExecuteString(engine, "float ret = false ? 1 : 0.1; \n"       // 1 is not implicitly converted
-			                      "assert( abs(ret - 0) < 0.0001 );");
-		if( r >= 0 )
+		r = ExecuteString(engine, "float ret = false ? 1 : 0.1; \n"       // 1 is implicitly converted
+			                      "assert( abs(ret - 0.1) < 0.0001 );");
+		if( r < 0 )
 			TEST_FAILED;
-		if( bout.buffer != "ExecuteString (1, 13) : Error   : Can't find unambiguous implicit conversion to make both expressions have the same type\n"
-						   "ExecuteString (2, 17) : Warning : 'ret' is not initialized.\n")
+		if( bout.buffer != "")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -640,11 +683,11 @@ bool TestCondition()
 		bout.buffer = "";
 		r = ExecuteString(engine, "float f = 0.1;\n"
 								  "float ret = 0.2;\n"
-								  "ret += false ? 1 : f * 15;\n"           // 1 is not implicitly converted to the other type
-								  "assert( abs(ret - 1.2) < 0.0001 );\n");
-		if( r >= 0 )
+								  "ret += false ? 1 : f * 15;\n"           // 1 is implicitly converted to the other type
+								  "assert( abs(ret - 1.7) < 0.0001 );\n");
+		if( r != asEXECUTION_FINISHED)
 			TEST_FAILED;
-		if( bout.buffer != "ExecuteString (3, 8) : Error   : Can't find unambiguous implicit conversion to make both expressions have the same type\n" )
+		if( bout.buffer != "" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

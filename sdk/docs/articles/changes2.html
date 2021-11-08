@@ -15,13 +15,17 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.36.0 WIP - 2021/10/14</h2>
+<h2>Version 2.36.0 WIP - 2021/11/07</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Fixed 32bit/64bit compatibility of saved bytecode with unsafe references enabled (Thanks Alexander Orefkov)
 <li>Fixed 32bit/64bit compatibility of saved bytecode in functions returning handles (Thanks Alexander Orefkov)
+</ul>
+<li>Script language
+<ul>
+<li>Improved implicit conversion rules to reduce number of type ambiguity errors for function overloads and ternary operators (Thanks Violet CLM)
 </ul>
 </ul>
 

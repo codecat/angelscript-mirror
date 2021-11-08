@@ -157,6 +157,8 @@ The type of conversion that needs to be performed on the argument to get to the 
 parameter determines how well a function matches. The following list gives the order of how one 
 type of conversion compares to another.
 
+\todo Update list with new degrees
+
  - no conversion needed
  - conversion to const
  - size of primitive changes 
