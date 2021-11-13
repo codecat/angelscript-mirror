@@ -94,6 +94,34 @@ bool TestCondition()
 	CBufferedOutStream bout;
 	asIScriptEngine* engine;
 
+	// Test condition with objects. Should return handle for better efficiency. TODO: Can this be done in all scenarios?
+	// https://www.gamedev.net/forums/topic/711022-ternary-operators-stopped-paying-attention-to-expected-return-type/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class foo { \n"
+			"	foo(int) {} \n"
+			"} \n"
+			"void main() { \n"
+			"	foo@ bar = true ? foo(0) : foo(0); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test condition with different primitive types. Should follow the same cast priority as for function overrides
 	// https://www.gamedev.net/forums/topic/711022-ternary-operators-stopped-paying-attention-to-expected-return-type/
 	{
@@ -139,6 +167,7 @@ bool TestCondition()
 
 		engine->ShutDownAndRelease();
 	}
+
 	// Test condition with enum and int as operands. Should convert the enum to int
 	// ref: for c++ https://stackoverflow.com/questions/32251419/c-ternary-operator-conditional-operator-and-its-implicit-type-conversion-r
 	// https://www.gamedev.net/forums/topic/708198-implicit-conversion-from-enum-to-int-in-ternary-op/5431934/

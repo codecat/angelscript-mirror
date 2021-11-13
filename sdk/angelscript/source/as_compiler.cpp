@@ -8819,6 +8819,17 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asCExprContext *ctx)
 				ImplicitConversion(&re, dt, cexpr->next->next, asIC_IMPLICIT_CONV);
 			}
 
+			// If the type of the expressions can be handle, then make them so for efficiency
+			if (le.type.dataType.SupportHandles() && re.type.dataType.SupportHandles())
+			{
+				asCDataType dt = le.type.dataType;
+				dt.MakeHandle(true);
+				ImplicitConversion(&le, dt, cexpr->next, asIC_IMPLICIT_CONV);
+				dt = re.type.dataType;
+				dt.MakeHandle(true);
+				ImplicitConversion(&re, dt, cexpr->next->next, asIC_IMPLICIT_CONV);
+			}
+
 			// Allow either case to be converted to const @ if the other is const @
 			if( (le.type.dataType.IsHandleToConst() && !le.type.IsNullConstant()) || (re.type.dataType.IsHandleToConst() && !re.type.dataType.IsNullHandle()) )
 			{
