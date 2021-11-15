@@ -139,6 +139,10 @@ When this option is set to true the compiler will accept identifiers that contai
 value higher than 127. This permits the use of international characters in the identifiers as the script 
 can be encoded in UTF-8 format and compiler normally.
 
+\ref asEP_IGNORE_DUPLICATE_SHARED_INTF
+
+\todo document the behaviour
+
 
 
 

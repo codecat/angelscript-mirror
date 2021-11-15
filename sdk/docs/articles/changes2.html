@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.36.0 WIP - 2021/11/12</h2>
+<h2>Version 2.36.0 WIP - 2021/11/14</h2>
 
 <ul>
 <li>Bug fixes
@@ -27,6 +27,10 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Improved implicit conversion rules to reduce number of type ambiguity errors for function overloads and ternary operators (Thanks Violet CLM)
 <li>Ternary condition will now return the result as handle if possible to avoid unnecessary copy of objects (Thanks Violet CLM)
+</ul>
+<li>Library
+<ul>
+<li>Added engine property asEP_IGNORE_DUPLICATE_SHARED_INTF to add backwards compatibility with 2.35.0 when scripts include declaration of shared interfaces more than once (Thanks Violet CLM)
 </ul>
 </ul>
 

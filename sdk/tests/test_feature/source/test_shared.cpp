@@ -10,6 +10,32 @@ bool Test()
 	asIScriptEngine* engine;
 	int r;
 
+	// Test duplicate declaration of shared class (allowed with engine property)
+	// https://www.gamedev.net/forums/topic/707753-bug-when-importing-an-external-interface/
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		engine->SetEngineProperty(asEP_IGNORE_DUPLICATE_SHARED_INTF, true);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"shared interface i {} \n"
+			"shared interface i {} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test discarding a shared class with default factory
 	// https://www.gamedev.net/forums/topic/709671-shared-class-invalidates-when-1-of-the-modules-is-discarded/
 	{
@@ -208,7 +234,7 @@ bool Test()
 		r = engine->ShutDownAndRelease(); assert(r >= 0);
 	}
 
-	// Test with external shared interface and inhering from shared interface
+	// Test with external shared interface and inheriting from shared interface
 	// https://www.gamedev.net/forums/topic/707753-bug-when-importing-an-external-interface/5430255/
 	{
 		engine = asCreateScriptEngine();
