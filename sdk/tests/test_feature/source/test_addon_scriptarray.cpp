@@ -222,6 +222,59 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// Test array with uint64
+	// https://www.gamedev.net/forums/topic/711196-cscriptarrayequals-doesnt-know-about-64-bit-types/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, false);
+		RegisterStdString(engine);
+		g_printBuf = "";
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(printStr), asCALL_GENERIC);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() { \n"
+			"uint64 zero = 0;\n"
+			"uint64 nonzero = 0x100000000; \n"
+			"array<uint64> array_zero = { zero }; \n"
+			"array<uint64> array_nonzero = { nonzero }; \n"
+			"print('' + (zero == nonzero) + '\\n'); \n"             //false, good
+			"print('' + (array_zero == array_nonzero) + '\\n'); \n" //true, but should be false
+			"print('' + array_nonzero.find(zero) + '\\n'); \n"      //0, but should be -1
+			"array<uint64> arr = { 0, 2, 4, 0x100000001, 0x100000003, 0x100000005 }; \n"
+			"arr.sortAsc(); \n"
+			"for (uint i = 0; i < arr.length(); ++i) \n"
+			"	print(formatInt(arr[i], 'H') + '\\n'); \n" // 0, 100000001, 2, 100000003, 4, 100000005
+			"}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		if (g_printBuf != "false\n"
+						  "false\n"
+						  "-1\n"
+						  "0\n""2\n""4\n""100000001\n""100000003\n""100000005\n")
+		{
+			PRINTF("%s", g_printBuf.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test sorting array of handles where objects are garbage collectable
 	// https://www.gamedev.net/forums/topic/709910-objects-with-handle-member-can-get-garbage-collected-after-array-sort/
 	{
@@ -231,6 +284,7 @@ bool Test()
 
 		RegisterScriptArray(engine, false);
 		RegisterStdString(engine);
+		g_printBuf = "";
 		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(printStr), asCALL_GENERIC);
 
 		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);

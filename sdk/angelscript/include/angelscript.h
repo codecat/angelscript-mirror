@@ -360,6 +360,7 @@ enum asEFuncType
 //
 typedef signed char    asINT8;
 typedef signed short   asINT16;
+typedef signed int     asINT32;
 typedef unsigned char  asBYTE;
 typedef unsigned short asWORD;
 typedef unsigned int   asUINT;

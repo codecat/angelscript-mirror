@@ -1015,14 +1015,16 @@ bool CScriptArray::Less(const void *a, const void *b, bool asc)
 		switch( subTypeId )
 		{
 			#define COMPARE(T) *((T*)a) < *((T*)b)
-			case asTYPEID_BOOL: return COMPARE(bool);
-			case asTYPEID_INT8: return COMPARE(signed char);
-			case asTYPEID_UINT8: return COMPARE(unsigned char);
-			case asTYPEID_INT16: return COMPARE(signed short);
-			case asTYPEID_UINT16: return COMPARE(unsigned short);
-			case asTYPEID_INT32: return COMPARE(signed int);
-			case asTYPEID_UINT32: return COMPARE(unsigned int);
-			case asTYPEID_FLOAT: return COMPARE(float);
+			case asTYPEID_BOOL:   return COMPARE(bool);
+			case asTYPEID_INT8:   return COMPARE(asINT8);
+			case asTYPEID_INT16:  return COMPARE(asINT16);
+			case asTYPEID_INT32:  return COMPARE(asINT32);
+			case asTYPEID_INT64:  return COMPARE(asINT64);
+			case asTYPEID_UINT8:  return COMPARE(asBYTE);
+			case asTYPEID_UINT16: return COMPARE(asWORD);
+			case asTYPEID_UINT32: return COMPARE(asDWORD);
+			case asTYPEID_UINT64: return COMPARE(asQWORD);
+			case asTYPEID_FLOAT:  return COMPARE(float);
 			case asTYPEID_DOUBLE: return COMPARE(double);
 			default: return COMPARE(signed int); // All enums fall in this case
 			#undef COMPARE
@@ -1115,16 +1117,18 @@ bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx, S
 		switch( subTypeId )
 		{
 			#define COMPARE(T) *((T*)a) == *((T*)b)
-			case asTYPEID_BOOL: return COMPARE(bool);
-			case asTYPEID_INT8: return COMPARE(signed char);
-			case asTYPEID_UINT8: return COMPARE(unsigned char);
-			case asTYPEID_INT16: return COMPARE(signed short);
-			case asTYPEID_UINT16: return COMPARE(unsigned short);
-			case asTYPEID_INT32: return COMPARE(signed int);
-			case asTYPEID_UINT32: return COMPARE(unsigned int);
-			case asTYPEID_FLOAT: return COMPARE(float);
+			case asTYPEID_BOOL:   return COMPARE(bool);
+			case asTYPEID_INT8:   return COMPARE(asINT8);
+			case asTYPEID_INT16:  return COMPARE(asINT16);
+			case asTYPEID_INT32:  return COMPARE(asINT32);
+			case asTYPEID_INT64:  return COMPARE(asINT64);
+			case asTYPEID_UINT8:  return COMPARE(asBYTE);
+			case asTYPEID_UINT16: return COMPARE(asWORD);
+			case asTYPEID_UINT32: return COMPARE(asDWORD);
+			case asTYPEID_UINT64: return COMPARE(asQWORD);
+			case asTYPEID_FLOAT:  return COMPARE(float);
 			case asTYPEID_DOUBLE: return COMPARE(double);
-			default: return COMPARE(signed int); // All enums fall here
+			default: return COMPARE(signed int); // All enums fall here. TODO: update this when enums can have different sizes and types
 			#undef COMPARE
 		}
 	}
@@ -1504,7 +1508,7 @@ void CScriptArray::Sort(asUINT startAt, asUINT count, bool asc)
 					{
 						return (int)cmpContext->GetReturnDWord() < 0;
 					}
-				}				
+				}
 
 				return false;
 			}
