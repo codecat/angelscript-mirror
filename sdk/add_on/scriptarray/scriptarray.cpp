@@ -211,7 +211,7 @@ static bool ScriptArrayTemplateCallback(asITypeInfo *ti, bool &dontGarbageCollec
 
 		// It is not necessary to set the array as garbage collected for all handle types.
 		// If it is possible to determine that the handle cannot refer to an object type
-		// that can potentially form a circular reference with the array then it is not 
+		// that can potentially form a circular reference with the array then it is not
 		// necessary to make the array garbage collected.
 		asITypeInfo *subtype = ti->GetEngine()->GetTypeInfoById(typeId);
 		asDWORD flags = subtype->GetFlags();
@@ -220,7 +220,7 @@ static bool ScriptArrayTemplateCallback(asITypeInfo *ti, bool &dontGarbageCollec
 			if( (flags & asOBJ_SCRIPT_OBJECT) )
 			{
 				// Even if a script class is by itself not garbage collected, it is possible
-				// that classes that derive from it may be, so it is not possible to know 
+				// that classes that derive from it may be, so it is not possible to know
 				// that no circular reference can occur.
 				if( (flags & asOBJ_NOINHERIT) )
 				{
@@ -961,7 +961,7 @@ void CScriptArray::Construct(SArrayBuffer *buf, asUINT start, asUINT end)
 			*d = (void*)engine->CreateScriptObject(subType);
 			if( *d == 0 )
 			{
-				// Set the remaining entries to null so the destructor 
+				// Set the remaining entries to null so the destructor
 				// won't attempt to destroy invalid objects later
 				memset(d, 0, sizeof(void*)*(max-d));
 
@@ -1327,7 +1327,7 @@ int CScriptArray::Find(asUINT startAt, void *value) const
 
 // internal
 // Copy object handle or primitive value
-// Even in arrays of objects the objects are allocated on 
+// Even in arrays of objects the objects are allocated on
 // the heap and the array stores the pointers to the objects
 void CScriptArray::Copy(void *dst, void *src)
 {
@@ -1488,7 +1488,7 @@ void CScriptArray::Sort(asUINT startAt, asUINT count, bool asc)
 					a = b;
 					b = TEMP;
 				}
-				
+
 				int r = 0;
 
 				// Allow sort to work even if the array contains null handles
@@ -1514,7 +1514,7 @@ void CScriptArray::Sort(asUINT startAt, asUINT count, bool asc)
 			}
 		} customLess = {asc, cmpContext, cache ? cache->cmpFunc : 0};
 		std::sort((void**)GetArrayItemPointer(start), (void**)GetArrayItemPointer(end), customLess);
-		
+
 		// Clean up
 		if( cmpContext )
 		{
@@ -1532,7 +1532,7 @@ void CScriptArray::Sort(asUINT startAt, asUINT count, bool asc)
 	else
 	{
 		// TODO: Use std::sort for primitive types too
-		
+
 		// Insertion sort
 		asBYTE tmp[16];
 		for( int i = start + 1; i < end; i++ )
@@ -2188,7 +2188,6 @@ static void RegisterScriptArray_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("array<T>", "bool isEmpty() const", asFUNCTION(ScriptArrayIsEmpty_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterFuncdef("bool array<T>::less(const T&in if_handle_then_const a, const T&in if_handle_then_const b)");
 	r = engine->RegisterObjectMethod("array<T>", "void sort(const less &in, uint startAt = 0, uint count = uint(-1))", asFUNCTION(ScriptArraySortCallback_Generic), asCALL_GENERIC); assert(r >= 0);
-
 #if AS_USE_STLNAMES != 1 && AS_USE_ACCESSORS == 1
 	r = engine->RegisterObjectMethod("array<T>", "uint get_length() const property", asFUNCTION(ScriptArrayLength_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "void set_length(uint) property", asFUNCTION(ScriptArrayResize_Generic), asCALL_GENERIC); assert( r >= 0 );

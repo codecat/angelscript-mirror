@@ -1217,7 +1217,7 @@ int asCContext::Execute()
 
 	asCThreadLocalData *tld = asPushActiveContext((asIScriptContext *)this);
 
-	// Make sure there are not too many nested calls, as it could crash the application 
+	// Make sure there are not too many nested calls, as it could crash the application
 	// by filling up the thread call stack
 	if (tld->activeContexts.GetLength() > m_engine->ep.maxNestedCalls)
 		SetInternalException(TXT_TOO_MANY_NESTED_CALLS);
@@ -1723,7 +1723,7 @@ bool asCContext::ReserveStackSpace(asUINT size)
 			                  (m_currentFunction->DoesReturnOnStack() ? AS_PTR_SIZE : 0);
 
 #ifdef WIP_16BYTE_ALIGN
-		// Align the stack pointer 
+		// Align the stack pointer
 		(asPWORD&)m_regs.stackPointer &= ~(MAX_TYPE_ALIGNMENT-1);
 
 		asASSERT( isAligned(m_regs.stackPointer, MAX_TYPE_ALIGNMENT) );
@@ -1763,8 +1763,8 @@ void asCContext::PrepareScriptFunction()
 	// over the function arguments to the new block.
 	if( m_regs.stackPointer != oldStackPointer )
 	{
-		int numDwords = m_currentFunction->GetSpaceNeededForArguments() + 
-		                (m_currentFunction->objectType ? AS_PTR_SIZE : 0) + 
+		int numDwords = m_currentFunction->GetSpaceNeededForArguments() +
+		                (m_currentFunction->objectType ? AS_PTR_SIZE : 0) +
 		                (m_currentFunction->DoesReturnOnStack() ? AS_PTR_SIZE : 0);
 		memcpy(m_regs.stackPointer, oldStackPointer, sizeof(asDWORD)*numDwords);
 	}
@@ -4389,7 +4389,7 @@ void asCContext::ExecuteNext()
 		break;
 	case asBC_Thiscall1:
 		// This instruction is a faster version of asBC_CALLSYS. It is faster because
-		// it has much less runtime overhead with determining the calling convention 
+		// it has much less runtime overhead with determining the calling convention
 		// and no dynamic code for loading the parameters. The instruction can only
 		// be used to call functions with the following signatures:
 		//
@@ -4413,7 +4413,7 @@ void asCContext::ExecuteNext()
 				SetInternalException(TXT_NULL_POINTER_ACCESS);
 			else
 			{
-				// Only update the stack pointer if all is OK so the 
+				// Only update the stack pointer if all is OK so the
 				// exception handler can properly clean up the stack
 				l_sp += AS_PTR_SIZE;
 
@@ -4427,15 +4427,15 @@ void asCContext::ExecuteNext()
 #ifdef AS_NO_EXCEPTIONS
 				ptr = m_engine->CallObjectMethodRetPtr(obj, arg, m_callingSystemFunction);
 #else
-				// This try/catch block is to catch potential exception that may 
-				// be thrown by the registered function. 
+				// This try/catch block is to catch potential exception that may
+				// be thrown by the registered function.
 				try
 				{
 					ptr = m_engine->CallObjectMethodRetPtr(obj, arg, m_callingSystemFunction);
 				}
 				catch (...)
 				{
-					// Convert the exception to a script exception so the VM can 
+					// Convert the exception to a script exception so the VM can
 					// properly report the error to the application and then clean up
 					HandleAppException();
 				}
@@ -4683,7 +4683,7 @@ void asCContext::CleanStack(bool catchException)
 		}
 	}
 
-	// If the exception was caught, then move the status to 
+	// If the exception was caught, then move the status to
 	// active as is now possible to resume the execution
 	if (caught)
 		m_status = asEXECUTION_ACTIVE;
@@ -4977,7 +4977,7 @@ void asCContext::CleanArgsOnStack()
 
 bool asCContext::FindExceptionTryCatch()
 {
-	// Check each of the script functions on the callstack to see if 
+	// Check each of the script functions on the callstack to see if
 	// the current program position is within a try/catch block
 	if (m_currentFunction && m_currentFunction->scriptData)
 	{
@@ -5030,7 +5030,7 @@ bool asCContext::CleanStackFrame(bool catchException)
 		if (catchException && m_currentFunction->scriptData)
 		{
 			asUINT currPos = asUINT(m_regs.programPointer - m_currentFunction->scriptData->byteCode.AddressOf());
-			
+
 			for (asUINT n = 0; n < m_currentFunction->scriptData->tryCatchInfo.GetLength(); n++)
 			{
 				if (currPos >= m_currentFunction->scriptData->tryCatchInfo[n].tryPos &&
@@ -5061,7 +5061,7 @@ bool asCContext::CleanStackFrame(bool catchException)
 			{
 				// Find out where the variable was declared, and skip cleaning of those that were declared before the try catch
 				// Multiple variables in different scopes may occupy the same slot on the stack so it is necessary to search
-				// the entire list to determine which variable occupies the slot now. 
+				// the entire list to determine which variable occupies the slot now.
 				int skipClean = 0;
 				for( asUINT p = 0; p < m_currentFunction->scriptData->objVariableInfo.GetLength(); p++ )
 				{
@@ -5083,8 +5083,8 @@ bool asCContext::CleanStackFrame(bool catchException)
 						}
 					}
 				}
-				
-				// Skip only variables that have been declared before the try block. Variables declared 
+
+				// Skip only variables that have been declared before the try block. Variables declared
 				// within the try block and variables whose declaration was not identified (temporary objects)
 				// will not be skipped.
 				// TODO: What if a temporary variable reuses a slot from a declared variable that is no longer in scope?
@@ -5245,7 +5245,7 @@ asEContextState asCContext::GetState() const
 // interface
 int asCContext::SetLineCallback(asSFuncPtr callback, void *obj, int callConv)
 {
-	// First turn off the line callback to avoid a second thread 
+	// First turn off the line callback to avoid a second thread
 	// attempting to call it while the new one is still being set
 	m_lineCallback = false;
 
@@ -5267,11 +5267,11 @@ int asCContext::SetLineCallback(asSFuncPtr callback, void *obj, int callConv)
 	}
 
 	int r = DetectCallingConvention(isObj, callback, callConv, 0, &m_lineCallbackFunc);
-	
+
 	// Turn on the line callback after setting both the function pointer and object pointer
 	if( r >= 0 ) m_lineCallback = true;
 
-	// The BC_SUSPEND instruction should be processed if either line 
+	// The BC_SUSPEND instruction should be processed if either line
 	// callback is set or if the application has requested a suspension
 	m_regs.doProcessSuspend = m_doSuspend || m_lineCallback;
 
@@ -5391,15 +5391,15 @@ int asCContext::CallGeneric(asCScriptFunction *descr)
 #ifdef AS_NO_EXCEPTIONS
 	func(&gen);
 #else
-	// This try/catch block is to catch potential exception that may 
-	// be thrown by the registered function. 
+	// This try/catch block is to catch potential exception that may
+	// be thrown by the registered function.
 	try
 	{
 		func(&gen);
 	}
 	catch (...)
 	{
-		// Convert the exception to a script exception so the VM can 
+		// Convert the exception to a script exception so the VM can
 		// properly report the error to the application and then clean up
 		HandleAppException();
 	}
@@ -5434,14 +5434,14 @@ int asCContext::CallGeneric(asCScriptFunction *descr)
 					*addr = 0;
 				}
 			}
-			else 
+			else
 			{
 				asASSERT( clean->op == 1 || clean->op == 2 );
 				asASSERT( *addr );
 
 				if( clean->op == 2 )
 					m_engine->CallObjectMethod(*addr, clean->ot->beh.destruct);
-				
+
 				m_engine->CallFree(*addr);
 			}
 		}

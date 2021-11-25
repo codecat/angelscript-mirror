@@ -40,7 +40,7 @@ void RegisterScriptFileSystem_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("filesystem", asBEHAVE_FACTORY, "filesystem @f()", asFUNCTION(ScriptFileSystem_Factory), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("filesystem", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptFileSystem,AddRef), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("filesystem", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptFileSystem,Release), asCALL_THISCALL); assert( r >= 0 );
-	
+
 	r = engine->RegisterObjectMethod("filesystem", "bool changeCurrentPath(const string &in)", asMETHOD(CScriptFileSystem, ChangeCurrentPath), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("filesystem", "string getCurrentPath() const", asMETHOD(CScriptFileSystem, GetCurrentPath), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("filesystem", "array<string> @getDirs() const", asMETHOD(CScriptFileSystem, GetDirs), asCALL_THISCALL); assert( r >= 0 );
@@ -144,9 +144,9 @@ CScriptArray *CScriptFileSystem::GetFiles() const
 
 	WIN32_FIND_DATAW ffd;
 	HANDLE hFind = FindFirstFileW(bufUTF16, &ffd);
-	if( INVALID_HANDLE_VALUE == hFind ) 
+	if( INVALID_HANDLE_VALUE == hFind )
 		return array;
-	
+
 	do
 	{
 		// Skip directories
@@ -156,7 +156,7 @@ CScriptArray *CScriptFileSystem::GetFiles() const
 		// Convert the file name back to UTF8
 		char bufUTF8[10000];
 		WideCharToMultiByte(CP_UTF8, 0, ffd.cFileName, -1, bufUTF8, 10000, 0, 0);
-		
+
 		// Add the file to the array
 		array->Resize(array->GetSize()+1);
 		((string*)(array->At(array->GetSize()-1)))->assign(bufUTF8);
@@ -167,7 +167,7 @@ CScriptArray *CScriptFileSystem::GetFiles() const
 #else
 	dirent *ent = 0;
 	DIR *dir = opendir(currentPath.c_str());
-	while( (ent = readdir(dir)) != NULL ) 
+	while( (ent = readdir(dir)) != NULL )
 	{
 		const string filename = ent->d_name;
 
@@ -211,12 +211,12 @@ CScriptArray *CScriptFileSystem::GetDirs() const
 	wchar_t bufUTF16[10000];
 	string searchPattern = currentPath + "/*";
 	MultiByteToWideChar(CP_UTF8, 0, searchPattern.c_str(), -1, bufUTF16, 10000);
-	
+
 	WIN32_FIND_DATAW ffd;
 	HANDLE hFind = FindFirstFileW(bufUTF16, &ffd);
-	if( INVALID_HANDLE_VALUE == hFind ) 
+	if( INVALID_HANDLE_VALUE == hFind )
 		return array;
-	
+
 	do
 	{
 		// Skip files
@@ -229,7 +229,7 @@ CScriptArray *CScriptFileSystem::GetDirs() const
 
 		if( strcmp(bufUTF8, ".") == 0 || strcmp(bufUTF8, "..") == 0 )
 			continue;
-		
+
 		// Add the dir to the array
 		array->Resize(array->GetSize()+1);
 		((string*)(array->At(array->GetSize()-1)))->assign(bufUTF8);
@@ -240,7 +240,7 @@ CScriptArray *CScriptFileSystem::GetDirs() const
 #else
 	dirent *ent = 0;
 	DIR *dir = opendir(currentPath.c_str());
-	while( (ent = readdir(dir)) != NULL ) 
+	while( (ent = readdir(dir)) != NULL )
 	{
 		const string filename = ent->d_name;
 
@@ -408,7 +408,7 @@ int CScriptFileSystem::MakeDir(const string &path)
 #endif
 }
 
-// TODO: Should be able to return different codes for 
+// TODO: Should be able to return different codes for
 //       - directory doesn't exist
 //       - directory is not empty
 //       - access denied
@@ -581,7 +581,7 @@ CDateTime CScriptFileSystem::GetCreateDateTime(const string &path) const
 		return CDateTime();
 	}
 	tm *t = localtime(&st.st_ctime);
-	return CDateTime(t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);	
+	return CDateTime(t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
 #endif
 }
 
@@ -624,7 +624,7 @@ CDateTime CScriptFileSystem::GetModifyDateTime(const string &path) const
 		return CDateTime();
 	}
 	tm *t = localtime(&st.st_mtime);
-	return CDateTime(t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);	
+	return CDateTime(t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
 #endif
 }
 
