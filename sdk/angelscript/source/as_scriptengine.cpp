@@ -3624,24 +3624,59 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		ot->beh.listFactory = func->id;
 	}
 
+	// Create new template functions for behaviours that, may need to know the new object type id
+	int funcId = templateType->beh.destruct;
+	asCScriptFunction* func = scriptFunctions[funcId];
+	if (func && GenerateNewTemplateFunction(templateType, ot, func, &func))
+		ot->beh.destruct = func->id;
+	else
+	{
+		ot->beh.destruct = templateType->beh.destruct;
+		if (scriptFunctions[ot->beh.destruct]) scriptFunctions[ot->beh.destruct]->AddRefInternal();
+	}
+
+	funcId = templateType->beh.copy;
+	func = scriptFunctions[funcId];
+	if (func && GenerateNewTemplateFunction(templateType, ot, func, &func))
+		ot->beh.copy = func->id;
+	else
+	{
+		ot->beh.copy = templateType->beh.copy;
+		if (scriptFunctions[ot->beh.copy]) scriptFunctions[ot->beh.copy]->AddRefInternal();
+	}
+
+	funcId = templateType->beh.gcEnumReferences;
+	func = scriptFunctions[funcId];
+	if (func && GenerateNewTemplateFunction(templateType, ot, func, &func))
+		ot->beh.gcEnumReferences = func->id;
+	else
+	{
+		ot->beh.gcEnumReferences = templateType->beh.gcEnumReferences;
+		if (scriptFunctions[ot->beh.gcEnumReferences]) scriptFunctions[ot->beh.gcEnumReferences]->AddRefInternal();
+	}
+
+	funcId = templateType->beh.gcReleaseAllReferences;
+	func = scriptFunctions[funcId];
+	if (func && GenerateNewTemplateFunction(templateType, ot, func, &func))
+		ot->beh.gcReleaseAllReferences = func->id;
+	else
+	{
+		ot->beh.gcReleaseAllReferences = templateType->beh.gcReleaseAllReferences;
+		if (scriptFunctions[ot->beh.gcReleaseAllReferences]) scriptFunctions[ot->beh.gcReleaseAllReferences]->AddRefInternal();
+	}
+
+	// For the last behaviours no unique copy is generated. It is not expected that
+	// anyone will need to see the correct objectType for these to implement them
 	ot->beh.addref = templateType->beh.addref;
 	if( scriptFunctions[ot->beh.addref] ) scriptFunctions[ot->beh.addref]->AddRefInternal();
 	ot->beh.release = templateType->beh.release;
 	if( scriptFunctions[ot->beh.release] ) scriptFunctions[ot->beh.release]->AddRefInternal();
-	ot->beh.destruct = templateType->beh.destruct;
-	if( scriptFunctions[ot->beh.destruct] ) scriptFunctions[ot->beh.destruct]->AddRefInternal();
-	ot->beh.copy = templateType->beh.copy;
-	if( scriptFunctions[ot->beh.copy] ) scriptFunctions[ot->beh.copy]->AddRefInternal();
 	ot->beh.gcGetRefCount = templateType->beh.gcGetRefCount;
 	if( scriptFunctions[ot->beh.gcGetRefCount] ) scriptFunctions[ot->beh.gcGetRefCount]->AddRefInternal();
 	ot->beh.gcSetFlag = templateType->beh.gcSetFlag;
 	if( scriptFunctions[ot->beh.gcSetFlag] ) scriptFunctions[ot->beh.gcSetFlag]->AddRefInternal();
 	ot->beh.gcGetFlag = templateType->beh.gcGetFlag;
 	if( scriptFunctions[ot->beh.gcGetFlag] ) scriptFunctions[ot->beh.gcGetFlag]->AddRefInternal();
-	ot->beh.gcEnumReferences = templateType->beh.gcEnumReferences;
-	if( scriptFunctions[ot->beh.gcEnumReferences] ) scriptFunctions[ot->beh.gcEnumReferences]->AddRefInternal();
-	ot->beh.gcReleaseAllReferences = templateType->beh.gcReleaseAllReferences;
-	if( scriptFunctions[ot->beh.gcReleaseAllReferences] ) scriptFunctions[ot->beh.gcReleaseAllReferences]->AddRefInternal();
 	ot->beh.getWeakRefFlag = templateType->beh.getWeakRefFlag;
 	if( scriptFunctions[ot->beh.getWeakRefFlag] ) scriptFunctions[ot->beh.getWeakRefFlag]->AddRefInternal();
 
@@ -3649,8 +3684,8 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	// generate new functions to substitute the ones with the template subtype.
 	for( n = 0; n < ot->methods.GetLength(); n++ )
 	{
-		int funcId = ot->methods[n];
-		asCScriptFunction *func = scriptFunctions[funcId];
+		funcId = ot->methods[n];
+		func = scriptFunctions[funcId];
 
 		if( GenerateNewTemplateFunction(templateType, ot, func, &func) )
 		{

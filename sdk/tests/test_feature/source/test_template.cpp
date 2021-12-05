@@ -205,6 +205,42 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Destructor for value template type must be unique for each template instance even though there are no differences in parameters
+	// https://www.gamedev.net/forums/topic/711330-unable-to-get-subtype-id-from-asiscriptgeneric-in-destructor/
+	{
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterObjectType("MyValue<class T>", 1, asOBJ_VALUE | asOBJ_TEMPLATE);
+		r = engine->RegisterObjectBehaviour("MyValue<T>", asBEHAVE_CONSTRUCT, "void f(int&in type)", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectBehaviour("MyValue<T>", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
+
+		asITypeInfo* tmpl1 = engine->GetTypeInfoByDecl("MyValue<int>");
+		asITypeInfo* tmpl2 = engine->GetTypeInfoByDecl("MyValue<float>");
+		asEBehaviours beh;
+		asIScriptFunction *destr1 = tmpl1->GetBehaviourByIndex(0, &beh);
+		if (beh != asBEHAVE_DESTRUCT)
+			TEST_FAILED;
+		asIScriptFunction* destr2 = tmpl2->GetBehaviourByIndex(0, &beh);
+		if (beh != asBEHAVE_DESTRUCT)
+			TEST_FAILED;
+		if (destr1 == destr2)
+			TEST_FAILED;
+		if (destr1->GetObjectType() != tmpl1)
+			TEST_FAILED;
+		if (destr2->GetObjectType() != tmpl2)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test asBEHAVE_LIST_CONSTRUCTOR with repeat T pattern on template value type
 	// Reported by Suedwest
 	{
