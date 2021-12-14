@@ -4724,7 +4724,7 @@ bool asCContext::IsVarInScope(asUINT varIndex, asUINT stackLevel)
 
 	// If the program position is after the variable declaration it is necessary
 	// determine if the program position is still inside the statement block where
-	// the variable was delcared.
+	// the variable was declared.
 	for( int n = 0; n < (int)func->scriptData->objVariableInfo.GetLength(); n++ )
 	{
 		if( func->scriptData->objVariableInfo[n].programPos >= declaredAt )
@@ -5481,18 +5481,53 @@ const char *asCContext::GetVarDeclaration(asUINT varIndex, asUINT stackLevel, bo
 }
 
 // interface
-int asCContext::GetVarTypeId(asUINT varIndex, asUINT stackLevel)
+int asCContext::GetVarTypeId(asUINT varIndex, asUINT stackLevel, asETypeModifiers *typeModifiers)
 {
-	asIScriptFunction *func = GetFunction(stackLevel);
+	asCScriptFunction *func = reinterpret_cast<asCScriptFunction*>(GetFunction(stackLevel));
 	if( func == 0 ) return asINVALID_ARG;
 
 	int typeId;
 	int r = func->GetVar(varIndex, 0, &typeId);
-	return r < 0 ? r : typeId;
+	if (r < 0)
+		return r;
+
+	if (typeModifiers)
+	{
+		*typeModifiers = asTM_NONE;
+		if (func->scriptData && func->scriptData->variables[varIndex]->type.IsReference())
+		{
+			// Find the function argument if it is not a local variable
+			int pos = func->scriptData->variables[varIndex]->stackOffset;
+			if (pos <= 0)
+			{
+				int stackPos = 0;
+				if (func->objectType)
+					stackPos -= AS_PTR_SIZE;
+
+				if (func->DoesReturnOnStack())
+					stackPos -= AS_PTR_SIZE;
+
+				for (asUINT n = 0; n < func->parameterTypes.GetLength(); n++)
+				{
+					if (stackPos == pos)
+					{
+						// The right argument was found. Is this a reference parameter?
+						*typeModifiers = func->inOutFlags[n];
+						break;
+					}
+					stackPos -= func->parameterTypes[n].GetSizeOnStackDWords();
+				}
+			}
+			else
+				*typeModifiers = asTM_INOUTREF;
+		}
+	}
+
+	return typeId;
 }
 
 // interface
-void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel)
+void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel, bool dontDereference)
 {
 	// Don't return anything if there is no bytecode, e.g. before calling Execute()
 	if( m_regs.programPointer == 0 ) return 0;
@@ -5558,7 +5593,8 @@ void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel)
 		}
 
 		// If it wasn't an object on the heap, then check if it is a reference parameter
-		if( !onHeap && pos <= 0 )
+		// If dontDereference is true then the application wants the address of the reference, rather than the value it refers to
+		if( !onHeap && pos <= 0 && !dontDereference )
 		{
 			// Determine what function argument this position matches
 			int stackPos = 0;

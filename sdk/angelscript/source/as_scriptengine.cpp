@@ -3624,7 +3624,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		ot->beh.listFactory = func->id;
 	}
 
-	// Create new template functions for behaviours that, may need to know the new object type id
+	// Create new template functions for behaviours that may need to know the new object type id
 	int funcId = templateType->beh.destruct;
 	asCScriptFunction* func = scriptFunctions[funcId];
 	if (func && GenerateNewTemplateFunction(templateType, ot, func, &func))
