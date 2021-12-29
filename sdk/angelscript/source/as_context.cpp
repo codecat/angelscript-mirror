@@ -1452,6 +1452,7 @@ int asCContext::PushState()
 	return asSUCCESS;
 }
 
+// interface
 int asCContext::PopState()
 {
 	if( !IsNested() )
@@ -1492,6 +1493,7 @@ int asCContext::PopState()
 	return asSUCCESS;
 }
 
+// internal
 int asCContext::PushCallState()
 {
 	if( m_callStack.GetLength() == m_callStack.GetCapacity() )
@@ -1532,6 +1534,7 @@ int asCContext::PushCallState()
 	return asSUCCESS;
 }
 
+// internal
 void asCContext::PopCallState()
 {
 	// See comments in PushCallState about pointer aliasing and data cache trashing
@@ -5152,7 +5155,7 @@ bool asCContext::CleanStackFrame(bool catchException)
 	}
 
 	// Functions that do not own the object and parameters shouldn't do any clean up
-	if( m_currentFunction->dontCleanUpOnException )
+	if( m_currentFunction == 0 || m_currentFunction->dontCleanUpOnException )
 		return exceptionCaught;
 
 	// Clean object and parameters

@@ -969,7 +969,7 @@ const char *asCScriptFunction::GetVarDecl(asUINT index, bool includeNamespace) c
 }
 
 // internal
-void asCScriptFunction::AddVariable(asCString &in_name, asCDataType &in_type, int in_stackOffset)
+void asCScriptFunction::AddVariable(const asCString &in_name, asCDataType &in_type, int in_stackOffset)
 {
 	asASSERT( scriptData );
 	asSScriptVariable *var = asNEW(asSScriptVariable);
