@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2021 Andreas Jonsson
+   Copyright (c) 2003-2022 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -192,15 +192,16 @@ asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 	m_needToCleanupArgs         = false;
 	m_currentFunction           = 0;
 	m_callingSystemFunction     = 0;
-	m_regs.objectRegister       = 0;
 	m_initialFunction           = 0;
 	m_lineCallback              = false;
 	m_exceptionCallback         = false;
 	m_regs.doProcessSuspend     = false;
 	m_doSuspend                 = false;
 	m_userData                  = 0;
-	m_regs.ctx                  = this;
 	m_exceptionWillBeCaught     = false;
+	m_regs.ctx                  = this;
+	m_regs.objectRegister       = 0;
+	m_regs.objectType           = 0;
 }
 
 asCContext::~asCContext()

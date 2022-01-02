@@ -693,6 +693,13 @@ void CDebugger::ListLocalVariables(asIScriptContext *ctx)
 	stringstream s;
 	for( asUINT n = 0; n < func->GetVarCount(); n++ )
 	{
+		// Skip temporary variables
+		// TODO: Should there be an option to view temporary variables too?
+		const char* name;
+		func->GetVar(n, &name);
+		if (name == 0 || strlen(name) == 0)
+			continue;
+
 		if( ctx->IsVarInScope(n) )
 		{
 			// TODO: Allow user to set if members should be expanded or not

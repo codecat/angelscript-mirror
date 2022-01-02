@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2021 Andreas Jonsson
+   Copyright (c) 2003-2022 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1343,33 +1343,36 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 				}
 
 				// Read the variable information
-				if (!noDebugInfo)
+				int length = SanityCheck(ReadEncodedUInt(), 1000000);
+				func->scriptData->variables.Allocate(length, false);
+				for (i = 0; i < length; i++)
 				{
-					int length = SanityCheck(ReadEncodedUInt(), 1000000);
-					func->scriptData->variables.Allocate(length, false);
-					for (i = 0; i < length; i++)
+					asSScriptVariable *var = asNEW(asSScriptVariable);
+					if (var == 0)
 					{
-						asSScriptVariable *var = asNEW(asSScriptVariable);
-						if (var == 0)
-						{
-							// Out of memory
-							error = true;
-							func->DestroyHalfCreated();
-							return 0;
-						}
-						func->scriptData->variables.PushLast(var);
+						// Out of memory
+						error = true;
+						func->DestroyHalfCreated();
+						return 0;
+					}
+					func->scriptData->variables.PushLast(var);
 
+					if (!noDebugInfo)
+					{
 						var->declaredAtProgramPos = ReadEncodedUInt();
-						var->stackOffset = SanityCheck(ReadEncodedInt(),10000);
 						ReadString(&var->name);
-						ReadDataType(&var->type);
+					}
+					else
+						var->declaredAtProgramPos = 0;
 
-						if (error)
-						{
-							// No need to continue (the error has already been reported before)
-							func->DestroyHalfCreated();
-							return 0;
-						}
+					var->stackOffset = SanityCheck(ReadEncodedInt(),10000);
+					ReadDataType(&var->type);
+
+					if (error)
+					{
+						// No need to continue (the error has already been reported before)
+						func->DestroyHalfCreated();
+						return 0;
 					}
 				}
 
@@ -4372,18 +4375,23 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 		}
 
 		// Write the variable information
-		if( !stripDebugInfo )
+		// Even without the debug info the type and position of the variables
+		// must be stored, as this is used for serializing contexts
+		// TODO: Store the type info/position in an intelligent way to avoid duplicating info in objVariablePos & objVariableTypes.
+		// TODO: Perhaps objVariablePos & objVariableTypes should be retired now that all variable types must be stored anyway
+		WriteEncodedInt64((asUINT)func->scriptData->variables.GetLength());
+		for( i = 0; i < func->scriptData->variables.GetLength(); i++ )
 		{
-			WriteEncodedInt64((asUINT)func->scriptData->variables.GetLength());
-			for( i = 0; i < func->scriptData->variables.GetLength(); i++ )
+			if (!stripDebugInfo)
 			{
 				// The program position must be adjusted to be in number of instructions
 				WriteEncodedInt64(bytecodeNbrByPos[func->scriptData->variables[i]->declaredAtProgramPos]);
-				// The stack position must be adjusted according to the pointer sizes
-				WriteEncodedInt64(AdjustStackPosition(func->scriptData->variables[i]->stackOffset));
 				WriteString(&func->scriptData->variables[i]->name);
-				WriteDataType(&func->scriptData->variables[i]->type);
 			}
+
+			// The stack position must be adjusted according to the pointer sizes
+			WriteEncodedInt64(AdjustStackPosition(func->scriptData->variables[i]->stackOffset));
+			WriteDataType(&func->scriptData->variables[i]->type);
 		}
 
 		// Store script section name

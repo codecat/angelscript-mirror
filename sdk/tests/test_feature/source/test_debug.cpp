@@ -139,6 +139,11 @@ void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
 	int numVars = ctx->GetVarCount(stackLevel);
 	for( int n = 0; n < numVars; n++ )
 	{
+		// Skip temporary variables
+		const char* name = ctx->GetVarName(n, stackLevel);
+		if (name == 0 || strlen(name) == 0)
+			continue;
+
 		typeId = ctx->GetVarTypeId(n, stackLevel); 
 		varPointer = ctx->GetAddressOfVar(n, stackLevel);
 		if( typeId == engine->GetTypeIdByDecl("int") )
