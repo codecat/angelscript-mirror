@@ -5535,7 +5535,7 @@ int asCContext::GetVarTypeId(asUINT varIndex, asUINT stackLevel, asETypeModifier
 }
 
 // interface
-void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel, bool dontDereference)
+void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel, bool dontDereference, bool returnAddressOfUnitializedObjects)
 {
 	// Don't return anything if there is no bytecode, e.g. before calling Execute()
 	if( m_regs.programPointer == 0 ) return 0;
@@ -5584,7 +5584,7 @@ void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel, bool dontD
 					{
 						onHeap = n < func->scriptData->objVariablesOnHeap;
 
-						if( !onHeap )
+						if( !onHeap && !returnAddressOfUnitializedObjects )
 						{
 							// If the object on the stack is not initialized return a null pointer instead
 							asCArray<int> liveObjects;
@@ -5601,8 +5601,7 @@ void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel, bool dontD
 		}
 
 		// If it wasn't an object on the heap, then check if it is a reference parameter
-		// If dontDereference is true then the application wants the address of the reference, rather than the value it refers to
-		if( !onHeap && pos <= 0 && !dontDereference )
+		if( !onHeap && pos <= 0 )
 		{
 			// Determine what function argument this position matches
 			int stackPos = 0;
@@ -5626,7 +5625,8 @@ void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel, bool dontD
 			}
 		}
 
-		if( onHeap )
+		// If dontDereference is true then the application wants the address of the reference, rather than the value it refers to
+		if( onHeap && !dontDereference )
 			return *(void**)(sf - func->scriptData->variables[varIndex]->stackOffset);
 	}
 

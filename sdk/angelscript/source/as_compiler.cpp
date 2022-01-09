@@ -288,7 +288,6 @@ void asCCompiler::FinalizeFunction()
 	{
 		// Get the parameter type
 		asCDataType& type = outFunc->parameterTypes[n];
-		asETypeModifiers inoutFlag = n < outFunc->inOutFlags.GetLength() ? outFunc->inOutFlags[n] : asTM_NONE;
 
 		// If the parameter has a name then it was already added to the list in SetupParametersAndReturnVariable
 		if (outFunc->parameterNames[n] == "")
