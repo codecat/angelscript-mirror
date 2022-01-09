@@ -5509,7 +5509,11 @@ int asCContext::GetVarTypeId(asUINT varIndex, asUINT stackLevel, asETypeModifier
 					stackPos -= AS_PTR_SIZE;
 
 				if (func->DoesReturnOnStack())
+				{
+					if (stackPos == pos)
+						*typeModifiers = asTM_INOUTREF;
 					stackPos -= AS_PTR_SIZE;
+				}
 
 				for (asUINT n = 0; n < func->parameterTypes.GetLength(); n++)
 				{
