@@ -276,6 +276,35 @@ void asCCompiler::FinalizeFunction()
 		int slot = GetVariableSlot(tempVariableOffsets[n]);
 		outFunc->AddVariable("", variableAllocations[slot], tempVariableOffsets[n]);
 	}
+	// Add the type of unnamed parameters
+	int stackPos = outFunc->objectType ? -AS_PTR_SIZE : 0;
+	// If the return type is a value type returned by value the address of the
+	// location where the value will be stored is pushed on the stack before
+	// the arguments
+	bool isDestructor = (outFunc->name.GetLength() > 0 && outFunc->name[0] == '~') ? true : false;
+	if (!(isDestructor || m_isConstructor) && outFunc->DoesReturnOnStack())
+		stackPos -= AS_PTR_SIZE;
+	for (n = 0; n < outFunc->parameterNames.GetLength(); n++)
+	{
+		// Get the parameter type
+		asCDataType& type = outFunc->parameterTypes[n];
+		asETypeModifiers inoutFlag = n < outFunc->inOutFlags.GetLength() ? outFunc->inOutFlags[n] : asTM_NONE;
+
+		// If the parameter has a name then it was already added to the list in SetupParametersAndReturnVariable
+		if (outFunc->parameterNames[n] == "")
+			outFunc->AddVariable("", type, stackPos);
+
+		// Move to next parameter
+		stackPos -= type.GetSizeOnStackDWords();
+	}
+	// Add the return type too at the end if it returns on the stack, which is when it uses a hidden parameter
+	if (outFunc->DoesReturnOnStack())
+	{
+		// Though declared as return by value, locally the return value is seen as a reference
+		asCDataType returnType = outFunc->returnType;
+		returnType.MakeReference(true);
+		outFunc->AddVariable("", returnType, outFunc->objectType ? -AS_PTR_SIZE : 0);
+	}
 
 	// Finalize the bytecode
 	byteCode.Finalize(tempVariableOffsets);
@@ -662,7 +691,7 @@ int asCCompiler::CompileFunction(asCBuilder *in_builder, asCScriptCode *in_scrip
 		if( v->stackOffset > 0 )
 		{
 			// Call variables destructors
-			if( v->name != "return" && v->name != "return address" )
+			if( v->name != "return" )
 				CallDestructor(v->type, v->stackOffset, v->onHeap, &byteCode);
 
 			DeallocateVariable(v->stackOffset);
@@ -680,7 +709,7 @@ int asCCompiler::CompileFunction(asCBuilder *in_builder, asCScriptCode *in_scrip
 		if( v->stackOffset <= 0 )
 		{
 			// Call variable destructors here, for variables not yet destroyed
-			if( v->name != "return" && v->name != "return address" )
+			if( v->name != "return" )
 				CallDestructor(v->type, v->stackOffset, v->onHeap, &byteCode);
 		}
 
