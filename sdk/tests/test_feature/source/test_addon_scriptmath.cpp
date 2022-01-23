@@ -126,7 +126,7 @@ bool Test()
 	{
 		// Internal return
 		r = ExecuteString(engine, "v = TestComplex();", mod);
-		if( r < 0 )
+		if( r != 0 )
 		{
 			PRINTF("%s: ExecuteString() failed %d\n", TESTNAME, r);
 			TEST_FAILED;

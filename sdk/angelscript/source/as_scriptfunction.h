@@ -61,7 +61,8 @@ struct asSScriptVariable
 	asCString   name;
 	asCDataType type;
 	int         stackOffset;
-	asUINT      declaredAtProgramPos;
+	asUINT      onHeap : 1;
+	asUINT      declaredAtProgramPos : 31;
 };
 
 enum asEListPatternNodeType
@@ -237,7 +238,7 @@ public:
 
 	void      DestroyInternal();
 
-	void      AddVariable(const asCString &name, asCDataType &type, int stackOffset);
+	void      AddVariable(const asCString &name, asCDataType &type, int stackOffset, bool onHeap);
 
 	int       GetSpaceNeededForArguments();
 	int       GetSpaceNeededForReturnValue();
@@ -328,17 +329,6 @@ public:
 		// The stack space needed for the local variables
 		asDWORD                         variableSpace;
 
-		// These hold information on objects and function pointers, including temporary
-		// variables used by exception handler and when saving bytecode
-		// TODO: These two are not needed anymore, since the variables array contain the same information
-		asCArray<asCTypeInfo*>          objVariableTypes;
-		asCArray<int>                   objVariablePos; // offset on stackframe
-
-		// The first variables in above array are allocated on the heap, the rest on the stack.
-		// This variable shows how many are on the heap.
-		// TODO: This one needs to be stored in a different way when objVariableTypes & objVariablePos are removed, unless the variables array is rearranged in the same way as above arrays
-		asUINT                          objVariablesOnHeap;
-
 		// Holds information on scope for object variables on the stack
 		asCArray<asSObjectVariableInfo> objVariableInfo;
 
@@ -352,7 +342,9 @@ public:
 		asJITFunction                   jitFunction;
 
 		// Holds type information on both explicitly declared variables and temporary variables
+		// Used during exception handling, byte code serialization, debugging, and context serialization
 		asCArray<asSScriptVariable*>    variables;
+
 		// Store position, line number pairs for debug information
 		asCArray<int>                   lineNumbers;
 		// Store the script section where the code was declared

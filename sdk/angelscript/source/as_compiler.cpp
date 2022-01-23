@@ -274,7 +274,7 @@ void asCCompiler::FinalizeFunction()
 	for (n = 0; n < tempVariableOffsets.GetLength(); n++)
 	{
 		int slot = GetVariableSlot(tempVariableOffsets[n]);
-		outFunc->AddVariable("", variableAllocations[slot], tempVariableOffsets[n]);
+		outFunc->AddVariable("", variableAllocations[slot], tempVariableOffsets[n], variableIsOnHeap[slot]);
 	}
 	// Add the type of unnamed parameters
 	int stackPos = outFunc->objectType ? -AS_PTR_SIZE : 0;
@@ -291,7 +291,11 @@ void asCCompiler::FinalizeFunction()
 
 		// If the parameter has a name then it was already added to the list in SetupParametersAndReturnVariable
 		if (outFunc->parameterNames[n] == "")
-			outFunc->AddVariable("", type, stackPos);
+		{
+			// Object types passed by value are considered to be on heap
+			bool onHeap = !type.IsReference() && type.IsObject() && !type.IsObjectHandle();
+			outFunc->AddVariable("", type, stackPos, onHeap);
+		}
 
 		// Move to next parameter
 		stackPos -= type.GetSizeOnStackDWords();
@@ -302,7 +306,7 @@ void asCCompiler::FinalizeFunction()
 		// Though declared as return by value, locally the return value is seen as a reference
 		asCDataType returnType = outFunc->returnType;
 		returnType.MakeReference(true);
-		outFunc->AddVariable("", returnType, outFunc->objectType ? -AS_PTR_SIZE : 0);
+		outFunc->AddVariable("", returnType, outFunc->objectType ? -AS_PTR_SIZE : 0, false);
 	}
 
 	// Finalize the bytecode
@@ -313,44 +317,6 @@ void asCCompiler::FinalizeFunction()
 	byteCode.ExtractTryCatchInfo(outFunc);
 
 	byteCode.ExtractObjectVariableInfo(outFunc);
-
-	// Compile the list of object variables for the exception handler and the bytecode serialization
-	// Start with the variables allocated on the heap, and then the ones allocated on the stack
-	for( n = 0; n < variableAllocations.GetLength(); n++ )
-	{
-		// The exception handler doesn't need to know about references, but the bytecode serialization must adjust the size of the pointer
-		if( (variableAllocations[n].IsObject() || variableAllocations[n].IsFuncdef()) )
-		{
-			if( variableIsOnHeap[n] )
-			{
-				// For references, we just store a null pointer so the exception handler can identify that it shouldn't do anything, 
-				// but the bytecode serializer can still understand that it needs to adjust the size of the pointer
-				if (variableAllocations[n].IsReference())
-					outFunc->scriptData->objVariableTypes.PushLast(0);
-				else
-					outFunc->scriptData->objVariableTypes.PushLast(variableAllocations[n].GetTypeInfo());
-				outFunc->scriptData->objVariablePos.PushLast(GetVariableOffset(n));
-			}
-		}
-	}
-	outFunc->scriptData->objVariablesOnHeap = asUINT(outFunc->scriptData->objVariablePos.GetLength());
-	for( n = 0; n < variableAllocations.GetLength(); n++ )
-	{
-		// The exception handler doesn't need to know about references, but the bytecode serialization must adjust the size of the pointer
-		if( (variableAllocations[n].IsObject() || variableAllocations[n].IsFuncdef()) )
-		{
-			if( !variableIsOnHeap[n] )
-			{
-				// For references, we just store a null pointer so the exception handler can identify that it shouldn't do anything, 
-				// but the bytecode serializer can still understand that it needs to adjust the size of the pointer
-				if (variableAllocations[n].IsReference())
-					outFunc->scriptData->objVariableTypes.PushLast(0);
-				else
-					outFunc->scriptData->objVariableTypes.PushLast(variableAllocations[n].GetTypeInfo());
-				outFunc->scriptData->objVariablePos.PushLast(GetVariableOffset(n));
-			}
-		}
-	}
 
 	// Copy byte code to the function
 	asASSERT( outFunc->scriptData->byteCode.GetLength() == 0 );
@@ -446,10 +412,12 @@ int asCCompiler::SetupParametersAndReturnVariable(asCArray<asCString> &parameter
 		}
 
 		// If the parameter has a name then declare it as variable
+		// Object types passed by value are considered to be on heap
+		bool onHeap = !type.IsReference() && type.IsObject() && !type.IsObjectHandle();
 		if( parameterNames[n] != "" )
 		{
 			asCString &name = parameterNames[n];
-			if( vs.DeclareVariable(name.AddressOf(), type, stackPos, true) < 0 )
+			if( vs.DeclareVariable(name.AddressOf(), type, stackPos, onHeap) < 0 )
 			{
 				// TODO: It might be an out-of-memory too
 				Error(TXT_PARAMETER_ALREADY_DECLARED, func);
@@ -457,10 +425,10 @@ int asCCompiler::SetupParametersAndReturnVariable(asCArray<asCString> &parameter
 
 			// Add marker for variable declaration
 			byteCode.VarDecl((int)outFunc->scriptData->variables.GetLength());
-			outFunc->AddVariable(name, type, stackPos);
+			outFunc->AddVariable(name, type, stackPos, onHeap);
 		}
 		else
-			vs.DeclareVariable("", type, stackPos, true);
+			vs.DeclareVariable("", type, stackPos, onHeap);
 
 		// Move to next parameter
 		stackPos -= type.GetSizeOnStackDWords();
@@ -469,7 +437,7 @@ int asCCompiler::SetupParametersAndReturnVariable(asCArray<asCString> &parameter
 	for( n = asUINT(vs.variables.GetLength()); n-- > 0; )
 		variables->DeclareVariable(vs.variables[n]->name.AddressOf(), vs.variables[n]->type, vs.variables[n]->stackOffset, vs.variables[n]->onHeap);
 
-	variables->DeclareVariable("return", returnType, stackPos, true);
+	variables->DeclareVariable("return", returnType, stackPos, false);
 
 	return stackPos;
 }
@@ -2853,7 +2821,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 
 		// Add marker that the variable has been declared
 		bc->VarDecl((int)outFunc->scriptData->variables.GetLength());
-		outFunc->AddVariable(name, type, offset);
+		outFunc->AddVariable(name, type, offset, IsVariableOnHeap(offset));
 
 		// Keep the node for the variable decl
 		asCScriptNode *varNode = node;

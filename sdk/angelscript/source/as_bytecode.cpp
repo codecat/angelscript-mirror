@@ -2181,8 +2181,7 @@ void asCByteCode::DebugOutput(const char *name, asCScriptFunction *func)
 	fprintf(file, "Variables: \n");
 	for( n = 0; n < func->scriptData->variables.GetLength(); n++ )
 	{
-		int idx = func->scriptData->objVariablePos.IndexOf(func->scriptData->variables[n]->stackOffset);
-		bool isOnHeap = asUINT(idx) < func->scriptData->objVariablesOnHeap ? true : false;
+		bool isOnHeap = func->scriptData->variables[n]->onHeap;
 		fprintf(file, " %.3d: %s%s %s\n", func->scriptData->variables[n]->stackOffset, isOnHeap ? "(heap) " : "", func->scriptData->variables[n]->type.Format(func->nameSpace, true).AddressOf(), func->scriptData->variables[n]->name.AddressOf());
 	}
 	if( func->objectType )

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2021 Andreas Jonsson
+   Copyright (c) 2003-2022 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -969,7 +969,7 @@ const char *asCScriptFunction::GetVarDecl(asUINT index, bool includeNamespace) c
 }
 
 // internal
-void asCScriptFunction::AddVariable(const asCString &in_name, asCDataType &in_type, int in_stackOffset)
+void asCScriptFunction::AddVariable(const asCString &in_name, asCDataType &in_type, int in_stackOffset, bool in_onHeap)
 {
 	asASSERT( scriptData );
 	asSScriptVariable *var = asNEW(asSScriptVariable);
@@ -981,6 +981,7 @@ void asCScriptFunction::AddVariable(const asCString &in_name, asCDataType &in_ty
 	var->name                 = in_name;
 	var->type                 = in_type;
 	var->stackOffset          = in_stackOffset;
+	var->onHeap               = in_onHeap;
 	var->declaredAtProgramPos = 0;
 	scriptData->variables.PushLast(var);
 }
@@ -990,10 +991,10 @@ asCTypeInfo *asCScriptFunction::GetTypeInfoOfLocalVar(short varOffset)
 {
 	asASSERT( scriptData );
 
-	for( asUINT n = 0; n < scriptData->objVariablePos.GetLength(); n++ )
+	for( asUINT n = 0; n < scriptData->variables.GetLength(); n++ )
 	{
-		if( scriptData->objVariablePos[n] == varOffset )
-			return scriptData->objVariableTypes[n];
+		if (scriptData->variables[n]->stackOffset == varOffset)
+			return scriptData->variables[n]->type.GetTypeInfo();
 	}
 
 	return 0;
@@ -1096,14 +1097,17 @@ void asCScriptFunction::AddReferences()
 				if( group != 0 ) group->AddRef();
 			}
 
-		for( asUINT v = 0; v < scriptData->objVariableTypes.GetLength(); v++ )
-			if( scriptData->objVariableTypes[v] ) // The null handle is also stored, but it doesn't have an object type
+		for (asUINT v = 0; v < scriptData->variables.GetLength(); v++)
+		{
+			asCTypeInfo* ti = reinterpret_cast<asCTypeInfo*>(scriptData->variables[v]->type.GetTypeInfo());
+			if (ti) // The null handle is also stored, but it doesn't have an object type
 			{
-				scriptData->objVariableTypes[v]->AddRefInternal();
+				ti->AddRefInternal();
 
-				asCConfigGroup *group = engine->FindConfigGroupForTypeInfo(scriptData->objVariableTypes[v]);
-				if( group != 0 ) group->AddRef();
+				asCConfigGroup* group = engine->FindConfigGroupForTypeInfo(ti);
+				if (group != 0) group->AddRef();
 			}
+		}
 
 		// Go through the byte code and add references to all resources used by the function
 		asCArray<asDWORD> &bc = scriptData->byteCode;
@@ -1253,14 +1257,17 @@ void asCScriptFunction::ReleaseReferences()
 				if( group != 0 ) group->Release();
 			}
 
-		for( asUINT v = 0; v < scriptData->objVariableTypes.GetLength(); v++ )
-			if( scriptData->objVariableTypes[v] ) // The null handle is also stored, but it doesn't have an object type
+		for (asUINT v = 0; v < scriptData->variables.GetLength(); v++)
+		{
+			asCTypeInfo* ti = reinterpret_cast<asCTypeInfo*>(scriptData->variables[v]->type.GetTypeInfo());
+			if (ti) // The null handle is also stored, but it doesn't have an object type
 			{
-				scriptData->objVariableTypes[v]->ReleaseInternal();
+				ti->ReleaseInternal();
 
-				asCConfigGroup *group = engine->FindConfigGroupForTypeInfo(scriptData->objVariableTypes[v]);
-				if( group != 0 ) group->Release();
+				asCConfigGroup* group = engine->FindConfigGroupForTypeInfo(ti);
+				if (group != 0) group->Release();
 			}
+		}
 
 		// Go through the byte code and release references to all resources used by the function
 		asCArray<asDWORD> &bc = scriptData->byteCode;

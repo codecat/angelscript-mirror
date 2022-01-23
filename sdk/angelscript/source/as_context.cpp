@@ -1387,6 +1387,7 @@ int asCContext::Execute()
 	return asERROR;
 }
 
+// interface
 int asCContext::PushState()
 {
 	// Only allow the state to be pushed when active
@@ -1778,11 +1779,17 @@ void asCContext::PrepareScriptFunction()
 
 	// Set all object variables to 0 to guarantee that they are null before they are used
 	// Only variables on the heap should be cleared. The rest will be cleared by calling the constructor
-	asUINT n = m_currentFunction->scriptData->objVariablesOnHeap;
-	while( n-- > 0 )
+	// TODO: Need a fast way to iterate over this list (perhaps a pointer in variables to give index of next object var, or perhaps just order the array with object types first)
+	for (asUINT n = m_currentFunction->scriptData->variables.GetLength(); n-- > 0; )
 	{
-		int pos = m_currentFunction->scriptData->objVariablePos[n];
-		*(asPWORD*)&m_regs.stackFramePointer[-pos] = 0;
+		asSScriptVariable *var = m_currentFunction->scriptData->variables[n];
+
+		// Dopn't clear the function arguments
+		if (var->stackOffset <= 0)
+			continue;
+
+		if( var->onHeap && (var->type.IsObject() || var->type.IsFuncdef()) )
+			*(asPWORD*)&m_regs.stackFramePointer[-var->stackOffset] = 0;
 	}
 
 	// Initialize the stack pointer with the space needed for local variables
@@ -4794,7 +4801,7 @@ void asCContext::DetermineLiveObjects(asCArray<int> &liveObjects, asUINT stackLe
 	}
 
 	// Determine which object variables that are really live ones
-	liveObjects.SetLength(func->scriptData->objVariablePos.GetLength());
+	liveObjects.SetLength(func->scriptData->variables.GetLength());
 	memset(liveObjects.AddressOf(), 0, sizeof(int)*liveObjects.GetLength());
 	for( int n = 0; n < (int)func->scriptData->objVariableInfo.GetLength(); n++ )
 	{
@@ -4814,8 +4821,8 @@ void asCContext::DetermineLiveObjects(asCArray<int> &liveObjects, asUINT stackLe
 						// TODO: optimize: This should have been done by the compiler already
 						// Which variable is this?
 						asUINT var = 0;
-						for( asUINT v = 0; v < func->scriptData->objVariablePos.GetLength(); v++ )
-							if( func->scriptData->objVariablePos[v] == func->scriptData->objVariableInfo[n].variableOffset )
+						for (asUINT v = 0; v < func->scriptData->variables.GetLength(); v++)
+							if (func->scriptData->variables[v]->stackOffset == func->scriptData->objVariableInfo[n].variableOffset)
 							{
 								var = v;
 								break;
@@ -4827,8 +4834,8 @@ void asCContext::DetermineLiveObjects(asCArray<int> &liveObjects, asUINT stackLe
 					{
 						// Which variable is this?
 						asUINT var = 0;
-						for( asUINT v = 0; v < func->scriptData->objVariablePos.GetLength(); v++ )
-							if( func->scriptData->objVariablePos[v] == func->scriptData->objVariableInfo[n].variableOffset )
+						for (asUINT v = 0; v < func->scriptData->variables.GetLength(); v++)
+							if (func->scriptData->variables[v]->stackOffset == func->scriptData->objVariableInfo[n].variableOffset)
 							{
 								var = v;
 								break;
@@ -4902,11 +4909,11 @@ void asCContext::CleanArgsOnStack()
 		int var = asBC_SWORDARG0(prevInstr);
 
 		// Find the funcdef from the local variable
-		for( v = 0; v < m_currentFunction->scriptData->objVariablePos.GetLength(); v++ )
-			if( m_currentFunction->scriptData->objVariablePos[v] == var )
+		for( v = 0; v < m_currentFunction->scriptData->variables.GetLength(); v++ )
+			if( m_currentFunction->scriptData->variables[v]->stackOffset == var )
 			{
-				asASSERT(m_currentFunction->scriptData->objVariableTypes[v]);
-				func = CastToFuncdefType(m_currentFunction->scriptData->objVariableTypes[v])->funcdef;
+				asASSERT(m_currentFunction->scriptData->variables[v]->type.GetTypeInfo());
+				func = CastToFuncdefType(m_currentFunction->scriptData->variables[v]->type.GetTypeInfo())->funcdef;
 				break;
 			}
 
@@ -5056,9 +5063,9 @@ bool asCContext::CleanStackFrame(bool catchException)
 		asCArray<int> liveObjects;
 		DetermineLiveObjects(liveObjects, 0);
 
-		for( asUINT n = 0; n < m_currentFunction->scriptData->objVariablePos.GetLength(); n++ )
+		for (asUINT n = 0; n < m_currentFunction->scriptData->variables.GetLength(); n++)
 		{
-			int pos = m_currentFunction->scriptData->objVariablePos[n];
+			int pos = m_currentFunction->scriptData->variables[n]->stackOffset;
 
 			// If the exception was caught, then only clean up objects within the try block
 			if (exceptionCaught)
@@ -5096,33 +5103,33 @@ bool asCContext::CleanStackFrame(bool catchException)
 					continue;
 			}
 
-			if( n < m_currentFunction->scriptData->objVariablesOnHeap )
+			if( m_currentFunction->scriptData->variables[n]->onHeap )
 			{
 				// Check if the pointer is initialized
 				if( *(asPWORD*)&m_regs.stackFramePointer[-pos] )
 				{
 					// Skip pointers with unknown types, as this is either a null pointer or just a reference that is not owned by function
-					if (m_currentFunction->scriptData->objVariableTypes[n])
+					if(m_currentFunction->scriptData->variables[n]->type.GetTypeInfo())
 					{
 						// Call the object's destructor
-						if (m_currentFunction->scriptData->objVariableTypes[n]->flags & asOBJ_FUNCDEF)
+						if( m_currentFunction->scriptData->variables[n]->type.GetTypeInfo()->flags & asOBJ_FUNCDEF )
 						{
 							(*(asCScriptFunction**)&m_regs.stackFramePointer[-pos])->Release();
 						}
-						else if( m_currentFunction->scriptData->objVariableTypes[n]->flags & asOBJ_REF )
+						else if (m_currentFunction->scriptData->variables[n]->type.GetTypeInfo()->flags & asOBJ_REF)
 						{
-							asSTypeBehaviour *beh = &CastToObjectType(m_currentFunction->scriptData->objVariableTypes[n])->beh;
-							asASSERT( (m_currentFunction->scriptData->objVariableTypes[n]->flags & asOBJ_NOCOUNT) || beh->release );
+							asSTypeBehaviour* beh = &CastToObjectType(m_currentFunction->scriptData->variables[n]->type.GetTypeInfo())->beh;
+							asASSERT((m_currentFunction->scriptData->variables[n]->type.GetTypeInfo()->flags & asOBJ_NOCOUNT) || beh->release);
 							if( beh->release )
 								m_engine->CallObjectMethod((void*)*(asPWORD*)&m_regs.stackFramePointer[-pos], beh->release);
 						}
 						else
 						{
-							asSTypeBehaviour *beh = &CastToObjectType(m_currentFunction->scriptData->objVariableTypes[n])->beh;
-							if( beh->destruct )
+							asSTypeBehaviour* beh = &CastToObjectType(m_currentFunction->scriptData->variables[n]->type.GetTypeInfo())->beh;
+							if (beh->destruct)
 								m_engine->CallObjectMethod((void*)*(asPWORD*)&m_regs.stackFramePointer[-pos], beh->destruct);
-							else if( m_currentFunction->scriptData->objVariableTypes[n]->flags & asOBJ_LIST_PATTERN )
-								m_engine->DestroyList((asBYTE*)*(asPWORD*)&m_regs.stackFramePointer[-pos], CastToObjectType(m_currentFunction->scriptData->objVariableTypes[n]));
+							else if (m_currentFunction->scriptData->variables[n]->type.GetTypeInfo()->flags & asOBJ_LIST_PATTERN)
+								m_engine->DestroyList((asBYTE*)*(asPWORD*)&m_regs.stackFramePointer[-pos], CastToObjectType(m_currentFunction->scriptData->variables[n]->type.GetTypeInfo()));
 
 							// Free the memory
 							m_engine->CallFree((void*)*(asPWORD*)&m_regs.stackFramePointer[-pos]);
@@ -5133,12 +5140,12 @@ bool asCContext::CleanStackFrame(bool catchException)
 			}
 			else
 			{
-				asASSERT( m_currentFunction->scriptData->objVariableTypes[n] && m_currentFunction->scriptData->objVariableTypes[n]->GetFlags() & asOBJ_VALUE );
-
 				// Only destroy the object if it is truly alive
 				if( liveObjects[n] > 0 )
 				{
-					asSTypeBehaviour *beh = &CastToObjectType(m_currentFunction->scriptData->objVariableTypes[n])->beh;
+					asASSERT(m_currentFunction->scriptData->variables[n]->type.GetTypeInfo() && m_currentFunction->scriptData->variables[n]->type.GetTypeInfo()->GetFlags() & asOBJ_VALUE);
+
+					asSTypeBehaviour* beh = &CastToObjectType(m_currentFunction->scriptData->variables[n]->type.GetTypeInfo())->beh;
 					if( beh->destruct )
 						m_engine->CallObjectMethod((void*)(asPWORD*)&m_regs.stackFramePointer[-pos], beh->destruct);
 				}
@@ -5571,31 +5578,21 @@ void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel, bool dontD
 	if( (func->scriptData->variables[varIndex]->type.IsObject() && !func->scriptData->variables[varIndex]->type.IsObjectHandle()) || (pos <= 0) )
 	{
 		// Determine if the object is really on the heap
-		bool onHeap = false;
+		bool onHeap = func->scriptData->variables[varIndex]->onHeap;
 		if( func->scriptData->variables[varIndex]->type.IsObject() &&
-			!func->scriptData->variables[varIndex]->type.IsObjectHandle() )
+			!func->scriptData->variables[varIndex]->type.IsObjectHandle() &&
+			!func->scriptData->variables[varIndex]->type.IsReference() )
 		{
-			onHeap = true;
 			if( func->scriptData->variables[varIndex]->type.GetTypeInfo()->GetFlags() & asOBJ_VALUE )
 			{
-				for( asUINT n = 0; n < func->scriptData->objVariablePos.GetLength(); n++ )
+				if (!onHeap && !returnAddressOfUnitializedObjects)
 				{
-					if( func->scriptData->objVariablePos[n] == pos )
-					{
-						onHeap = n < func->scriptData->objVariablesOnHeap;
+					// If the object on the stack is not initialized return a null pointer instead
+					asCArray<int> liveObjects;
+					DetermineLiveObjects(liveObjects, stackLevel);
 
-						if( !onHeap && !returnAddressOfUnitializedObjects )
-						{
-							// If the object on the stack is not initialized return a null pointer instead
-							asCArray<int> liveObjects;
-							DetermineLiveObjects(liveObjects, stackLevel);
-
-							if( liveObjects[n] <= 0 )
-								return 0;
-						}
-
-						break;
-					}
+					if (liveObjects[varIndex] <= 0)
+						return 0;
 				}
 			}
 		}
@@ -5603,26 +5600,8 @@ void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel, bool dontD
 		// If it wasn't an object on the heap, then check if it is a reference parameter
 		if( !onHeap && pos <= 0 )
 		{
-			// Determine what function argument this position matches
-			int stackPos = 0;
-			if( func->objectType )
-				stackPos -= AS_PTR_SIZE;
-
-			if( func->DoesReturnOnStack() )
-				stackPos -= AS_PTR_SIZE;
-
-			for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
-			{
-				if( stackPos == pos )
-				{
-					// The right argument was found. Is this a reference parameter?
-					if( func->inOutFlags[n] != asTM_NONE )
-						onHeap = true;
-
-					break;
-				}
-				stackPos -= func->parameterTypes[n].GetSizeOnStackDWords();
-			}
+			if (func->scriptData->variables[varIndex]->type.IsReference())
+				onHeap = true;
 		}
 
 		// If dontDereference is true then the application wants the address of the reference, rather than the value it refers to
