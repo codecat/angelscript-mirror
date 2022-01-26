@@ -374,6 +374,257 @@ asIScriptFunction *asCContext::GetSystemFunction()
 }
 
 // interface
+int asCContext::PushFunction(asIScriptFunction *func, void *object, int typeId)
+{
+	asCScriptFunction *realFunc = static_cast<asCScriptFunction*>(func);
+
+	if( realFunc == 0 )
+	{
+		asCString str;
+		str.Format(TXT_FAILED_IN_FUNC_s_s_d, "PushFunction", errorNames[-asINVALID_ARG], asINVALID_ARG);
+		m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+		return asINVALID_ARG;
+	}
+
+	if( m_status != asEXECUTION_DESERIALIZATION )
+	{
+		asCString str;
+		str.Format(TXT_FAILED_IN_FUNC_s_s_d, "PushFunction", errorNames[-asCONTEXT_NOT_PREPARED], asCONTEXT_NOT_PREPARED);
+		m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+		return asCONTEXT_NOT_PREPARED;
+	}
+
+	if( realFunc->funcType == asFUNC_DELEGATE )
+	{
+		asASSERT(object == 0 && typeId == asTYPEID_VOID);
+
+		object   = realFunc->objForDelegate;
+		realFunc = realFunc->funcForDelegate;
+		typeId   = realFunc->GetObjectType()->GetTypeId();
+	}
+
+	realFunc = GetRealFunc(realFunc, &object);
+
+	if( GetCallstackSize() == 0 )
+	{
+		m_status = asEXECUTION_UNINITIALIZED;
+		Prepare(realFunc);
+		if(object) *(asPWORD*)&m_regs.stackFramePointer[0] = (asPWORD)object;
+		m_status = asEXECUTION_DESERIALIZATION;
+	}
+	else
+	{
+		if(realFunc->funcType == asFUNC_INTERFACE || realFunc->funcType == asFUNC_VIRTUAL)
+			CallInterfaceMethod(realFunc);
+		else
+			CallScriptFunction(realFunc);
+
+		if(object) *(asPWORD*)&m_regs.stackFramePointer[0] = (asPWORD)object;
+	}
+
+	asASSERT(m_currentFunction->funcType != asFUNC_DELEGATE);
+
+	return asSUCCESS;
+}
+
+// interface
+int asCContext::GetStateRegisters(asUINT stackLevel, asIScriptFunction **_callingSystemFunction, asIScriptFunction **_initialFunction, asDWORD *_originalStackPointer, asDWORD *_argumentSize, asQWORD *_valueRegister, void **_objectRegister, asITypeInfo **_objectRegisterType)
+{
+	asIScriptFunction * callingSystemFunction;
+	asIScriptFunction * initialFunction;
+	asDWORD *           originalStackPointer;
+	int                 argumentsSize;
+	asQWORD             valueRegister;
+	void *              objectRegister;
+	asITypeInfo *       objectType;
+
+	if( stackLevel == 0 )
+	{
+		callingSystemFunction = m_callingSystemFunction;
+		initialFunction       = m_initialFunction;
+		originalStackPointer  = m_originalStackPointer;
+		argumentsSize         = m_argumentsSize;
+
+		// Need to push the value of registers so they can be restored
+		valueRegister         = *(asQWORD*)(&m_regs.valueRegister);
+		objectRegister        = m_regs.objectRegister;
+		objectType            = m_regs.objectType;
+	}
+	else
+	{
+		asPWORD const *tmp = &m_callStack[m_callStack.GetLength() - CALLSTACK_FRAME_SIZE*stackLevel];
+
+		if( tmp[0] != 0 )
+			return asERROR;
+
+		// Restore the previous initial function and the associated values
+		callingSystemFunction = reinterpret_cast<asCScriptFunction*>(tmp[1]);
+		initialFunction       = reinterpret_cast<asCScriptFunction*>(tmp[2]);
+		originalStackPointer  = (asDWORD*)tmp[3];
+		argumentsSize         = (int)tmp[4];
+
+		valueRegister   = asQWORD(asDWORD(tmp[5]));
+		valueRegister  |= asQWORD(tmp[6])<<32;
+		objectRegister  = (void*)tmp[7];
+		objectType      = (asITypeInfo*)tmp[8];
+	}
+
+	if(_callingSystemFunction) *_callingSystemFunction = callingSystemFunction;
+	if(_initialFunction)       *_initialFunction       = initialFunction;
+	if(_originalStackPointer)  *_originalStackPointer  = SerializeStackPointer(originalStackPointer);
+	if(_argumentSize)          *_argumentSize          = argumentsSize;
+	if(_valueRegister)         *_valueRegister         = valueRegister;
+	if(_objectRegister)        *_objectRegister        = objectRegister;
+	if(_objectRegisterType)    *_objectRegisterType    = objectType;
+
+	return asSUCCESS;
+}
+
+// interface
+int asCContext::GetCallStateRegisters(asUINT stackLevel, asDWORD *_stackFramePointer, asIScriptFunction **_currentFunction, asDWORD *_programPointer, asDWORD *_stackPointer, asDWORD *_stackIndex)
+{
+	asDWORD           *stackFramePointer;
+	asCScriptFunction *currentFunction;
+	asDWORD           *programPointer;
+	asDWORD           *stackPointer;
+	int                stackIndex;
+
+	if( stackLevel == 0 )
+	{
+		stackFramePointer = m_regs.stackFramePointer;
+		currentFunction   = m_currentFunction;
+		programPointer    = m_regs.programPointer;
+		stackPointer      = m_regs.stackPointer;
+		stackIndex        = m_stackIndex;
+	}
+	else
+	{
+		asPWORD const*s = &m_callStack[m_callStack.GetLength() - CALLSTACK_FRAME_SIZE*stackLevel];
+
+		stackFramePointer = (asDWORD*)s[0];
+		currentFunction   = (asCScriptFunction*)s[1];
+		programPointer    = (asDWORD*)s[2];
+		stackPointer      = (asDWORD*)s[3];
+		stackIndex        = (int)s[4];
+	}
+
+	if( stackFramePointer == 0 )
+		return asERROR; // TODO: This is not really an error. It just means that the stackLevel represent a pushed state
+
+	if(_stackFramePointer) *_stackFramePointer = SerializeStackPointer(stackFramePointer);
+	if(_currentFunction)   *_currentFunction   = currentFunction;
+	if(_programPointer)    *_programPointer    = programPointer != 0? asUINT(programPointer - currentFunction->scriptData->byteCode.AddressOf()) : -1;
+	if(_stackPointer)      *_stackPointer      = SerializeStackPointer(stackPointer);
+	if(_stackIndex)        *_stackIndex        = stackIndex;
+
+	return asSUCCESS;
+}
+
+// interface
+int asCContext::SetStateRegisters(asUINT stackLevel, asIScriptFunction *callingSystemFunction, asIScriptFunction *initialFunction, asDWORD originalStackPointer, asDWORD argumentsSize, asQWORD valueRegister, void *objectRegister, asITypeInfo *objectType)
+{
+	if( m_status != asEXECUTION_DESERIALIZATION)
+	{
+		asCString str;
+		str.Format(TXT_FAILED_IN_FUNC_s_s_d, "SetStateRegisters", errorNames[-asCONTEXT_ACTIVE], asCONTEXT_ACTIVE);
+		m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+		return asCONTEXT_ACTIVE;
+	}
+
+	if( stackLevel == 0 )
+	{
+		m_callingSystemFunction = reinterpret_cast<asCScriptFunction*>(callingSystemFunction);
+		m_initialFunction       = reinterpret_cast<asCScriptFunction*>(initialFunction);
+		m_originalStackPointer  = DeserializeStackPointer(originalStackPointer);
+		m_argumentsSize         = argumentsSize;
+
+		// Need to push the value of registers so they can be restored
+		m_regs.valueRegister  = valueRegister;
+		m_regs.objectRegister = objectRegister;
+		m_regs.objectType     = objectType;
+	}
+	else
+	{
+		asPWORD *tmp = &m_callStack[m_callStack.GetLength() - CALLSTACK_FRAME_SIZE*stackLevel];
+
+		if(tmp[0] != 0)
+			return asERROR; // TODO: This is not really an error. It just means that the stackLevel doesn't represent a pushed state
+
+		tmp[0] = 0;
+		tmp[1] = (asPWORD)callingSystemFunction;
+		tmp[2] = (asPWORD)initialFunction;
+		tmp[3] = (asPWORD)DeserializeStackPointer(originalStackPointer);
+		tmp[4] = (asPWORD)argumentsSize;
+
+		// Need to push the value of registers so they can be restored
+		tmp[5] = (asPWORD)asDWORD(valueRegister);
+		tmp[6] = (asPWORD)asDWORD(valueRegister>>32);
+		tmp[7] = (asPWORD)objectRegister;
+		tmp[8] = (asPWORD)objectType;
+	}
+
+	return asSUCCESS;
+}
+
+// interface
+int asCContext::SetCallStateRegisters(asUINT stackLevel, asDWORD stackFramePointer, asIScriptFunction *_currentFunction, asDWORD _programPointer, asDWORD stackPointer, asDWORD stackIndex)
+{
+	if( m_status != asEXECUTION_DESERIALIZATION)
+	{
+		asCString str;
+		str.Format(TXT_FAILED_IN_FUNC_s_s_d, "SetCallStateRegisters", errorNames[-asCONTEXT_ACTIVE], asCONTEXT_ACTIVE);
+		m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+		return asCONTEXT_ACTIVE;
+	}
+
+	// TODO: The arg _currentFunction is just used in debug mode to validate that it is the same that is already given in m_currentFunction or on the call stack. Do we really need to take this argument?
+	asCScriptFunction *currentFunction =  static_cast<asCScriptFunction*>(_currentFunction);
+
+	if( currentFunction->funcType == asFUNC_DELEGATE )
+	{
+		currentFunction = currentFunction->funcForDelegate;
+	}
+
+	if( stackLevel == 0 )
+	{
+		asASSERT(currentFunction->signatureId == m_currentFunction->signatureId);
+		currentFunction = m_currentFunction;
+
+		asDWORD *programPointer = currentFunction->scriptData->byteCode.AddressOf();
+		if(currentFunction->scriptData->byteCode.GetLength() > _programPointer)
+		{
+			programPointer += _programPointer;
+		}
+
+		m_regs.stackFramePointer = DeserializeStackPointer(stackFramePointer);
+		m_regs.programPointer    = programPointer;
+		m_regs.stackPointer      = DeserializeStackPointer(stackPointer);
+		m_stackIndex             = stackIndex;
+	}
+	else
+	{
+		asPWORD *tmp = &m_callStack[m_callStack.GetLength() - CALLSTACK_FRAME_SIZE*stackLevel];
+
+		asASSERT(currentFunction->signatureId == ((asCScriptFunction*)tmp[1])->signatureId);
+		currentFunction = ((asCScriptFunction*)tmp[1]);
+
+		asDWORD *programPointer = currentFunction->scriptData->byteCode.AddressOf();
+		if(currentFunction->scriptData->byteCode.GetLength() > _programPointer)
+		{
+			programPointer += _programPointer;
+		}
+
+		tmp[0] = (asPWORD)DeserializeStackPointer(stackFramePointer);
+	//	tmp[1] = (asPWORD)(currentFunction);
+		tmp[2] = (asPWORD)programPointer;
+		tmp[3] = (asPWORD)DeserializeStackPointer(stackPointer);
+		tmp[4] = (asPWORD)stackIndex;
+	}
+
+	return asSUCCESS;
+}
+
+// interface
 int asCContext::Prepare(asIScriptFunction *func)
 {
 	if( func == 0 )
@@ -1223,101 +1474,7 @@ int asCContext::Execute()
 	if (tld->activeContexts.GetLength() > m_engine->ep.maxNestedCalls)
 		SetInternalException(TXT_TOO_MANY_NESTED_CALLS);
 	else if( m_regs.programPointer == 0 )
-	{
-		if( m_currentFunction->funcType == asFUNC_DELEGATE )
-		{
-			// Push the object pointer onto the stack
-			asASSERT( m_regs.stackPointer - AS_PTR_SIZE >= m_stackBlocks[m_stackIndex] );
-			m_regs.stackPointer -= AS_PTR_SIZE;
-			m_regs.stackFramePointer -= AS_PTR_SIZE;
-			*(asPWORD*)m_regs.stackPointer = asPWORD(m_currentFunction->objForDelegate);
-
-			// Make the call to the delegated object method
-			m_currentFunction = m_currentFunction->funcForDelegate;
-		}
-
-		if( m_currentFunction->funcType == asFUNC_VIRTUAL ||
-			m_currentFunction->funcType == asFUNC_INTERFACE )
-		{
-			// The currentFunction is a virtual method
-
-			// Determine the true function from the object
-			asCScriptObject *obj = *(asCScriptObject**)(asPWORD*)m_regs.stackFramePointer;
-			if( obj == 0 )
-			{
-				SetInternalException(TXT_NULL_POINTER_ACCESS);
-			}
-			else
-			{
-				asCObjectType *objType = obj->objType;
-				asCScriptFunction *realFunc = 0;
-
-				if( m_currentFunction->funcType == asFUNC_VIRTUAL )
-				{
-					if( objType->virtualFunctionTable.GetLength() > (asUINT)m_currentFunction->vfTableIdx )
-					{
-						realFunc = objType->virtualFunctionTable[m_currentFunction->vfTableIdx];
-					}
-				}
-				else
-				{
-					// Search the object type for a function that matches the interface function
-					for( asUINT n = 0; n < objType->methods.GetLength(); n++ )
-					{
-						asCScriptFunction *f2 = m_engine->scriptFunctions[objType->methods[n]];
-						if( f2->signatureId == m_currentFunction->signatureId )
-						{
-							if( f2->funcType == asFUNC_VIRTUAL )
-								realFunc = objType->virtualFunctionTable[f2->vfTableIdx];
-							else
-								realFunc = f2;
-							break;
-						}
-					}
-				}
-
-				if( realFunc && realFunc->signatureId == m_currentFunction->signatureId )
-					m_currentFunction = realFunc;
-				else
-					SetInternalException(TXT_NULL_POINTER_ACCESS);
-			}
-		}
-		else if( m_currentFunction->funcType == asFUNC_IMPORTED )
-		{
-			int funcId = m_engine->importedFunctions[m_currentFunction->id & ~FUNC_IMPORTED]->boundFunctionId;
-			if( funcId > 0 )
-				m_currentFunction = m_engine->scriptFunctions[funcId];
-			else
-				SetInternalException(TXT_UNBOUND_FUNCTION);
-		}
-
-		if( m_currentFunction->funcType == asFUNC_SCRIPT )
-		{
-			m_regs.programPointer = m_currentFunction->scriptData->byteCode.AddressOf();
-
-			// Set up the internal registers for executing the script function
-			PrepareScriptFunction();
-		}
-		else if( m_currentFunction->funcType == asFUNC_SYSTEM )
-		{
-			// The current function is an application registered function
-
-			// Call the function directly
-			CallSystemFunction(m_currentFunction->id, this);
-
-			// Was the call successful?
-			if( m_status == asEXECUTION_ACTIVE )
-			{
-				m_status = asEXECUTION_FINISHED;
-			}
-		}
-		else
-		{
-			// This shouldn't happen unless there was an error in which
-			// case an exception should have been raised already
-			asASSERT( m_status == asEXECUTION_EXCEPTION );
-		}
-	}
+		SetProgramPointer();
 
 	asUINT gcPreObjects = 0;
 	if( m_engine->ep.autoGarbageCollect )
@@ -1387,13 +1544,130 @@ int asCContext::Execute()
 	return asERROR;
 }
 
+// internal
+asCScriptFunction *asCContext::GetRealFunc(asCScriptFunction * currentFunction, void ** _This)
+{
+	if( currentFunction->funcType == asFUNC_VIRTUAL ||
+		currentFunction->funcType == asFUNC_INTERFACE )
+	{
+		// The currentFunction is a virtual method
+
+		// Determine the true function from the object
+		asCScriptObject *obj = *(asCScriptObject**)_This;
+
+		if( obj == 0 )
+		{
+			SetInternalException(TXT_NULL_POINTER_ACCESS);
+		}
+		else
+		{
+			asCObjectType *objType = obj->objType;
+			asCScriptFunction * realFunc = 0;
+
+			if( currentFunction->funcType == asFUNC_VIRTUAL )
+			{
+				if( objType->virtualFunctionTable.GetLength() > (asUINT)currentFunction->vfTableIdx )
+				{
+					realFunc = objType->virtualFunctionTable[currentFunction->vfTableIdx];
+				}
+			}
+			else
+			{
+				// Search the object type for a function that matches the interface function
+				for( asUINT n = 0; n < objType->methods.GetLength(); n++ )
+				{
+					asCScriptFunction *f2 = m_engine->scriptFunctions[objType->methods[n]];
+					if( f2->signatureId == currentFunction->signatureId )
+					{
+						if( f2->funcType == asFUNC_VIRTUAL )
+							realFunc = objType->virtualFunctionTable[f2->vfTableIdx];
+						else
+							realFunc = f2;
+
+						break;
+					}
+				}
+			}
+
+			if( realFunc && realFunc->signatureId == currentFunction->signatureId )
+				return realFunc;
+			else
+				SetInternalException(TXT_NULL_POINTER_ACCESS);
+		}
+	}
+	else if( currentFunction->funcType == asFUNC_IMPORTED )
+	{
+		int funcId = m_engine->importedFunctions[currentFunction->id & ~FUNC_IMPORTED]->boundFunctionId;
+		if( funcId > 0 )
+			return m_engine->scriptFunctions[funcId];
+		else
+			SetInternalException(TXT_UNBOUND_FUNCTION);
+	}
+
+	return currentFunction;
+}
+
+// internal
+void asCContext::SetProgramPointer()
+{
+	// This shouldn't be called if the program pointer is already set
+	asASSERT(m_regs.programPointer == 0);
+
+	// Can't set up the program pointer if no function has been set yet
+	asASSERT(m_currentFunction != 0);
+
+	// If the function is a delegate then get then set the function and object from the delegate
+	if( m_currentFunction->funcType == asFUNC_DELEGATE )
+	{
+		// Push the object pointer onto the stack
+		asASSERT( m_regs.stackPointer - AS_PTR_SIZE >= m_stackBlocks[m_stackIndex] );
+		m_regs.stackPointer -= AS_PTR_SIZE;
+		m_regs.stackFramePointer -= AS_PTR_SIZE;
+		*(asPWORD*)m_regs.stackPointer = asPWORD(m_currentFunction->objForDelegate);
+
+		// Make the call to the delegated object method
+		m_currentFunction = m_currentFunction->funcForDelegate;
+	}
+
+	m_currentFunction = GetRealFunc(m_currentFunction, (void**)m_regs.stackFramePointer);
+
+	if( m_currentFunction->funcType == asFUNC_SCRIPT )
+	{
+		m_regs.programPointer = m_currentFunction->scriptData->byteCode.AddressOf();
+
+		// Set up the internal registers for executing the script function
+		PrepareScriptFunction();
+	}
+	else if( m_currentFunction->funcType == asFUNC_SYSTEM )
+	{
+		asASSERT(m_status != asEXECUTION_DESERIALIZATION);
+
+		// The current function is an application registered function
+
+		// Call the function directly
+		CallSystemFunction(m_currentFunction->id, this);
+
+		// Was the call successful?
+		if( m_status == asEXECUTION_ACTIVE )
+		{
+			m_status = asEXECUTION_FINISHED;
+		}
+	}
+	else
+	{
+		// This shouldn't happen unless there was an error in which
+		// case an exception should have been raised already
+		asASSERT( m_status == asEXECUTION_EXCEPTION );
+	}
+}
+
 // interface
 int asCContext::PushState()
 {
-	// Only allow the state to be pushed when active
+	// Only allow the state to be pushed when active or deserialising
 	// TODO: Can we support a suspended state too? So the reuse of
 	//       the context can be done outside the Execute() call?
-	if( m_status != asEXECUTION_ACTIVE )
+	if( m_status != asEXECUTION_ACTIVE || m_status == asEXECUTION_DESERIALIZATION)
 	{
 		// TODO: Write message. Wrong usage
 		return asERROR;
@@ -1449,7 +1723,8 @@ int asCContext::PushState()
 
 	// Set the status to uninitialized as application
 	// should call Prepare() after this to reuse the context
-	m_status = asEXECUTION_UNINITIALIZED;
+	if( m_status != asEXECUTION_DESERIALIZATION )
+		m_status = asEXECUTION_UNINITIALIZED;
 
 	return asSUCCESS;
 }
@@ -5669,9 +5944,127 @@ void *asCContext::GetThisPointer(asUINT stackLevel)
 	return thisPointer;
 }
 
+// interface
+int asCContext::StartDeserialization()
+{
+	if( m_status == asEXECUTION_ACTIVE || m_status == asEXECUTION_SUSPENDED )
+	{
+		asCString str;
+		str.Format(TXT_FAILED_IN_FUNC_s_s_d, "StartDeserialization", errorNames[-asCONTEXT_ACTIVE], asCONTEXT_ACTIVE);
+		m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+		return asCONTEXT_ACTIVE;
+	}
 
+	Unprepare();
+	m_status = asEXECUTION_DESERIALIZATION;
 
+	return asSUCCESS;
+}
 
+// internal
+int asCContext::DeserializeProgramPointer(int programPointer, asCScriptFunction *currentFunction, void *object, asDWORD *&p, asCScriptFunction *&realFunc)
+{
+	realFunc = currentFunction;
+
+	if( currentFunction->funcType == asFUNC_VIRTUAL ||
+		currentFunction->funcType == asFUNC_INTERFACE )
+	{
+		// The currentFunction is a virtual method
+
+		// Determine the true function from the object
+		asCScriptObject *obj = *(asCScriptObject**)(asPWORD*)object;
+
+		if( obj == 0 )
+		{
+			return asINVALID_ARG;
+		}
+		else
+		{
+			realFunc = GetRealFunc(m_currentFunction, (void**)&obj);
+
+			if( realFunc && realFunc->signatureId == m_currentFunction->signatureId )
+				m_currentFunction = realFunc;
+			else
+				return asINVALID_ARG;
+		}
+	}
+
+	if( currentFunction->funcType == asFUNC_SCRIPT )
+	{
+		// TODO: Instead of returning pointer, this should count number of instructions so that the deserialized program pointer is 32/64bit agnostic
+		p = currentFunction->scriptData->byteCode.AddressOf() + programPointer;
+	}
+
+	return asSUCCESS;
+}
+
+// interface
+int asCContext::FinishDeserialization()
+{
+	if( m_status != asEXECUTION_DESERIALIZATION )
+	{
+		asCString str;
+		str.Format(TXT_FAILED_IN_FUNC_s_s_d, "FinishDeserialization", errorNames[-asCONTEXT_NOT_PREPARED], asCONTEXT_NOT_PREPARED);
+		m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+		return asCONTEXT_NOT_PREPARED;
+	}
+
+	// Sanity test
+	if (m_currentFunction == 0)
+	{
+		asCString str;
+		str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_s_d, "FinishDeserialization", "No function set", errorNames[-asCONTEXT_NOT_PREPARED], asCONTEXT_NOT_PREPARED);
+		m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+
+		// Clean up before returning to leave the context in a valid state
+		Unprepare();
+
+		return asCONTEXT_NOT_PREPARED;
+	}
+	
+	m_status = asEXECUTION_SUSPENDED;
+
+	return asSUCCESS;
+}
+
+// internal
+asDWORD *asCContext::DeserializeStackPointer(asDWORD v)
+{
+	// TODO: This function should find the correct stack block and then get the address within that stack block. It must not be expected that the same initContextStackSize was used when the stack pointer was serialized
+	int block = (v >> (32-6)) & 0x3F;
+	uint32_t offset = v & 0x03FFFFFF;
+
+	asASSERT((asUINT)block < m_stackBlocks.GetLength());
+	asASSERT(offset <= m_engine->ep.initContextStackSize*(1 << block));
+
+	return m_stackBlocks[block] + offset;
+}
+
+// internal
+asDWORD asCContext::SerializeStackPointer(asDWORD *v) const
+{
+	// TODO: This function should determine actual offset from the lowest stack by unwinding the stack. This way when deserializing it doesn't matter if the same block sizes are used or not
+	asASSERT(v != 0);
+	asASSERT(m_stackBlocks.GetLength());
+
+	uint64_t min = ~0llu;
+	int best     = -1;
+
+	for(asUINT i = 0; i < m_stackBlocks.GetLength(); ++i)
+	{
+		uint64_t delta = v - m_stackBlocks[i];
+
+		if(delta < min)
+		{
+			min = delta;
+			best = i;
+		}
+	}
+
+	asASSERT(min < 0x03FFFFFF && (asUINT)best < 0x3F);
+
+	return (min & 0x03FFFFFF) | (( best & 0x3F) << (32-6));
+}
 
 
 

@@ -252,14 +252,15 @@ enum asEBehaviours
 // Context states
 enum asEContextState
 {
-	asEXECUTION_FINISHED      = 0,
-	asEXECUTION_SUSPENDED     = 1,
-	asEXECUTION_ABORTED       = 2,
-	asEXECUTION_EXCEPTION     = 3,
-	asEXECUTION_PREPARED      = 4,
-	asEXECUTION_UNINITIALIZED = 5,
-	asEXECUTION_ACTIVE        = 6,
-	asEXECUTION_ERROR         = 7
+	asEXECUTION_FINISHED        = 0,
+	asEXECUTION_SUSPENDED       = 1,
+	asEXECUTION_ABORTED         = 2,
+	asEXECUTION_EXCEPTION       = 3,
+	asEXECUTION_PREPARED        = 4,
+	asEXECUTION_UNINITIALIZED   = 5,
+	asEXECUTION_ACTIVE          = 6,
+	asEXECUTION_ERROR           = 7,
+	asEXECUTION_DESERIALIZATION = 8
 };
 
 // Message types
@@ -952,6 +953,15 @@ public:
 	// User data
 	virtual void *SetUserData(void *data, asPWORD type = 0) = 0;
 	virtual void *GetUserData(asPWORD type = 0) const = 0;
+
+	// Serialization
+	virtual int StartDeserialization() = 0;
+	virtual int FinishDeserialization() = 0;
+	virtual int PushFunction(asIScriptFunction *func, void *object, int typeId) = 0;
+	virtual int GetStateRegisters(asUINT stackLevel, asIScriptFunction **callingSystemFunction, asIScriptFunction **initialFunction, asDWORD *origStackPointer, asDWORD *argumentsSize, asQWORD *valueRegister, void **objectRegister, asITypeInfo **objectTypeRegister) = 0;
+	virtual int GetCallStateRegisters(asUINT stackLevel, asDWORD *stackFramePointer, asIScriptFunction **currentFunction, asDWORD *programPointer, asDWORD *stackPointer, asDWORD *stackIndex) = 0;
+	virtual int SetStateRegisters(asUINT stackLevel, asIScriptFunction *callingSystemFunction, asIScriptFunction *initialFunction, asDWORD origStackPointer, asDWORD argumentsSize, asQWORD valueRegister, void *objectRegister, asITypeInfo *objectTypeRegister) = 0;
+	virtual int SetCallStateRegisters(asUINT stackLevel, asDWORD stackFramePointer, asIScriptFunction *currentFunction, asDWORD programPointer, asDWORD stackPointer, asDWORD stackIndex) = 0;
 
 protected:
 	virtual ~asIScriptContext() {}

@@ -591,6 +591,7 @@
     <ClCompile Include="..\..\source\test_constproperty.cpp" />
     <ClCompile Include="..\..\source\test_constructor.cpp" />
     <ClCompile Include="..\..\source\test_constructor2.cpp" />
+    <ClCompile Include="..\..\source\test_context.cpp" />
     <ClCompile Include="..\..\source\test_conversion.cpp" />
     <ClCompile Include="..\..\source\test_custommem.cpp" />
     <ClCompile Include="..\..\source\test_debug.cpp" />

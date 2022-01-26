@@ -533,6 +533,9 @@
     <ClCompile Include="..\..\source\test_native_defaultfunc.cpp">
       <Filter>tests</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\test_context.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\angelscript\include\angelscript.h" />

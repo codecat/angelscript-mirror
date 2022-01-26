@@ -44,6 +44,7 @@ SRCNAMES = \
   test_constproperty.cpp \
   test_constructor.cpp \
   test_constructor2.cpp \
+  test_context.cpp \
   test_conversion.cpp \
   test_custommem.cpp \
   test_debug.cpp \

@@ -46,6 +46,7 @@ add_executable(
         ../../source/test_constproperty.cpp
         ../../source/test_constructor.cpp
         ../../source/test_constructor2.cpp
+        ../../source/test_context.cpp
         ../../source/test_conversion.cpp
         ../../source/test_cstring.cpp
         ../../source/test_custommem.cpp
