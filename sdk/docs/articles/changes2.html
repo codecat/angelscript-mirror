@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.36.0 WIP - 2022/01/25</h2>
+<h2>Version 2.36.0 WIP - 2022/02/05</h2>
 
 <ul>
 <li>Bug fixes
@@ -23,6 +23,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed 32bit/64bit compatibility of saved bytecode with unsafe references enabled (Thanks Alexander Orefkov)
 <li>Fixed 32bit/64bit compatibility of saved bytecode in functions returning handles (Thanks Alexander Orefkov)
 <li>Destructor for template value types now get a unique function with correct object type (Thanks Miss)
+<li>Fixed crash in compiler when compiling initialization lists for a global variable with a higher index than 2^15 (Thanks Miss)
 </ul>
 <li>Script language
 <ul>

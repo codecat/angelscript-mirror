@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2021 Andreas Jonsson
+   Copyright (c) 2003-2022 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -102,7 +102,7 @@ struct asCExprValue
 	bool  isRefToLocal : 1; // The reference may be to a local variable
 	bool  isRefSafe : 1; // the life-time of the ref is guaranteed for the duration of the access
 	short dummy : 9;
-	short stackOffset;
+	int   stackOffset; // used both for stack offset and indexing global variables
 
 private:
 	// These values must not be accessed directly in order to avoid problems with endianess. 
