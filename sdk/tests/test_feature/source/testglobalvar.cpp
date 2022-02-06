@@ -39,11 +39,13 @@ bool TestGlobalVar()
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
+		// Turn off debug output, compiling this takes forever when debug output is on
+		engine->SetEngineProperty(asEP_NO_DEBUG_OUTPUT, true);
+
 		RegisterScriptArray(engine, false);
 
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 
-		// TODO: Need to be able to dynamically turn off debug output, compiling this takes forever when debug output is on
 		std::stringstream script;
 		for (int n = 0; n < 100000; n++)
 			script << "int g_" << n << " = " << n << ";\n";

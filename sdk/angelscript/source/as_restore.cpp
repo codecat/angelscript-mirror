@@ -3597,6 +3597,10 @@ void asCReader::CalculateAdjustmentByPos(asCScriptFunction *func)
 	int highestPos = 0;
 	for (n = 0; n < func->scriptData->variables.GetLength(); n++)
 	{
+		// Skip function parameters as these are adjusted by adjustNegativeStackByPos
+		if (func->scriptData->variables[n]->stackOffset <= 0)
+			continue;
+
 		asCDataType t = func->scriptData->variables[n]->type;
 		if (!t.IsObject() && !t.IsObjectHandle())
 			continue;
@@ -4810,6 +4814,10 @@ void asCWriter::CalculateAdjustmentByPos(asCScriptFunction *func)
 	adjustments.SetLength(0);
 	for (n = 0; n < func->scriptData->variables.GetLength(); n++)
 	{
+		// Skip function parameters as these are adjusted by adjustNegativeStackByPos
+		if (func->scriptData->variables[n]->stackOffset <= 0)
+			continue;
+
 		asCDataType t = func->scriptData->variables[n]->type;
 		if (!t.IsObject() && !t.IsObjectHandle())
 			continue;

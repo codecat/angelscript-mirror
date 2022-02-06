@@ -2136,6 +2136,9 @@ void asCByteCode::PostProcess()
 #ifdef AS_DEBUG
 void asCByteCode::DebugOutput(const char *name, asCScriptFunction *func)
 {
+	if (engine->ep.noDebugOutput)
+		return;
+
 #ifndef __MINGW32__
 	// _mkdir is broken on mingw
 	_mkdir("AS_DEBUG");

@@ -447,6 +447,10 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		ep.ignoreDuplicateSharedIntf = value ? true : false;
 		break;
 
+	case asEP_NO_DEBUG_OUTPUT:
+		ep.noDebugOutput = value ? true : false;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -555,6 +559,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 	case asEP_IGNORE_DUPLICATE_SHARED_INTF:
 		return ep.ignoreDuplicateSharedIntf;
 
+	case asEP_NO_DEBUG_OUTPUT:
+		return ep.noDebugOutput;
+
 	default:
 		return 0;
 	}
@@ -625,6 +632,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.initCallStackSize             = 10;        // 10 levels of calls
 		ep.maxCallStackSize              = 0;         // 0 = no limit
 		ep.ignoreDuplicateSharedIntf     = false;
+		ep.noDebugOutput                 = false;
 	}
 
 	gc.engine = this;
