@@ -2242,6 +2242,9 @@ void asCReader::ReadDataType(asCDataType *dt)
 	dt->MakeReadOnly(isReadOnly ? true : false);
 	dt->MakeReference(isReference ? true : false);
 
+	if (tokenType == ttUnrecognizedToken && isObjectHandle && ti == 0)
+		*dt = asCDataType::CreateNullHandle();
+
 	// Update the previously saved slot
 	savedDataTypes[saveSlot] = *dt;
 }
@@ -3608,13 +3611,7 @@ void asCReader::CalculateAdjustmentByPos(asCScriptFunction *func)
 		// Determing the size of the variable currently occupies on the stack
 		int size = AS_PTR_SIZE;
 		if (t.GetTypeInfo() && (t.GetTypeInfo()->GetFlags() & asOBJ_VALUE) && !func->scriptData->variables[n]->onHeap)
-		{
-			size = t.GetTypeInfo()->GetSize();
-			if (size < 4)
-				size = 1;
-			else
-				size /= 4;
-		}
+			size = t.GetSizeInMemoryDWords();
 
 		// Check if type has a different size than stored
 		if (size > 1)
@@ -4825,7 +4822,7 @@ void asCWriter::CalculateAdjustmentByPos(asCScriptFunction *func)
 		// Determing the size of the variable currently occupies on the stack
 		int size = AS_PTR_SIZE;
 		if (t.GetTypeInfo() && (t.GetTypeInfo()->GetFlags() & asOBJ_VALUE) && !func->scriptData->variables[n]->onHeap)
-			size = t.GetSizeOnStackDWords();
+			size = t.GetSizeInMemoryDWords();
 
 		// If larger than 1 dword, adjust the offsets accordingly
 		if (size > 1)

@@ -169,7 +169,11 @@ protected:
 class CBytecodeStream : public asIBinaryStream
 {
 public:
-	CBytecodeStream(const char * /*name*/) {wpointer = 0;rpointer = 0;}
+	CBytecodeStream(const char * /*name*/) 
+	{
+		wpointer = 0;
+		rpointer = 0;
+	}
 
 	int Write(const void *ptr, asUINT size) 
 	{
