@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2021 Andreas Jonsson
+   Copyright (c) 2003-2022 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.35.1
-#define ANGELSCRIPT_VERSION        23501
-#define ANGELSCRIPT_VERSION_STRING "2.35.1"
+//! Version 2.36.0
+#define ANGELSCRIPT_VERSION        23600
+#define ANGELSCRIPT_VERSION_STRING "2.36.0"
 
 // Data types
 
@@ -214,6 +214,10 @@ enum asEEngineProp
 	asEP_INIT_CALL_STACK_SIZE               = 30,
 	//! Maximum call stack size for script contexts. Default: 0 (no limit)
 	asEP_MAX_CALL_STACK_SIZE                = 31,
+	//! Ignore multiple declarations of shared interface. Default: false
+	asEP_IGNORE_DUPLICATE_SHARED_INTF       = 32,
+	//! Don't write debug output when library is compiled with AS_DEBUG. Default: false
+	asEP_NO_DEBUG_OUTPUT                    = 33,
 
 	asEP_LAST_PROPERTY
 };
@@ -565,6 +569,9 @@ enum asEFuncType
 //! \typedef asINT16
 //! \brief 16 bit signed integer
 
+//! \typedef asINT32
+//! \brief 32 bit signed integer
+
 //! \typedef asBYTE
 //! \brief 8 bit unsigned integer
 
@@ -595,6 +602,7 @@ enum asEFuncType
 //
 typedef signed char    asINT8;
 typedef signed short   asINT16;
+typedef signed int     asINT32;
 typedef unsigned char  asBYTE;
 typedef unsigned short asWORD;
 typedef unsigned int   asUINT;

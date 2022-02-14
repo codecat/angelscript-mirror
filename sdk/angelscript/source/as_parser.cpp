@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2021 Andreas Jonsson
+   Copyright (c) 2003-2022 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -919,6 +919,8 @@ asCScriptNode *asCParser::SuperficiallyParseExpression()
 	return node;
 }
 
+// BNF:18: COMMENT       ::= single token:  starts with // and ends with new line or starts with /* and ends with */
+// BNF:18: WHITESPACE    ::= single token:  spaces, tab, carriage return, line feed, and UTF8 byte-order-mark
 void asCParser::GetToken(sToken *token)
 {
 	// Check if the token has already been parsed
@@ -1584,7 +1586,7 @@ asCScriptNode *asCParser::ParseExprValue()
 }
 
 // BNF:12: LITERAL       ::= NUMBER | STRING | BITS | 'true' | 'false' | 'null'
-// BNF:17: NUMBER        ::= single token:  includes integers and real numbers, same as C++
+// BNF:17: NUMBER        ::= single token:  includes integers and real numbers, same as C++ 
 // BNF:17: STRING        ::= single token:  single quoted ', double quoted ", or heredoc multi-line string """
 // BNF:17: BITS          ::= single token:  binary 0b or 0B, octal 0o or 0O, decimal 0d or 0D, hexadecimal 0x or 0X
 asCScriptNode *asCParser::ParseConstant()
@@ -2147,7 +2149,7 @@ asCScriptNode *asCParser::ParseExprPostOp()
 }
 
 // BNF:15: EXPROP        ::= MATHOP | COMPOP | LOGICOP | BITOP
-// BNF:16: MATHOP        ::= '+' | '-' | '*' | '/' | '%' | '**'
+// BNF:16: MATHOP        ::= '+' | '-' | '*' | '/' | '\%' | '**'
 // BNF:16: COMPOP        ::= '==' | '!=' | '<' | '<=' | '>' | '>=' | 'is' | '!is'
 // BNF:16: LOGICOP       ::= '&&' | '||' | '^^' | 'and' | 'or' | 'xor'
 // BNF:16: BITOP         ::= '&' | '|' | '^' | '<<' | '>>' | '>>>'

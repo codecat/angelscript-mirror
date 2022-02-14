@@ -17,14 +17,14 @@ The following convention is used:
 
 <pre>
 SCRIPT        ::= {IMPORT | ENUM | TYPEDEF | CLASS | MIXIN | INTERFACE | FUNCDEF | VIRTPROP | VAR | FUNC | NAMESPACE | ';'}
+NAMESPACE     ::= 'namespace' IDENTIFIER {'::' IDENTIFIER} '{' SCRIPT '}'
+ENUM          ::= {'shared' | 'external'} 'enum' IDENTIFIER (';' | ('{' IDENTIFIER ['=' EXPR] {',' IDENTIFIER ['=' EXPR]} '}'))
 CLASS         ::= {'shared' | 'abstract' | 'final' | 'external'} 'class' IDENTIFIER (';' | ([':' IDENTIFIER {',' IDENTIFIER}] '{' {VIRTPROP | FUNC | VAR | FUNCDEF} '}'))
 TYPEDEF       ::= 'typedef' PRIMTYPE IDENTIFIER ';'
-NAMESPACE     ::= 'namespace' IDENTIFIER {'::' IDENTIFIER} '{' SCRIPT '}'
 FUNC          ::= {'shared' | 'external'} ['private' | 'protected'] [((TYPE ['&']) | '~')] IDENTIFIER PARAMLIST ['const'] FUNCATTR (';' | STATBLOCK)
 INTERFACE     ::= {'external' | 'shared'} 'interface' IDENTIFIER (';' | ([':' IDENTIFIER {',' IDENTIFIER}] '{' {VIRTPROP | INTFMTHD} '}'))
 VAR           ::= ['private'|'protected'] TYPE IDENTIFIER [( '=' (INITLIST | EXPR)) | ARGLIST] {',' IDENTIFIER [( '=' (INITLIST | EXPR)) | ARGLIST]} ';'
 IMPORT        ::= 'import' TYPE ['&'] IDENTIFIER PARAMLIST FUNCATTR 'from' STRING ';'
-ENUM          ::= {'shared' | 'external'} 'enum' IDENTIFIER (';' | ('{' IDENTIFIER ['=' EXPR] {',' IDENTIFIER ['=' EXPR]} '}'))
 FUNCDEF       ::= {'external' | 'shared'} 'funcdef' TYPE ['&'] IDENTIFIER PARAMLIST ';'
 VIRTPROP      ::= ['private' | 'protected'] TYPE ['&'] IDENTIFIER '{' {('get' | 'set') ['const'] FUNCATTR (STATBLOCK | ';')} '}'
 MIXIN         ::= 'mixin' CLASS
@@ -66,7 +66,7 @@ ASSIGN        ::= CONDITION [ ASSIGNOP ASSIGN ]
 CONDITION     ::= EXPR ['?' ASSIGN ':' ASSIGN]
 EXPROP        ::= MATHOP | COMPOP | LOGICOP | BITOP
 BITOP         ::= '&' | '|' | '^' | '<<' | '>>' | '>>>'
-MATHOP        ::= '+' | '-' | '*' | '/' | '%' | '**'
+MATHOP        ::= '+' | '-' | '*' | '/' | '\%' | '**'
 COMPOP        ::= '==' | '!=' | '<' | '<=' | '>' | '>=' | 'is' | '!is'
 LOGICOP       ::= '&&' | '||' | '^^' | 'and' | 'or' | 'xor'
 ASSIGNOP      ::= '=' | '+=' | '-=' | '*=' | '/=' | '|=' | '&=' | '^=' | '%=' | '**=' | '<<=' | '>>=' | '>>>='
@@ -74,6 +74,8 @@ IDENTIFIER    ::= single token:  starts with letter or _, can include any letter
 NUMBER        ::= single token:  includes integers and real numbers, same as C++
 STRING        ::= single token:  single quoted ', double quoted ", or heredoc multi-line string """
 BITS          ::= single token:  binary 0b or 0B, octal 0o or 0O, decimal 0d or 0D, hexadecimal 0x or 0X
+COMMENT       ::= single token:  starts with // and ends with new line or starts with /* and ends with */
+WHITESPACE    ::= single token:  spaces, tab, carriage return, line feed, and UTF8 byte-order-mark
 </pre>
 
 
