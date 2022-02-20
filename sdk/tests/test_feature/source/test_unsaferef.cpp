@@ -1,5 +1,7 @@
 #include "utils.h"
 #include "scriptmath3d.h"
+#include "../../add_on/scriptstdstring/scriptstdstring.h"
+#include "../../add_on/scripthelper/scripthelper.h"
 
 BEGIN_AS_NAMESPACE
 void RegisterStdString_Generic(asIScriptEngine *engine);
@@ -108,6 +110,52 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 	asIScriptEngine *engine;
+
+	// Test cleanup of temporary reference to string constant
+	// Reported by Polyak Istvan
+	{
+		engine = asCreateScriptEngine();
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterExceptionRoutines(engine);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main1() \n"
+			"{ \n"
+			"	'xxx' + 'yyy'; \n" // bad
+			"	throw('e'); \n"
+			"} \n"
+			"void main2() \n"
+			"{ \n"
+			"	string s1('xxx'), s2('yyy'); \n"
+			"	s1 + s2; \n"
+			"	s1 + 'xxx'; \n"
+			"	'yyy' + s2; \n" // bad
+			"	throw('e'); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptContext* ctx = engine->CreateContext();
+		ctx->Prepare(mod->GetFunctionByName("main1"));
+		r = ctx->Execute();
+		if (r != asEXECUTION_EXCEPTION)
+			TEST_FAILED;
+		ctx->Release();
+
+		ctx = engine->CreateContext();
+		ctx->Prepare(mod->GetFunctionByName("main2"));
+		r = ctx->Execute();
+		if (r != asEXECUTION_EXCEPTION)
+			TEST_FAILED;
+		ctx->Release();
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test problem with small types and unsafe references
 	// Reported by Polyak Istvan

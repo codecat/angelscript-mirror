@@ -5384,7 +5384,7 @@ bool asCContext::CleanStackFrame(bool catchException)
 				if( *(asPWORD*)&m_regs.stackFramePointer[-pos] )
 				{
 					// Skip pointers with unknown types, as this is either a null pointer or just a reference that is not owned by function
-					if(m_currentFunction->scriptData->variables[n]->type.GetTypeInfo())
+					if( m_currentFunction->scriptData->variables[n]->type.GetTypeInfo() && !m_currentFunction->scriptData->variables[n]->type.IsReference() )
 					{
 						// Call the object's destructor
 						if( m_currentFunction->scriptData->variables[n]->type.GetTypeInfo()->flags & asOBJ_FUNCDEF )
