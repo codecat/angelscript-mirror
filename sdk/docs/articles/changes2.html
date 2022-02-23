@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.36.0 WIP - 2022/02/19</h2>
+<h2>Version 2.36.0 WIP - 2022/02/23</h2>
 
 <ul>
 <li>Bug fixes
@@ -25,6 +25,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Destructor for template value types now get a unique function with correct object type (Thanks Miss)
 <li>Fixed crash in compiler when compiling initialization lists for a global variable with a higher index than 2^15 (Thanks Miss)
 <li>Fixed crash that could happen on cleaning up stack when unsafe references is used (Thanks Polyak Istvan)
+<li>Fixed crash in context stack unwind if it happened at a position after a branch return that returns a value object by value (Thanks Miss)
 </ul>
 <li>Script language
 <ul>

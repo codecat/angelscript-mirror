@@ -5114,6 +5114,10 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 					// Clean up the local variables and process deferred parameters
 					DestroyVariables(&expr.bc);
 					ProcessDeferredParams(&expr);
+
+					// If this return statement is within a branch, there might be more statements after this. To avoid having the exception 
+					// handler think the object is live in the statements between the return and the end of the function we need to add a marker
+					expr.bc.ObjInfo(offset, asOBJ_UNINIT);
 				}
 				else
 				{

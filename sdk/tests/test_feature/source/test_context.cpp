@@ -16,6 +16,12 @@ void pause(asIScriptGeneric*)
 	ctx->Suspend();
 }
 
+void abort(asIScriptGeneric*)
+{
+	asIScriptContext* ctx = asGetActiveContext();
+	ctx->Abort();
+}
+
 class CContextSerializer
 {
 public:
@@ -78,7 +84,7 @@ public:
 							storage.Write(&isNull, sizeof(bool));
 							if (!isNull)
 							{
-								asUINT len = reinterpret_cast<std::string*>(var)->length();
+								asUINT len = asUINT(reinterpret_cast<std::string*>(var)->length());
 								storage.Write(&len, sizeof(len));
 								storage.Write(reinterpret_cast<std::string*>(var)->data(), len);
 							}
@@ -794,6 +800,52 @@ bool Test()
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test clean-up of variables after aborting a context
+	// https://www.gamedev.net/forums/topic/711858-return-value-destructed-without-being-initialized/5445727/
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void abort()", asFUNCTION(abort), asCALL_GENERIC);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void Render() { \n"
+			"  loop(); \n"
+			"} \n"
+
+			"string loop() { \n"
+			"  float zero = 0; \n"
+			"  float one = 1; \n"
+			"  if (one <= zero) return 'aaaa!'; \n"
+
+			"  while (true) {abort();} \n"
+
+			"  return 'bbbb!'; \n"
+			"} \n" );
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asIScriptContext* ctx = engine->CreateContext();
+		ctx->Prepare(mod->GetFunctionByName("Render"));
+		r = ctx->Execute();
+		if (r != asEXECUTION_ABORTED)
+			TEST_FAILED;
+		ctx->Unprepare();
+		ctx->Release();
 
 		engine->ShutDownAndRelease();
 	}
