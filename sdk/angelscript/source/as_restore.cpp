@@ -3441,7 +3441,7 @@ void asCReader::CalculateStackNeeded(asCScriptFunction *func)
 				bc == asBC_CALLINTF ||
 				bc == asBC_CallPtr )
 			{
-				asCScriptFunction *called = GetCalledFunction(func, pos);
+				asCScriptFunction *called = func->GetCalledFunction(pos);
 				if( called )
 				{
 					stackInc = -called->GetSpaceNeededForArguments();
@@ -3657,66 +3657,6 @@ int asCReader::AdjustStackPosition(int pos)
 	return pos;
 }
 
-asCScriptFunction *asCReader::GetCalledFunction(asCScriptFunction *func, asDWORD programPos)
-{
-	asBYTE bc = *(asBYTE*)&func->scriptData->byteCode[programPos];
-
-	if( bc == asBC_CALL ||
-		bc == asBC_CALLSYS ||
-		bc == asBC_Thiscall1 ||
-		bc == asBC_CALLINTF )
-	{
-		// Find the function from the function id in bytecode
-		int funcId = asBC_INTARG(&func->scriptData->byteCode[programPos]);
-		return engine->scriptFunctions[funcId];
-	}
-	else if( bc == asBC_ALLOC )
-	{
-		// Find the function from the function id in the bytecode
-		int funcId = asBC_INTARG(&func->scriptData->byteCode[programPos+AS_PTR_SIZE]);
-		return engine->scriptFunctions[funcId];
-	}
-	else if( bc == asBC_CALLBND )
-	{
-		// Find the function from the engine's bind array
-		int funcId = asBC_INTARG(&func->scriptData->byteCode[programPos]);
-		return engine->importedFunctions[funcId & ~FUNC_IMPORTED]->importedFunctionSignature;
-	}
-	else if( bc == asBC_CallPtr )
-	{
-		asUINT v;
-		int var = asBC_SWORDARG0(&func->scriptData->byteCode[programPos]);
-
-		// Find the funcdef from the local variable
-		for (v = 0; v < func->scriptData->variables.GetLength(); v++)
-			if (func->scriptData->variables[v]->stackOffset == var)
-				return CastToFuncdefType(func->scriptData->variables[v]->type.GetTypeInfo())->funcdef;
-
-		// Look in parameters
-		int paramPos = 0;
-		if( func->objectType )
-			paramPos -= AS_PTR_SIZE;
-		if( func->DoesReturnOnStack() )
-			paramPos -= AS_PTR_SIZE;
-		for( v = 0; v < func->parameterTypes.GetLength(); v++ )
-		{
-			if (var == paramPos)
-			{
-				if (func->parameterTypes[v].IsFuncdef())
-					return CastToFuncdefType(func->parameterTypes[v].GetTypeInfo())->funcdef;
-				else
-				{
-					error = true;
-					return 0;
-				}
-			}
-			paramPos -= func->parameterTypes[v].GetSizeOnStackDWords();
-		}
-	}
-
-	return 0;
-}
-
 int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD programPos)
 {
 	// TODO: optimize: multiple instructions for the same function doesn't need to look for the function everytime
@@ -3728,6 +3668,7 @@ int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 	bool bcAlloc = false;
 
 	// Find out which function that will be called
+	// TODO: Can the asCScriptFunction::FindNextFunctionCalled be adapted so it can be reused here (support for asBC_ALLOC, asBC_REFCPY and asBC_COPY)?
 	asCScriptFunction *calledFunc = 0;
 	int stackDelta = 0;
 	for( asUINT n = programPos; func->scriptData->byteCode.GetLength(); )
@@ -3746,7 +3687,7 @@ int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 			if (bc == asBC_ALLOC)
 				bcAlloc = true;
 
-			calledFunc = GetCalledFunction(func, n);
+			calledFunc = func->GetCalledFunction(n);
 			break;
 		}
 		else if( bc == asBC_REFCPY ||

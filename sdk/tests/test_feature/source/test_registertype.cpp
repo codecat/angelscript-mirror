@@ -3,6 +3,97 @@
 #include "../../../add_on/scriptmath/scriptmathcomplex.h"
 #include <malloc.h> // gnuc: memalign
 
+// olc::vX2d - A generic 2D vector type
+// https://github.com/OneLoneCoder/olcPixelGameEngine/blob/master/olcPixelGameEngine.h#L608-L671
+namespace olc
+{
+	template <class T>
+	struct v2d_generic
+	{
+		T x = 0;
+		T y = 0;
+		v2d_generic() : x(0), y(0) {}
+		v2d_generic(T _x, T _y) : x(_x), y(_y) {}
+		v2d_generic(const v2d_generic& v) : x(v.x), y(v.y) {}
+		v2d_generic& operator=(const v2d_generic& v) = default;
+		T mag() const { return T(std::sqrt(x * x + y * y)); }
+		T mag2() const { return x * x + y * y; }
+		v2d_generic  norm() const { T r = 1 / mag(); return v2d_generic(x * r, y * r); }
+		v2d_generic  perp() const { return v2d_generic(-y, x); }
+		v2d_generic  floor() const { return v2d_generic(std::floor(x), std::floor(y)); }
+		v2d_generic  ceil() const { return v2d_generic(std::ceil(x), std::ceil(y)); }
+		v2d_generic  max(const v2d_generic& v) const { return v2d_generic(std::max(x, v.x), std::max(y, v.y)); }
+		v2d_generic  min(const v2d_generic& v) const { return v2d_generic(std::min(x, v.x), std::min(y, v.y)); }
+		v2d_generic  cart() { return { std::cos(y) * x, std::sin(y) * x }; }
+		v2d_generic  polar() { return { mag(), std::atan2(y, x) }; }
+		T dot(const v2d_generic& rhs) const { return this->x * rhs.x + this->y * rhs.y; }
+		T cross(const v2d_generic& rhs) const { return this->x * rhs.y - this->y * rhs.x; }
+		v2d_generic  operator +  (const v2d_generic& rhs) const { return v2d_generic(this->x + rhs.x, this->y + rhs.y); }
+		v2d_generic  operator -  (const v2d_generic& rhs) const { return v2d_generic(this->x - rhs.x, this->y - rhs.y); }
+		v2d_generic  operator *  (const T& rhs)           const { return v2d_generic(this->x * rhs, this->y * rhs); }
+		v2d_generic  operator *  (const v2d_generic& rhs) const { return v2d_generic(this->x * rhs.x, this->y * rhs.y); }
+		v2d_generic  operator /  (const T& rhs)           const { return v2d_generic(this->x / rhs, this->y / rhs); }
+		v2d_generic  operator /  (const v2d_generic& rhs) const { return v2d_generic(this->x / rhs.x, this->y / rhs.y); }
+		v2d_generic& operator += (const v2d_generic& rhs) { this->x += rhs.x; this->y += rhs.y; return *this; }
+		v2d_generic& operator -= (const v2d_generic& rhs) { this->x -= rhs.x; this->y -= rhs.y; return *this; }
+		v2d_generic& operator *= (const T& rhs) { this->x *= rhs; this->y *= rhs; return *this; }
+		v2d_generic& operator /= (const T& rhs) { this->x /= rhs; this->y /= rhs; return *this; }
+		v2d_generic& operator *= (const v2d_generic& rhs) { this->x *= rhs.x; this->y *= rhs.y; return *this; }
+		v2d_generic& operator /= (const v2d_generic& rhs) { this->x /= rhs.x; this->y /= rhs.y; return *this; }
+		v2d_generic  operator +  () const { return { +x, +y }; }
+		v2d_generic  operator -  () const { return { -x, -y }; }
+		bool operator == (const v2d_generic& rhs) const { return (this->x == rhs.x && this->y == rhs.y); }
+		bool operator != (const v2d_generic& rhs) const { return (this->x != rhs.x || this->y != rhs.y); }
+		const std::string str() const { return std::string("(") + std::to_string(this->x) + "," + std::to_string(this->y) + ")"; }
+		friend std::ostream& operator << (std::ostream& os, const v2d_generic& rhs) { os << rhs.str(); return os; }
+		operator v2d_generic<int32_t>() const { return { static_cast<int32_t>(this->x), static_cast<int32_t>(this->y) }; }
+		operator v2d_generic<float>() const { return { static_cast<float>(this->x), static_cast<float>(this->y) }; }
+		operator v2d_generic<double>() const { return { static_cast<double>(this->x), static_cast<double>(this->y) }; }
+	};
+
+	// Note: joshinils has some good suggestions here, but they are complicated to implement at this moment, 
+	// however they will appear in a future version of PGE
+	template<class T> inline v2d_generic<T> operator * (const float& lhs, const v2d_generic<T>& rhs)
+	{
+		return v2d_generic<T>((T)(lhs * (float)rhs.x), (T)(lhs * (float)rhs.y));
+	}
+	template<class T> inline v2d_generic<T> operator * (const double& lhs, const v2d_generic<T>& rhs)
+	{
+		return v2d_generic<T>((T)(lhs * (double)rhs.x), (T)(lhs * (double)rhs.y));
+	}
+	template<class T> inline v2d_generic<T> operator * (const int& lhs, const v2d_generic<T>& rhs)
+	{
+		return v2d_generic<T>((T)(lhs * (int)rhs.x), (T)(lhs * (int)rhs.y));
+	}
+	template<class T> inline v2d_generic<T> operator / (const float& lhs, const v2d_generic<T>& rhs)
+	{
+		return v2d_generic<T>((T)(lhs / (float)rhs.x), (T)(lhs / (float)rhs.y));
+	}
+	template<class T> inline v2d_generic<T> operator / (const double& lhs, const v2d_generic<T>& rhs)
+	{
+		return v2d_generic<T>((T)(lhs / (double)rhs.x), (T)(lhs / (double)rhs.y));
+	}
+	template<class T> inline v2d_generic<T> operator / (const int& lhs, const v2d_generic<T>& rhs)
+	{
+		return v2d_generic<T>((T)(lhs / (int)rhs.x), (T)(lhs / (int)rhs.y));
+	}
+
+	// To stop dandistine crying...
+	template<class T, class U> inline bool operator < (const v2d_generic<T>& lhs, const v2d_generic<U>& rhs)
+	{
+		return lhs.y < rhs.y || (lhs.y == rhs.y && lhs.x < rhs.x);
+	}
+	template<class T, class U> inline bool operator > (const v2d_generic<T>& lhs, const v2d_generic<U>& rhs)
+	{
+		return lhs.y > rhs.y || (lhs.y == rhs.y && lhs.x > rhs.x);
+	}
+
+	typedef v2d_generic<int32_t> vi2d;
+	typedef v2d_generic<uint32_t> vu2d;
+	typedef v2d_generic<float> vf2d;
+	typedef v2d_generic<double> vd2d;
+}
+
 namespace TestRegisterType
 {
 
@@ -296,6 +387,24 @@ void RegisterTypes(asIScriptEngine* engine)
 	RegisterDerivedMembers<derived>(engine, "derived");
 }
 
+template<typename T>
+static void v2d_Constructor_def(void* self)
+{
+	::new(self) olc::v2d_generic<T>();
+}
+
+template<typename T>
+static void v2d_Constructor(int x, int y, void* self)
+{
+	::new(self) olc::v2d_generic<T>(x, y);
+}
+
+template<typename T>
+static void v2d_Constructor_copy(const olc::v2d_generic<T>& other, void* self)
+{
+	::new(self) olc::v2d_generic<T>(other);
+}
+
 bool Test()
 {
 	bool fail = TestHelper();
@@ -306,6 +415,36 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
  	asIScriptEngine *engine;
+
+	// Test registering olc::vec2d
+	// https://www.gamedev.net/forums/topic/712002-registering-a-template-struct/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		r = engine->RegisterObjectType("vi2d", sizeof(olc::vi2d), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<olc::vi2d>());
+		r = engine->RegisterObjectBehaviour("vi2d", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(v2d_Constructor_def<int>, (void*), void), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectBehaviour("vi2d", asBEHAVE_CONSTRUCT, "void f(int, int)", asFUNCTIONPR(v2d_Constructor<int>, (int, int, void*), void), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectBehaviour("vi2d", asBEHAVE_CONSTRUCT, "void f(const vi2d &in)", asFUNCTIONPR(v2d_Constructor_copy<int>, (const olc::v2d_generic<int>&, void*), void), asCALL_CDECL_OBJLAST);
+
+		r = engine->RegisterObjectProperty("vi2d", "int x", asOFFSET(olc::vi2d, x));
+		r = engine->RegisterObjectProperty("vi2d", "int y", asOFFSET(olc::vi2d, y));
+
+		r = ExecuteString(engine, "vi2d v(1, 2); vi2d w(v); assert( w.x == 1 && w.y == 2 );");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test WRAP_MFN_PR on method without overload in derived class
 	// https://www.gamedev.net/forums/topic/708971-class-members-unregistering/5436764/

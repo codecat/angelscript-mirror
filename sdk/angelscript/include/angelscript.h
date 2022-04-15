@@ -963,6 +963,8 @@ public:
 	virtual int GetCallStateRegisters(asUINT stackLevel, asDWORD *stackFramePointer, asIScriptFunction **currentFunction, asDWORD *programPointer, asDWORD *stackPointer, asDWORD *stackIndex) = 0;
 	virtual int SetStateRegisters(asUINT stackLevel, asIScriptFunction *callingSystemFunction, asIScriptFunction *initialFunction, asDWORD origStackPointer, asDWORD argumentsSize, asQWORD valueRegister, void *objectRegister, asITypeInfo *objectTypeRegister) = 0;
 	virtual int SetCallStateRegisters(asUINT stackLevel, asDWORD stackFramePointer, asIScriptFunction *currentFunction, asDWORD programPointer, asDWORD stackPointer, asDWORD stackIndex) = 0;
+	virtual int GetArgsOnStackCount(asUINT stackLevel) = 0;
+	virtual int GetArgOnStack(asUINT stackLevel, asUINT arg, int* typeId, asUINT *flags, void** address) = 0;
 
 protected:
 	virtual ~asIScriptContext() {}

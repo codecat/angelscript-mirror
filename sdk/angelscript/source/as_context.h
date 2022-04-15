@@ -135,6 +135,8 @@ public:
 	int GetCallStateRegisters(asUINT stackLevel, asDWORD* stackFramePointer, asIScriptFunction** currentFunction, asDWORD* programPointer, asDWORD* stackPointer, asDWORD* stackIndex);
 	int SetStateRegisters(asUINT stackLevel, asIScriptFunction* callingSystemFunction, asIScriptFunction* initialFunction, asDWORD origStackPointer, asDWORD argumentsSize, asQWORD valueRegister, void* objectRegister, asITypeInfo* objectTypeRegister);
 	int SetCallStateRegisters(asUINT stackLevel, asDWORD stackFramePointer, asIScriptFunction* currentFunction, asDWORD programPointer, asDWORD stackPointer, asDWORD stackIndex);
+	int GetArgsOnStackCount(asUINT stackLevel);
+	int GetArgOnStack(asUINT stackLevel, asUINT arg, int* typeId, asUINT *flags, void** address);
 
 public:
 	// Internal public functions
@@ -216,6 +218,11 @@ public:
 	asCScriptFunction *m_initialFunction;
 	int                m_returnValueSize;
 	int                m_argumentsSize;
+
+	// Cache for GetArgsOnStack
+	asCArray<int>      m_argsOnStackCache;
+	asUINT             m_argsOnStackCacheProgPos;
+	asCScriptFunction* m_argsOnStackCacheFunc;
 
 	// callbacks
 	bool                       m_lineCallback;

@@ -35,6 +35,8 @@ public:
 
 		asUINT callstackSize = ctx->GetCallstackSize();
 		storage.Write(&callstackSize, sizeof(callstackSize));
+
+		// First store the entire callstack state
 		for (int n = ctx->GetCallstackSize() - 1; n >= 0; n--)
 		{
 			// Get the stack frame content
@@ -54,56 +56,6 @@ public:
 				storage.Write(&programPointer, sizeof(programPointer));
 				storage.Write(&stackPointer, sizeof(stackPointer));
 				storage.Write(&stackIndex, sizeof(stackIndex)); // TODO: This shouldn't be needed
-
-				// Get variables on the stack frame
-				int thisTypeId = ctx->GetThisTypeId(n);
-				storage.Write(&thisTypeId, sizeof(thisTypeId)); // TODO: Serialize the type id
-				int varCount = ctx->GetVarCount(n); // TODO: Must return also temporary variables so these can be serialized too. The asCScriptFunction::variables must hold info on temporary vars too. The information must be serialized to the saved bytecode even if the debug info is skipped. Only the name of the variable can be skipped. Temporary variables should probably be marked as declared at position 0 so they are always in scope. The type of temporary primitives should be either asQWORD or asDWORD depending on the allocated size
-				storage.Write(&varCount, sizeof(varCount));
-				for (int v = 0; v < varCount; v++)
-				{
-					if (!ctx->IsVarInScope(v, n))
-						continue;
-
-					asETypeModifiers typeModifiers;
-					int typeId = ctx->GetVarTypeId(v, n, &typeModifiers);
-					void* var = ctx->GetAddressOfVar(v, n);
-					if (typeModifiers == asTM_NONE)
-					{
-						bool isValue = true;
-						storage.Write(&isValue, sizeof(isValue));
-						storage.Write(&typeId, sizeof(typeId)); // TODO: serialize the type id
-						if (typeId == asTYPEID_INT32)
-							storage.Write(var, sizeof(asINT32));
-						else if (typeId == asTYPEID_DOUBLE)
-							storage.Write(var, sizeof(double));
-						else if (typeId == ctx->GetEngine()->GetTypeIdByDecl("string"))
-						{
-							// If object is not initialized yet, the pointer will be null
-							bool isNull = var == 0;
-							storage.Write(&isNull, sizeof(bool));
-							if (!isNull)
-							{
-								asUINT len = asUINT(reinterpret_cast<std::string*>(var)->length());
-								storage.Write(&len, sizeof(len));
-								storage.Write(reinterpret_cast<std::string*>(var)->data(), len);
-							}
-						}
-						else
-							TEST_FAILED; // TODO: Add support for more types
-					}
-					else
-					{
-						bool isValue = false;
-						storage.Write(&isValue, sizeof(isValue));
-
-						// Serialize the reference
-						// Reference variables must not serialize to themselves. 
-						r = SerializeAddress(var, v, n);
-						if( r < 0 )
-							TEST_FAILED;
-					}
-				}
 			}
 			else
 			{
@@ -156,6 +108,83 @@ public:
 		storage.Write(&objectRegister, sizeof(objectRegister)); // TODO: serialize the object pointer
 		storage.Write(&objectType, sizeof(objectType)); // TODO: serialize the type info
 
+		// Then store the stack values
+		for (int n = ctx->GetCallstackSize() - 1; n >= 0; n--)
+		{
+			r = ctx->GetCallStateRegisters(n, 0, 0, 0, 0, 0);
+			if (r == asSUCCESS)
+			{
+				// Get variables on the stack frame
+				int thisTypeId = ctx->GetThisTypeId(n);
+				storage.Write(&thisTypeId, sizeof(thisTypeId)); // TODO: Serialize the type id
+				int varCount = ctx->GetVarCount(n); // TODO: Must return also temporary variables so these can be serialized too. The asCScriptFunction::variables must hold info on temporary vars too. The information must be serialized to the saved bytecode even if the debug info is skipped. Only the name of the variable can be skipped. Temporary variables should probably be marked as declared at position 0 so they are always in scope. The type of temporary primitives should be either asQWORD or asDWORD depending on the allocated size
+				storage.Write(&varCount, sizeof(varCount));
+				for (int v = 0; v < varCount; v++)
+				{
+					if (!ctx->IsVarInScope(v, n))
+						continue;
+
+					asETypeModifiers typeModifiers;
+					int typeId = ctx->GetVarTypeId(v, n, &typeModifiers);
+					void* var = ctx->GetAddressOfVar(v, n);
+					if (typeModifiers == asTM_NONE)
+					{
+						bool isValue = true;
+						storage.Write(&isValue, sizeof(isValue));
+						storage.Write(&typeId, sizeof(typeId)); // TODO: serialize the type id
+						if (typeId == asTYPEID_INT32)
+							storage.Write(var, sizeof(asINT32));
+						else if (typeId == asTYPEID_DOUBLE)
+							storage.Write(var, sizeof(double));
+						else if (typeId == ctx->GetEngine()->GetTypeIdByDecl("string"))
+						{
+							// If object is not initialized yet, the pointer will be null
+							bool isNull = var == 0;
+							storage.Write(&isNull, sizeof(bool));
+							if (!isNull)
+							{
+								asUINT len = asUINT(reinterpret_cast<std::string*>(var)->length());
+								storage.Write(&len, sizeof(len));
+								storage.Write(reinterpret_cast<std::string*>(var)->data(), len);
+							}
+						}
+						else
+							TEST_FAILED; // TODO: Add support for more types
+					}
+					else
+					{
+						bool isValue = false;
+						storage.Write(&isValue, sizeof(isValue));
+
+						// Serialize the reference
+						// Reference variables must not serialize to themselves. 
+						r = SerializeAddress(var, v, n);
+						if (r < 0)
+							TEST_FAILED;
+					}
+				}
+
+				// Get values pushed on the stack
+				int stackValuesCount = ctx->GetArgsOnStackCount(n);
+				storage.Write(&stackValuesCount, sizeof(stackValuesCount));
+				for (int v = 0; v < stackValuesCount; v++)
+				{
+					int typeId;
+					asUINT flags;
+					void* address;
+					ctx->GetArgOnStack(n, v, &typeId, &flags, &address);
+
+					if ((flags & asTM_INOUTREF) || (typeId & asTYPEID_MASK_OBJECT))
+						// TODO: In which case will it be necessary to store as integer?
+						storage.Write(address, sizeof(void*));
+					else if (typeId == asTYPEID_UINT64 || typeId == asTYPEID_INT64 || typeId == asTYPEID_DOUBLE)
+						storage.Write(address, 8);
+					else
+						storage.Write(address, 4);
+				}
+			}
+		}
+
 		return fail ? -1 : 0;
 	}
 
@@ -171,6 +200,8 @@ public:
 			TEST_FAILED;
 		asUINT callstackSize;
 		storage.Read(&callstackSize, sizeof(callstackSize));
+
+		// First restore the callstack
 		for (asUINT n = 0; n < callstackSize; n++)
 		{
 			bool stackFrame;
@@ -195,73 +226,6 @@ public:
 				r = ctx->SetCallStateRegisters(0, stackFramePointer, currentFunction, programPointer, stackPointer, stackIndex);
 				if (r < 0)
 					TEST_FAILED;
-
-				// Deserialize the local variables
-				int thisTypeId;
-				storage.Read(&thisTypeId, sizeof(thisTypeId)); // TODO: Serialize the type id
-				// TODO: set this type id in the context? Do we really need to serialize this?
-				int varCount;
-				storage.Read(&varCount, sizeof(varCount)); // TODO: This doesn't have to be serialized. We can get it from the context
-				for (int v = 0; v < varCount; v++)
-				{
-					if (!ctx->IsVarInScope(v, 0))
-						continue;
-
-					bool isValue;
-					storage.Read(&isValue, sizeof(isValue));
-					if (isValue)
-					{
-						int typeId;
-						void* var = ctx->GetAddressOfVar(v, 0);
-						storage.Read(&typeId, sizeof(typeId)); // TODO: serialize the type id
-						if (typeId == asTYPEID_INT32)
-							storage.Read(var, sizeof(asINT32));
-						else if (typeId == asTYPEID_DOUBLE)
-							storage.Read(var, sizeof(double));
-						else if (typeId == ctx->GetEngine()->GetTypeIdByDecl("string"))
-						{
-							bool isNull;
-							storage.Read(&isNull, sizeof(bool));
-							if (isNull)
-							{
-								// set the var as null
-								// TODO: Is this needed?
-	//								r = ctx->SetVarContents(v, 0, 0, typeId);
-	//								if (r < 0)
-	//									TEST_FAILED;
-							}
-							else
-							{
-								std::string value;
-								asUINT len;
-								storage.Read(&len, sizeof(asUINT));
-								value.resize(len);
-								storage.Read(&value[0], len);
-
-								// set the var to the string
-								// TODO: How to know when a string is stored on the stack or on the heap?
-								// TODO: If stored on the heap the memory needs to be allocated
-								var = ctx->GetAddressOfVar(v, 0, false, true);
-								new (var) std::string(value);
-
-								// TODO: For POD types it should be possible to use SetVarContents
-								//r = ctx->SetVarContents(v, 0, &value, typeId);
-								//if (r < 0)
-								//	TEST_FAILED;
-							}
-						}
-						else
-							TEST_FAILED; // TODO: Add support for more types
-					}
-					else
-					{
-						// Deserialize the reference
-						void** var = (void**)ctx->GetAddressOfVar(v, 0, true);
-						r = DeserializeAddress(var);
-						if( r < 0 )
-							TEST_FAILED;
-					}
-				}
 			}
 			else
 			{
@@ -317,6 +281,95 @@ public:
 		if (r < 0)
 			TEST_FAILED;
 
+		// Then restore the values on the stack
+		for (int n = ctx->GetCallstackSize() - 1; n >= 0; n--)
+		{
+			r = ctx->GetCallStateRegisters(n, 0, 0, 0, 0, 0);
+			if (r == asSUCCESS)
+			{
+				// Deserialize the local variables
+				int thisTypeId;
+				storage.Read(&thisTypeId, sizeof(thisTypeId)); // TODO: Serialize the type id
+				// TODO: set this type id in the context? Do we really need to serialize this?
+				int varCount;
+				storage.Read(&varCount, sizeof(varCount)); // TODO: This doesn't have to be serialized. We can get it from the context
+				for (int v = 0; v < varCount; v++)
+				{
+					if (!ctx->IsVarInScope(v, n))
+						continue;
+
+					bool isValue;
+					storage.Read(&isValue, sizeof(isValue));
+					if (isValue)
+					{
+						int typeId;
+						void* var = ctx->GetAddressOfVar(v, n);
+						storage.Read(&typeId, sizeof(typeId)); // TODO: serialize the type id
+						if (typeId == asTYPEID_INT32)
+							storage.Read(var, sizeof(asINT32));
+						else if (typeId == asTYPEID_DOUBLE)
+							storage.Read(var, sizeof(double));
+						else if (typeId == ctx->GetEngine()->GetTypeIdByDecl("string"))
+						{
+							bool isNull;
+							storage.Read(&isNull, sizeof(bool));
+							if (isNull)
+							{
+								// set the var as null
+								// TODO: Is this needed?
+							}
+							else
+							{
+								std::string value;
+								asUINT len;
+								storage.Read(&len, sizeof(asUINT));
+								value.resize(len);
+								storage.Read(&value[0], len);
+
+								// set the var to the string
+								// TODO: How to know when a string is stored on the stack or on the heap?
+								// TODO: If stored on the heap the memory needs to be allocated
+								var = ctx->GetAddressOfVar(v, n, false, true);
+								new (var) std::string(value);
+							}
+						}
+						else
+							TEST_FAILED; // TODO: Add support for more types
+					}
+					else
+					{
+						// Deserialize the reference
+						void** var = (void**)ctx->GetAddressOfVar(v, n, true);
+						r = DeserializeAddress(var);
+						if (r < 0)
+							TEST_FAILED;
+					}
+				}
+
+				// Deserialize values pushed on the stack
+				int stackValuesCount = ctx->GetArgsOnStackCount(n);
+				int storedCount;
+				storage.Read(&storedCount, sizeof(storedCount));
+				if (storedCount != stackValuesCount)
+					TEST_FAILED;
+				for (int v = 0; v < stackValuesCount; v++)
+				{
+					int typeId;
+					asUINT flags;
+					void* address;
+					ctx->GetArgOnStack(n, v, &typeId, &flags, &address);
+
+					if ((flags & asTM_INOUTREF) || (typeId & asTYPEID_MASK_OBJECT))
+						// TODO: In which case will it be necessary to store as integer?
+						storage.Read(address, sizeof(void*));
+					else if (typeId == asTYPEID_UINT64 || typeId == asTYPEID_INT64 || typeId == asTYPEID_DOUBLE)
+						storage.Read(address, 8);
+					else
+						storage.Read(address, 4);
+				}
+			}
+		}
+
 		r = ctx->FinishDeserialization();
 		if (r < 0)
 			TEST_FAILED;
@@ -351,7 +404,7 @@ public:
 		storage.Write(&refType, sizeof(refType));
 		storage.Write(&addr, sizeof(addr));
 
-		// TODO: The address might refernce a global variable or literal string constant
+		// TODO: The address might reference a global variable or literal string constant
 
 		// TODO: Iterate through previously saved objects to see if the address refers to any of them
 
@@ -414,8 +467,95 @@ bool Test()
 	// function that will be called to determine the type of the arguments on the stack, this must be done iteratively until all the stack values have been identified as there can potentially be 
 	// arguments for different functions prepared.
 	// TODO: The arguments on the stack must be 32bit/64bit agnostic, especifically placeholders need to adjusted
+	// TODO: test complex expressions with ternary operators to guarantee that branches are also properly handled
+	// TODO: Test with object methods that return value types by value (i.e. on stack)
+	// TODO: Test with value types passed by value
 	{
-		// TODO: 
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_GENERIC);
+		g_buf = "";
+		engine->RegisterGlobalFunction("void pause()", asFUNCTION(pause), asCALL_GENERIC);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() \n"
+			"{ \n"
+			"  string c = level1(level2('test', 3.14), 3.14); \n" // when level2 is called, 3.14 is already pushed on the stack
+			"  print('result: '+c+'\\n'); \n"
+			"} \n"
+			"string level1(const string &in a, double b) \n"
+			"{ \n"
+			"  return a+b; \n"
+			"} \n"
+			"string level2(const string &in a, double b) \n"
+			"{ \n"
+			"  pause(); \n" // this is where the script will be serialized
+			"  return a+b; \n"
+			"} \n"
+		);
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		bout.buffer = "";
+
+		// Start execution
+		asIScriptContext* ctx = engine->CreateContext();
+		ctx->Prepare(mod->GetFunctionByName("main"));
+		r = ctx->Execute();
+		if (r != asEXECUTION_SUSPENDED)
+			TEST_FAILED;
+
+		// Serialize the context
+		CContextSerializer storage;
+		r = storage.Serialize(ctx);
+		if (r < 0)
+			TEST_FAILED;
+
+		// Destroy the context
+		ctx->Release();
+
+		// Create a new context
+		ctx = engine->CreateContext();
+
+		// Deserialize the context
+		r = storage.Deserialize(ctx);
+		if (r < 0)
+			TEST_FAILED;
+
+		// Resume execution
+		r = ctx->Execute();
+		if (r != asEXECUTION_FINISHED)
+		{
+			if (r == asEXECUTION_EXCEPTION)
+				PRINTF("Exception: %s\n", GetExceptionInfo(ctx).c_str());
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		if (g_buf != "result: test3.143.14\n")
+		{
+			PRINTF("%s", g_buf.c_str());
+			TEST_FAILED;
+		}
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
 	}
 
 	// Test serializing a context with a value type objects

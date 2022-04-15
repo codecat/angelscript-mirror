@@ -1746,5 +1746,103 @@ bool asCScriptFunction::IsFactory() const
 	return true;
 }
 
+// internal
+asCScriptFunction* asCScriptFunction::FindNextFunctionCalled(asUINT startSearchFromProgramPos, int *outStackDelta)
+{
+	if (scriptData == 0)
+		return 0;
+
+	// Find out which function that will be called
+	asCScriptFunction* calledFunc = 0;
+	int stackDelta = 0;
+	for (asUINT n = startSearchFromProgramPos; scriptData->byteCode.GetLength(); )
+	{
+		asBYTE bc = *(asBYTE*)&scriptData->byteCode[n];
+		if (bc == asBC_CALL ||
+			bc == asBC_CALLSYS ||
+			bc == asBC_Thiscall1 ||
+			bc == asBC_CALLINTF ||
+			bc == asBC_ALLOC ||
+			bc == asBC_CALLBND ||
+			bc == asBC_CallPtr)
+		{
+			calledFunc = GetCalledFunction(n);
+			break;
+		}
+
+		// Keep track of the stack size between the
+		// instruction that needs to be adjusted and the call
+		stackDelta += asBCInfo[bc].stackInc;
+
+		n += asBCTypeSize[asBCInfo[bc].type];
+	}
+
+	if (outStackDelta)
+		*outStackDelta = stackDelta;
+
+	return calledFunc;
+}
+
+// internal
+asCScriptFunction* asCScriptFunction::GetCalledFunction(asDWORD programPos)
+{
+	if (scriptData == 0)
+		return 0;
+
+	asBYTE bc = *(asBYTE*)&scriptData->byteCode[programPos];
+
+	if (bc == asBC_CALL ||
+		bc == asBC_CALLSYS ||
+		bc == asBC_Thiscall1 ||
+		bc == asBC_CALLINTF)
+	{
+		// Find the function from the function id in bytecode
+		int funcId = asBC_INTARG(&scriptData->byteCode[programPos]);
+		return engine->scriptFunctions[funcId];
+	}
+	else if (bc == asBC_ALLOC)
+	{
+		// Find the function from the function id in the bytecode
+		int funcId = asBC_INTARG(&scriptData->byteCode[programPos + AS_PTR_SIZE]);
+		return engine->scriptFunctions[funcId];
+	}
+	else if (bc == asBC_CALLBND)
+	{
+		// Find the function from the engine's bind array
+		int funcId = asBC_INTARG(&scriptData->byteCode[programPos]);
+		return engine->importedFunctions[funcId & ~FUNC_IMPORTED]->importedFunctionSignature;
+	}
+	else if (bc == asBC_CallPtr)
+	{
+		asUINT v;
+		int var = asBC_SWORDARG0(&scriptData->byteCode[programPos]);
+
+		// Find the funcdef from the local variable
+		for (v = 0; v < scriptData->variables.GetLength(); v++)
+			if (scriptData->variables[v]->stackOffset == var)
+				return CastToFuncdefType(scriptData->variables[v]->type.GetTypeInfo())->funcdef;
+
+		// Look in parameters
+		int paramPos = 0;
+		if (objectType)
+			paramPos -= AS_PTR_SIZE;
+		if (DoesReturnOnStack())
+			paramPos -= AS_PTR_SIZE;
+		for (v = 0; v < parameterTypes.GetLength(); v++)
+		{
+			if (var == paramPos)
+			{
+				if (parameterTypes[v].IsFuncdef())
+					return CastToFuncdefType(parameterTypes[v].GetTypeInfo())->funcdef;
+				else
+					return 0;
+			}
+			paramPos -= parameterTypes[v].GetSizeOnStackDWords();
+		}
+	}
+
+	return 0;
+}
+
 END_AS_NAMESPACE
 

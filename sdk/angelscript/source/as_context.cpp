@@ -6066,7 +6066,208 @@ asDWORD asCContext::SerializeStackPointer(asDWORD *v) const
 	return (min & 0x03FFFFFF) | (( best & 0x3F) << (32-6));
 }
 
+// interface
+int asCContext::GetArgsOnStackCount(asUINT stackLevel)
+{
+	// Clear cache
+	m_argsOnStackCache.SetLength(0);
+	m_argsOnStackCacheProgPos = 0;
+	m_argsOnStackCacheFunc = 0;
 
+	// Don't return anything if there is no bytecode, e.g. before calling Execute()
+	if (m_regs.programPointer == 0) return asERROR;
+
+	if (stackLevel >= GetCallstackSize()) return asINVALID_ARG;
+
+	asCScriptFunction* func;
+	asDWORD* sf;
+	asDWORD* sp;
+	asDWORD* progPointer;
+	if (stackLevel == 0)
+	{
+		func = m_currentFunction;
+		sf = m_regs.stackFramePointer;
+		sp = m_regs.stackPointer;
+		progPointer = m_regs.programPointer;
+	}
+	else
+	{
+		asPWORD* s = m_callStack.AddressOf() + (GetCallstackSize() - stackLevel - 1) * CALLSTACK_FRAME_SIZE;
+		func = (asCScriptFunction*)s[1];
+		sf = (asDWORD*)s[0];
+		sp = (asDWORD*)s[3];
+		progPointer = (asDWORD*)s[2];
+	}
+
+	// Determine the highest stack position for local variables
+	// asCScriptFunction::variableSpace give this value
+	// If the stack pointer is higher than that, then there are data pushed on the stack
+	asUINT stackPos = asDWORD(sf - sp) - func->scriptData->variableSpace;
+	if (stackPos == 0)
+		return 0;
+
+	// If a function is already being called at a higher call stack position, subtract the args for that function
+	asCScriptFunction* calledFunc = 0;
+	if (stackLevel == 1)
+		calledFunc = m_currentFunction;
+	else if( stackLevel > 1 )
+	{
+		asPWORD *s = m_callStack.AddressOf() + (GetCallstackSize() - stackLevel - 2) * CALLSTACK_FRAME_SIZE;
+		calledFunc = (asCScriptFunction*)s[1];
+	}
+	if( calledFunc )
+		stackPos -= calledFunc->GetSpaceNeededForArguments() + (calledFunc->DoesReturnOnStack() ? AS_PTR_SIZE : 0) + (calledFunc->GetObjectType() ? AS_PTR_SIZE : 0);
+
+	// Cache the list of arg types by func pointer and program position
+	m_argsOnStackCacheFunc = func;
+	m_argsOnStackCacheProgPos = asUINT(progPointer - &func->scriptData->byteCode[0]);
+
+	// TODO: Do this recursively as an expression may have nested calls
+	if( stackPos > 0 )
+	{
+		// Find the next function that will be called to determine the arg types and sizes
+		int stackDelta = 0;
+		calledFunc = func->FindNextFunctionCalled(asUINT(progPointer - &func->scriptData->byteCode[0]), &stackDelta);
+
+		// Determine which args have not yet been pushed on the stack based on the stackDelta
+		if (stackDelta > 0 && calledFunc->DoesReturnOnStack())
+			stackDelta -= AS_PTR_SIZE;
+		if (stackDelta > 0 && calledFunc->GetObjectType())
+			stackDelta -= AS_PTR_SIZE;
+		int param = -1;
+		while (stackDelta > 0 && ++param < int(calledFunc->GetParamCount()))
+		{
+			int typeId;
+			asDWORD flags;
+			calledFunc->GetParam(param, &typeId, &flags);
+
+			// TODO: When enums can be of different sizes this needs to be adjusted
+			if ((flags & asTM_INOUTREF) || (typeId & asTYPEID_MASK_OBJECT))
+				stackDelta -= AS_PTR_SIZE;
+			else if (typeId == asTYPEID_UINT64 || typeId == asTYPEID_INT64 || typeId == asTYPEID_DOUBLE)
+				stackDelta -= 2;
+			else
+				stackDelta -= 1;
+		}
+
+		// Determine the args already pushed on the stack
+		bool detectedThis = false, detectedReturn = false;
+		while (stackPos > 0)
+		{
+			if (param >= 0 && param < int(calledFunc->GetParamCount()))
+			{
+				int typeId;
+				asDWORD flags;
+				calledFunc->GetParam(++param, &typeId, &flags);
+
+				if ((flags & asTM_INOUTREF) || (typeId & asTYPEID_MASK_OBJECT))
+				{
+					// TODO: The value pushed on the stack here is just the offset of the variable, not the actual pointer
+					stackPos -= AS_PTR_SIZE;
+				}
+				else if (typeId == asTYPEID_UINT64 || typeId == asTYPEID_INT64 || typeId == asTYPEID_DOUBLE)
+					stackPos -= 2;
+				else
+					stackPos -= 1;
+				m_argsOnStackCache.PushLast(typeId);
+				m_argsOnStackCache.PushLast(flags);
+				continue;
+			}
+
+			// There is no need to check for the this pointer or the pointer to the return value since the
+			// context cannot be suspended between the moment these are pushed on the stack and the call itself.
+			if (!detectedThis && calledFunc->GetObjectType())
+			{
+				stackPos -= AS_PTR_SIZE;
+				m_argsOnStackCache.PushLast(calledFunc->GetObjectType()->GetTypeId());
+				m_argsOnStackCache.PushLast(asTM_INOUTREF);
+				detectedThis = true;
+				continue;
+			}
+			if (!detectedReturn && calledFunc->DoesReturnOnStack())
+			{
+				stackPos -= AS_PTR_SIZE;
+				m_argsOnStackCache.PushLast(calledFunc->GetReturnTypeId());
+				m_argsOnStackCache.PushLast(asTM_INOUTREF);
+				detectedReturn = true;
+				continue;
+			}
+
+			// There are no more args for this function, there is a nested call
+			break;
+		}
+	}
+
+	return m_argsOnStackCache.GetLength() / 2;
+}
+
+// interface
+int asCContext::GetArgOnStack(asUINT stackLevel, asUINT arg, int* outTypeId, asUINT* outFlags, void** outAddress)
+{
+	// Don't return anything if there is no bytecode, e.g. before calling Execute()
+	if (m_regs.programPointer == 0) return asERROR;
+
+	if (stackLevel >= GetCallstackSize()) return asINVALID_ARG;
+
+	asCScriptFunction* func;
+	asDWORD* sf;
+	asDWORD* sp;
+	asDWORD* progPointer;
+	if (stackLevel == 0)
+	{
+		func = m_currentFunction;
+		sf = m_regs.stackFramePointer;
+		sp = m_regs.stackPointer;
+		progPointer = m_regs.programPointer;
+	}
+	else
+	{
+		asPWORD* s = m_callStack.AddressOf() + (GetCallstackSize() - stackLevel - 1) * CALLSTACK_FRAME_SIZE;
+		func = (asCScriptFunction*)s[1];
+		sf = (asDWORD*)s[0];
+		sp = (asDWORD*)s[3];
+		progPointer = (asDWORD*)s[2];
+	}
+
+	// If a function is already being called at a higher call stack position, subtract the args for that function
+	asCScriptFunction* calledFunc = 0;
+	if (stackLevel == 1)
+		calledFunc = m_currentFunction;
+	else if (stackLevel > 1)
+	{
+		asPWORD* s = m_callStack.AddressOf() + (GetCallstackSize() - stackLevel - 2) * CALLSTACK_FRAME_SIZE;
+		calledFunc = (asCScriptFunction*)s[1];
+	}
+	if (calledFunc)
+		sp += calledFunc->GetSpaceNeededForArguments() + (calledFunc->DoesReturnOnStack() ? AS_PTR_SIZE : 0) + (calledFunc->GetObjectType() ? AS_PTR_SIZE : 0);
+
+	// Check that the cache for GetArgsOnStack is up-to-date
+	if (m_argsOnStackCacheFunc != func || m_argsOnStackCacheProgPos != asUINT(progPointer - &func->scriptData->byteCode[0]))
+		GetArgsOnStackCount(stackLevel);
+
+	// The arg types in the array are stored from top to bottom, so we'll go through them in the inverse order
+	// TODO: Check that arg is not too high
+	arg = m_argsOnStackCache.GetLength() / 2 - arg - 1;
+	asUINT stackDelta = 0;
+	for (asUINT n = 0; n < arg; n++)
+	{
+		int typeId = m_argsOnStackCache[n * 2];
+		asUINT flags = m_argsOnStackCache[n * 2 + 1];
+
+		if ((flags & asTM_INOUTREF) || (typeId & asTYPEID_MASK_OBJECT))
+			stackDelta += AS_PTR_SIZE;
+		else if (typeId == asTYPEID_UINT64 || typeId == asTYPEID_INT64 || typeId == asTYPEID_DOUBLE)
+			stackDelta += 2;
+		else
+			stackDelta += 1;
+	}
+
+	if (outAddress) *outAddress = sp - stackDelta;
+	if (outTypeId) *outTypeId = m_argsOnStackCache[arg * 2];
+	if (outFlags) *outFlags = m_argsOnStackCache[arg * 2 + 1];
+
+	return asSUCCESS;
+}
 
 // TODO: Move these to as_utils.cpp
 
