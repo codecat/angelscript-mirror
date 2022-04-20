@@ -116,7 +116,7 @@ public:
 	int                GetVarCount(asUINT stackLevel);
 	const char        *GetVarName(asUINT varIndex, asUINT stackLevel);
 	const char        *GetVarDeclaration(asUINT varIndex, asUINT stackLevel, bool includeNamespace);
-	int                GetVarTypeId(asUINT varIndex, asUINT stackLevel, asETypeModifiers *typeModifiers);
+	int                GetVarTypeId(asUINT varIndex, asUINT stackLevel, asETypeModifiers *typeModifiers, bool* isVarOnHeap);
 	void              *GetAddressOfVar(asUINT varIndex, asUINT stackLevel, bool dontDereference, bool returnAddressOfUnitializedObjects);
 	bool               IsVarInScope(asUINT varIndex, asUINT stackLevel);
 	int                GetThisTypeId(asUINT stackLevel);

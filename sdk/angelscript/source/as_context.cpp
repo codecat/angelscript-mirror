@@ -5767,7 +5767,7 @@ const char *asCContext::GetVarDeclaration(asUINT varIndex, asUINT stackLevel, bo
 }
 
 // interface
-int asCContext::GetVarTypeId(asUINT varIndex, asUINT stackLevel, asETypeModifiers *typeModifiers)
+int asCContext::GetVarTypeId(asUINT varIndex, asUINT stackLevel, asETypeModifiers *typeModifiers, bool* isVarOnHeap)
 {
 	asCScriptFunction *func = reinterpret_cast<asCScriptFunction*>(GetFunction(stackLevel));
 	if( func == 0 ) return asINVALID_ARG;
@@ -5777,9 +5777,13 @@ int asCContext::GetVarTypeId(asUINT varIndex, asUINT stackLevel, asETypeModifier
 	if (r < 0)
 		return r;
 
+	if (isVarOnHeap) 
+		*isVarOnHeap = func->scriptData->variables[varIndex]->onHeap;
+
 	if (typeModifiers)
 	{
 		*typeModifiers = asTM_NONE;
+
 		if (func->scriptData && func->scriptData->variables[varIndex]->type.IsReference())
 		{
 			// Find the function argument if it is not a local variable
@@ -6262,7 +6266,7 @@ int asCContext::GetArgOnStack(asUINT stackLevel, asUINT arg, int* outTypeId, asU
 			stackDelta += 1;
 	}
 
-	if (outAddress) *outAddress = sp - stackDelta;
+	if (outAddress) *outAddress = sp + stackDelta;
 	if (outTypeId) *outTypeId = m_argsOnStackCache[arg * 2];
 	if (outFlags) *outFlags = m_argsOnStackCache[arg * 2 + 1];
 

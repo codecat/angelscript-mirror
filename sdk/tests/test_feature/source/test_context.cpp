@@ -326,10 +326,25 @@ public:
 								value.resize(len);
 								storage.Read(&value[0], len);
 
-								// set the var to the string
-								// TODO: How to know when a string is stored on the stack or on the heap?
-								// TODO: If stored on the heap the memory needs to be allocated
-								var = ctx->GetAddressOfVar(v, n, false, true);
+								// Check if the variable is stored on the heap
+								bool isOnHeap = false;
+								ctx->GetVarTypeId(v, n, false, &isOnHeap);
+								if( isOnHeap )
+								{
+									// When variable is stored on the heap, GetAddressOfVar should be called with doNotDerefence = true, 
+									// so the actual reference is obtained and can be set to the newly allocated
+									// If stored on the heap the memory needs to be allocated
+									var = ctx->GetAddressOfVar(v, n, true, true);
+
+									// Allocate memory for the string on the heap and set the variable to refer to it
+									*reinterpret_cast<std::string**>(var) = reinterpret_cast<std::string*>(asAllocMem(sizeof(std::string)));
+
+									var = *reinterpret_cast<void**>(var);
+								}
+								else
+									var = ctx->GetAddressOfVar(v, n, false, true);
+
+								// Initialize the string
 								new (var) std::string(value);
 							}
 						}
@@ -466,10 +481,10 @@ bool Test()
 	// If the count is done at a lower stack level then the count must substract the arguments of the called function before counting, then the code should iterate through the bytecode to find the 
 	// function that will be called to determine the type of the arguments on the stack, this must be done iteratively until all the stack values have been identified as there can potentially be 
 	// arguments for different functions prepared.
+	// Test with value types passed by value and by reference
 	// TODO: The arguments on the stack must be 32bit/64bit agnostic, especifically placeholders need to adjusted
 	// TODO: test complex expressions with ternary operators to guarantee that branches are also properly handled
 	// TODO: Test with object methods that return value types by value (i.e. on stack)
-	// TODO: Test with value types passed by value
 	{
 		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
@@ -485,12 +500,14 @@ bool Test()
 		mod->AddScriptSection("test",
 			"void main() \n"
 			"{ \n"
-			"  string c = level1(level2('test', 3.14), 3.14); \n" // when level2 is called, 3.14 is already pushed on the stack
+			// when level2 is called, a reference to 'd' is already pushed on the stack, an index to the variable holding 'c' is pushed on the stack, and the value 3.14
+			// the string 'c' is also stored in a local variable where the object is actually allocated on the heap
+			"  string c = level1(level2('test', 3.14), 3.14, 'c', 'd'); \n"
 			"  print('result: '+c+'\\n'); \n"
 			"} \n"
-			"string level1(const string &in a, double b) \n"
+			"string level1(const string &in a, double b, string c, const string &in d) \n"
 			"{ \n"
-			"  return a+b; \n"
+			"  return a+b+c+d; \n"
 			"} \n"
 			"string level2(const string &in a, double b) \n"
 			"{ \n"
@@ -543,7 +560,7 @@ bool Test()
 		}
 		ctx->Release();
 
-		if (g_buf != "result: test3.143.14\n")
+		if (g_buf != "result: test3.143.14cd\n")
 		{
 			PRINTF("%s", g_buf.c_str());
 			TEST_FAILED;
