@@ -502,7 +502,8 @@ bool Test()
 			"{ \n"
 			// when level2 is called, a reference to 'd' is already pushed on the stack, an index to the variable holding 'c' is pushed on the stack, and the value 3.14
 			// the string 'c' is also stored in a local variable where the object is actually allocated on the heap
-			"  string c = level1(level2('test', 3.14), 3.14, 'c', 'd'); \n"
+			// when level3 is called the value 42 is already pushed on the stack
+			"  string c = level1(level2(level3('test'), 42), 3.14, 'c', 'd'); \n"
 			"  print('result: '+c+'\\n'); \n"
 			"} \n"
 			"string level1(const string &in a, double b, string c, const string &in d) \n"
@@ -511,8 +512,12 @@ bool Test()
 			"} \n"
 			"string level2(const string &in a, double b) \n"
 			"{ \n"
-			"  pause(); \n" // this is where the script will be serialized
 			"  return a+b; \n"
+			"} \n"
+			"string level3(const string &in a) \n"
+			"{ \n"
+			"  pause(); \n" // this is where the script will be serialized
+			"  return a; \n"
 			"} \n"
 		);
 		r = mod->Build();
@@ -560,7 +565,7 @@ bool Test()
 		}
 		ctx->Release();
 
-		if (g_buf != "result: test3.143.14cd\n")
+		if (g_buf != "result: test423.14cd\n")
 		{
 			PRINTF("%s", g_buf.c_str());
 			TEST_FAILED;

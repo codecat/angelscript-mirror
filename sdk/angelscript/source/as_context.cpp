@@ -6126,12 +6126,13 @@ int asCContext::GetArgsOnStackCount(asUINT stackLevel)
 	m_argsOnStackCacheFunc = func;
 	m_argsOnStackCacheProgPos = asUINT(progPointer - &func->scriptData->byteCode[0]);
 
-	// TODO: Do this recursively as an expression may have nested calls
-	if( stackPos > 0 )
+	// Iteratively search for functions that will be called until all values on the arg has been determined
+	asUINT progPos = asUINT(progPointer - &func->scriptData->byteCode[0]);
+	while( stackPos > 0 )
 	{
 		// Find the next function that will be called to determine the arg types and sizes
 		int stackDelta = 0;
-		calledFunc = func->FindNextFunctionCalled(asUINT(progPointer - &func->scriptData->byteCode[0]), &stackDelta);
+		calledFunc = func->FindNextFunctionCalled(progPos, &stackDelta, &progPos);
 
 		// Determine which args have not yet been pushed on the stack based on the stackDelta
 		if (stackDelta > 0 && calledFunc->DoesReturnOnStack())
@@ -6155,18 +6156,17 @@ int asCContext::GetArgsOnStackCount(asUINT stackLevel)
 		}
 
 		// Determine the args already pushed on the stack
-		bool detectedThis = false, detectedReturn = false;
 		while (stackPos > 0)
 		{
-			if (param >= 0 && param < int(calledFunc->GetParamCount()))
+			if (param >= 0 && ++param < int(calledFunc->GetParamCount()))
 			{
 				int typeId;
 				asDWORD flags;
-				calledFunc->GetParam(++param, &typeId, &flags);
+				calledFunc->GetParam(param, &typeId, &flags);
 
 				if ((flags & asTM_INOUTREF) || (typeId & asTYPEID_MASK_OBJECT))
 				{
-					// TODO: The value pushed on the stack here is just the offset of the variable, not the actual pointer
+					// TODO: The value pushed on the stack here can be just the offset of the variable, not the actual pointer
 					stackPos -= AS_PTR_SIZE;
 				}
 				else if (typeId == asTYPEID_UINT64 || typeId == asTYPEID_INT64 || typeId == asTYPEID_DOUBLE)
@@ -6180,22 +6180,6 @@ int asCContext::GetArgsOnStackCount(asUINT stackLevel)
 
 			// There is no need to check for the this pointer or the pointer to the return value since the
 			// context cannot be suspended between the moment these are pushed on the stack and the call itself.
-			if (!detectedThis && calledFunc->GetObjectType())
-			{
-				stackPos -= AS_PTR_SIZE;
-				m_argsOnStackCache.PushLast(calledFunc->GetObjectType()->GetTypeId());
-				m_argsOnStackCache.PushLast(asTM_INOUTREF);
-				detectedThis = true;
-				continue;
-			}
-			if (!detectedReturn && calledFunc->DoesReturnOnStack())
-			{
-				stackPos -= AS_PTR_SIZE;
-				m_argsOnStackCache.PushLast(calledFunc->GetReturnTypeId());
-				m_argsOnStackCache.PushLast(asTM_INOUTREF);
-				detectedReturn = true;
-				continue;
-			}
 
 			// There are no more args for this function, there is a nested call
 			break;

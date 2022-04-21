@@ -269,7 +269,7 @@ public:
 	void      AllocateScriptFunctionData();
 	void      DeallocateScriptFunctionData();
 
-	asCScriptFunction* FindNextFunctionCalled(asUINT startSearchFromProgramPos, int *stackDelta);
+	asCScriptFunction* FindNextFunctionCalled(asUINT startSearchFromProgramPos, int *stackDelta, asUINT *outProgramPos);
 	asCScriptFunction* GetCalledFunction(asDWORD programPos);
 
 	asCGlobalProperty *GetPropertyByGlobalVarPtr(void *gvarPtr);

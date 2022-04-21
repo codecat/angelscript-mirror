@@ -1747,10 +1747,13 @@ bool asCScriptFunction::IsFactory() const
 }
 
 // internal
-asCScriptFunction* asCScriptFunction::FindNextFunctionCalled(asUINT startSearchFromProgramPos, int *outStackDelta)
+asCScriptFunction* asCScriptFunction::FindNextFunctionCalled(asUINT startSearchFromProgramPos, int *outStackDelta, asUINT *outProgramPos)
 {
 	if (scriptData == 0)
 		return 0;
+
+	if (outProgramPos)
+		*outProgramPos = startSearchFromProgramPos;
 
 	// Find out which function that will be called
 	asCScriptFunction* calledFunc = 0;
@@ -1767,6 +1770,10 @@ asCScriptFunction* asCScriptFunction::FindNextFunctionCalled(asUINT startSearchF
 			bc == asBC_CallPtr)
 		{
 			calledFunc = GetCalledFunction(n);
+
+			if (outProgramPos)
+				*outProgramPos = n + asBCTypeSize[asBCInfo[bc].type];
+
 			break;
 		}
 
