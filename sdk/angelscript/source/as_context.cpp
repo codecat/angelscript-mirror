@@ -5821,7 +5821,7 @@ int asCContext::GetVarTypeId(asUINT varIndex, asUINT stackLevel, asETypeModifier
 }
 
 // interface
-void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel, bool dontDereference, bool returnAddressOfUnitializedObjects)
+void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel, bool dontDereference, bool returnAddressOfUnitializedObjects, int *outStackOffset)
 {
 	// Don't return anything if there is no bytecode, e.g. before calling Execute()
 	if( m_regs.programPointer == 0 ) return 0;
@@ -5854,6 +5854,10 @@ void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel, bool dontD
 	// For object variables it's necessary to dereference the pointer to get the address of the value
 	// Reference parameters must also be dereferenced to give the address of the value
 	int pos = func->scriptData->variables[varIndex]->stackOffset;
+
+	if (outStackOffset)
+		*outStackOffset = pos;
+
 	if( (func->scriptData->variables[varIndex]->type.IsObject() && !func->scriptData->variables[varIndex]->type.IsObjectHandle()) || (pos <= 0) )
 	{
 		// Determine if the object is really on the heap

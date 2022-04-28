@@ -158,7 +158,7 @@ public:
 
 						// Serialize the reference
 						// Reference variables must not serialize to themselves. 
-						r = SerializeAddress(var, v, n);
+						r = SerializeAddress(var, v, n, false);
 						if (r < 0)
 							TEST_FAILED;
 					}
@@ -175,8 +175,11 @@ public:
 					ctx->GetArgOnStack(n, v, &typeId, &flags, &address);
 
 					if ((flags & asTM_INOUTREF) || (typeId & asTYPEID_MASK_OBJECT))
-						// TODO: In which case will it be necessary to store as integer?
-						storage.Write(address, sizeof(void*));
+					{
+						r = SerializeAddress(*(void**)address, v, n, true);
+						if (r < 0)
+							TEST_FAILED;
+					}
 					else if (typeId == asTYPEID_UINT64 || typeId == asTYPEID_INT64 || typeId == asTYPEID_DOUBLE)
 						storage.Write(address, 8);
 					else
@@ -375,8 +378,11 @@ public:
 					ctx->GetArgOnStack(n, v, &typeId, &flags, &address);
 
 					if ((flags & asTM_INOUTREF) || (typeId & asTYPEID_MASK_OBJECT))
-						// TODO: In which case will it be necessary to store as integer?
-						storage.Read(address, sizeof(void*));
+					{
+						r = DeserializeAddress((void**)address);
+						if (r < 0)
+							TEST_FAILED;
+					}
 					else if (typeId == asTYPEID_UINT64 || typeId == asTYPEID_INT64 || typeId == asTYPEID_DOUBLE)
 						storage.Read(address, 8);
 					else
@@ -392,7 +398,7 @@ public:
 		return fail ? -1 : 0;
 	}
 
-	int SerializeAddress(void *addr, int varIndex, int stackLevel)
+	int SerializeAddress(void *addr, int varIndex, int stackLevel, bool isArgOnStack)
 	{
 		bool fail = false;
 
@@ -403,7 +409,7 @@ public:
 			{
 				// Don't match the variable itself
 				void* addr2 = m_ctx->GetAddressOfVar(v, n, false, true);
-				if (addr == addr2 && !(v == varIndex && n == stackLevel) )
+				if (addr == addr2 && !(v == varIndex && n == stackLevel) && !isArgOnStack)
 				{
 					int refType = 0; // local variable
 					storage.Write(&refType, sizeof(refType));
@@ -414,8 +420,25 @@ public:
 			}
 		}
 
+		// For args on the stack, check if it is a placeholder for a local variable rather than an addres
+		if (isArgOnStack)
+		{
+			for (int v = 0; v < m_ctx->GetVarCount(stackLevel) ; v++)
+			{
+				int stackOffset = 0;
+				void* addr2 = m_ctx->GetAddressOfVar(v, stackLevel, false, false, &stackOffset);
+				if (addr2 && (asPWORD)stackOffset == (asPWORD)addr)
+				{
+					int refType = 2; // variable placeholder
+					storage.Write(&refType, sizeof(refType));
+					storage.Write(&stackOffset, sizeof(stackOffset));
+					return 0;
+				}
+			}
+		}
+
 		// It's not a local variable, save the address as is for now
-		int refType = 1;
+		int refType = 1; // absolute address
 		storage.Write(&refType, sizeof(refType));
 		storage.Write(&addr, sizeof(addr));
 
@@ -447,6 +470,12 @@ public:
 			storage.Read(&storedAddress, sizeof(storedAddress));
 			*addr = storedAddress;
 		}
+		else if (refType == 2) // variable placeholder
+		{
+			int stackOffset;
+			storage.Read(&stackOffset, sizeof(stackOffset));
+			*(asPWORD*)addr = (asPWORD)stackOffset;
+		}
 		else
 			TEST_FAILED;
 
@@ -470,7 +499,7 @@ bool Test()
 	// TODO: Test serializing a delegate call
 	// TODO: Test serializing context and saving bytecode, both with and without debug info (it must be possible to serialize even without debug info)
 	// TODO: Test serializing context within template factory stub (function parameters should be properly serialized)
-	// TODO: Test serializing when multiple stack blocks are used, and also when deserializing on a contex with different initContextStackSize
+	// TODO: Test serializing when multiple stack memory blocks are used, and also when deserializing on a contex with different initContextStackSize
 	// ref: https://github.com/SpehleonLP/Zodiac
 	//      https://github.com/SpehleonLP/Zodiac/blob/main/src/z_zodiaccontext.cpp
 
