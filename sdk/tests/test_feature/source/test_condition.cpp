@@ -128,13 +128,13 @@ bool TestCondition()
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
-
+/*
 		// C++ code for comparison
 		auto a = true ? 1 : 1.;
 		auto b = true ? 1 : asUINT(1);
 		auto c = true ? 1 : asINT16(1);
 		auto d = true ? 1 : 1.f;
-
+*/
 		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"auto a = true ? 1 : 1.; \n"

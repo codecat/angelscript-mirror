@@ -548,10 +548,11 @@ void CDebugger::PrintValue(const std::string &expr, asIScriptContext *ctx)
 			// We start from the end, in case the same name is reused in different scopes
 			for( asUINT n = func->GetVarCount(); n-- > 0; )
 			{
-				if( ctx->IsVarInScope(n) && name == ctx->GetVarName(n) )
+				const char* varName = 0;
+				ctx->GetVar(n, 0, &varName, &typeId);
+				if( ctx->IsVarInScope(n) && varName != 0 && name == varName )
 				{
 					ptr = ctx->GetAddressOfVar(n);
-					typeId = ctx->GetVarTypeId(n);
 					break;
 				}
 			}
@@ -704,7 +705,9 @@ void CDebugger::ListLocalVariables(asIScriptContext *ctx)
 		{
 			// TODO: Allow user to set if members should be expanded or not
 			// Expand members by default to 3 recursive levels only
-			s << func->GetVarDecl(n) << " = " << ToString(ctx->GetAddressOfVar(n), ctx->GetVarTypeId(n), 3, ctx->GetEngine()) << endl;
+			int typeId;
+			ctx->GetVar(n, 0, 0, &typeId);
+			s << func->GetVarDecl(n) << " = " << ToString(ctx->GetAddressOfVar(n), typeId, 3, ctx->GetEngine()) << endl;
 		}
 	}
 	Output(s.str());

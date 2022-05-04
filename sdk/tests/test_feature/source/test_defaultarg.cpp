@@ -22,14 +22,14 @@ void *factory(int value, int offset)
 	return NULL;
 }
 
-int get_opIndex(int obj, int index) 
+int get_opIndex(int /*obj*/, int index)
 {
 	assert(index == 10);
 
 	return 123;
 }
 
-int get_None(int obj) 
+int get_None(int /*obj*/)
 {
 	return 123;
 }
@@ -61,7 +61,7 @@ bool Test()
 		r = engine->RegisterObjectBehaviour("rObj", asBEHAVE_FACTORY, "rObj@ f(int value, int offset = 5000)", asFUNCTION(factory), asCALL_CDECL); assert(r >= 0);
 
 		{
-			asIScriptModule  *mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+			mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
 			asIScriptContext *ctx = engine->CreateContext(); assert(ctx != NULL);
 
 			r = mod->AddScriptSection("main", "void main() {vObj plain; rObj@ obj = rObj(plain.Prop[10]);}"); assert(r >= 0);
@@ -75,7 +75,7 @@ bool Test()
 		}
 
 		{
-			asIScriptModule  *mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+			mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
 			asIScriptContext *ctx = engine->CreateContext(); assert(ctx != NULL);
 
 			r = mod->AddScriptSection("main", "void main() {vObj plain; rObj@ obj = rObj(plain[10]);}"); assert(r >= 0);

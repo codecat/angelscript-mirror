@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.36.0 WIP - 2022/04/28</h2>
+<h2>Version 2.36.0 WIP - 2022/05/04</h2>
 
 <ul>
 <li>Bug fixes
@@ -40,11 +40,10 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 </ul>
 <li>Library interface
 <ul>
-<li>asIScriptContext::GetVarTypeId now supports returning type modifiers to identify reference parameters
-<li>asIScriptContext::GetVarTypeId now supports returning an indicator if the variable is stored on the heap
 <li>asIScriptContext::GetAddressOfVar now supports returning the address of a reference parameter without dereferencing it
 <li>asIScriptContext::GetAddressOfVar now supports returning the address of local value types even when not initialized yet
-<li>asIScriptContext::GetAddressOfVar can now also return the stack offset of the variable
+<li>Added asIScriptContext::GetVar to retrieve static information on variables on the stack
+<li>Deprecated asIScriptContext::GetVarName and GetVarTypeId
 <li>asIScriptContext has new methods to support serialization of context state (Thanks Patrick Jeeves)
 </ul>
 <li>Add-ons &amp; Samples

@@ -98,7 +98,7 @@ bool TestGlobalVar()
 		engine->RegisterGlobalProperty("string g_str", g_str);
 		engine->RegisterGlobalFunction("void print(string &in)", asFUNCTION(print), asCALL_GENERIC);
 
-		asIScriptModule* mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
 
 		mod->AddScriptSection(TESTNAME, "float global = func() * g_f * 2.0f;");
 		if (mod->Build() < 0)

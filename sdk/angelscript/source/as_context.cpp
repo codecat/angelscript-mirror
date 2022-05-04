@@ -5747,38 +5747,20 @@ int asCContext::GetVarCount(asUINT stackLevel)
 }
 
 // interface
-const char *asCContext::GetVarName(asUINT varIndex, asUINT stackLevel)
+int asCContext::GetVar(asUINT varIndex, asUINT stackLevel, const char** name, int* typeId, asETypeModifiers* typeModifiers, bool* isVarOnHeap, int* stackOffset)
 {
-	asIScriptFunction *func = GetFunction(stackLevel);
-	if( func == 0 ) return 0;
+	asCScriptFunction* func = reinterpret_cast<asCScriptFunction*>(GetFunction(stackLevel));
+	if (func == 0) return asINVALID_ARG;
 
-	const char *name = 0;
-	int r = func->GetVar(varIndex, &name);
-	return r >= 0 ? name : 0;
-}
-
-// interface
-const char *asCContext::GetVarDeclaration(asUINT varIndex, asUINT stackLevel, bool includeNamespace)
-{
-	asIScriptFunction *func = GetFunction(stackLevel);
-	if( func == 0 ) return 0;
-
-	return func->GetVarDecl(varIndex, includeNamespace);
-}
-
-// interface
-int asCContext::GetVarTypeId(asUINT varIndex, asUINT stackLevel, asETypeModifiers *typeModifiers, bool* isVarOnHeap)
-{
-	asCScriptFunction *func = reinterpret_cast<asCScriptFunction*>(GetFunction(stackLevel));
-	if( func == 0 ) return asINVALID_ARG;
-
-	int typeId;
-	int r = func->GetVar(varIndex, 0, &typeId);
-	if (r < 0)
+	int r = func->GetVar(varIndex, name, typeId);
+	if (r < 0) 
 		return r;
 
-	if (isVarOnHeap) 
+	if (isVarOnHeap)
 		*isVarOnHeap = func->scriptData->variables[varIndex]->onHeap;
+
+	if( stackOffset )
+		*stackOffset = func->scriptData->variables[varIndex]->stackOffset;
 
 	if (typeModifiers)
 	{
@@ -5817,11 +5799,49 @@ int asCContext::GetVarTypeId(asUINT varIndex, asUINT stackLevel, asETypeModifier
 		}
 	}
 
-	return typeId;
+	return asSUCCESS;
 }
 
+#ifdef AS_DEPRECATED
 // interface
-void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel, bool dontDereference, bool returnAddressOfUnitializedObjects, int *outStackOffset)
+const char *asCContext::GetVarName(asUINT varIndex, asUINT stackLevel)
+{
+	asIScriptFunction *func = GetFunction(stackLevel);
+	if( func == 0 ) return 0;
+
+	const char *name = 0;
+	int r = func->GetVar(varIndex, &name);
+	return r >= 0 ? name : 0;
+}
+#endif
+
+// interface
+const char *asCContext::GetVarDeclaration(asUINT varIndex, asUINT stackLevel, bool includeNamespace)
+{
+	asIScriptFunction *func = GetFunction(stackLevel);
+	if( func == 0 ) return 0;
+
+	return func->GetVarDecl(varIndex, includeNamespace);
+}
+
+#ifdef AS_DEPRECATED
+// interface
+int asCContext::GetVarTypeId(asUINT varIndex, asUINT stackLevel)
+{
+	asCScriptFunction *func = reinterpret_cast<asCScriptFunction*>(GetFunction(stackLevel));
+	if( func == 0 ) return asINVALID_ARG;
+
+	int typeId;
+	int r = func->GetVar(varIndex, 0, &typeId);
+	if (r < 0)
+		return r;
+
+	return typeId;
+}
+#endif
+
+// interface
+void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel, bool dontDereference, bool returnAddressOfUnitializedObjects)
 {
 	// Don't return anything if there is no bytecode, e.g. before calling Execute()
 	if( m_regs.programPointer == 0 ) return 0;
@@ -5854,10 +5874,6 @@ void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel, bool dontD
 	// For object variables it's necessary to dereference the pointer to get the address of the value
 	// Reference parameters must also be dereferenced to give the address of the value
 	int pos = func->scriptData->variables[varIndex]->stackOffset;
-
-	if (outStackOffset)
-		*outStackOffset = pos;
-
 	if( (func->scriptData->variables[varIndex]->type.IsObject() && !func->scriptData->variables[varIndex]->type.IsObjectHandle()) || (pos <= 0) )
 	{
 		// Determine if the object is really on the heap

@@ -115,7 +115,7 @@ bool Test()
 		if (r < 0)
 			TEST_FAILED;
 
-		asIScriptContext* ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		r = ctx->Prepare(shareMod->GetFunctionByDecl("void main()")); assert(r >= 0);
 		r = ctx->Execute(); assert(r == asEXECUTION_FINISHED);
 		if (r != asEXECUTION_FINISHED)

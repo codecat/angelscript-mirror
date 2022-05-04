@@ -114,10 +114,15 @@ public:
 	asIScriptFunction *GetFunction(asUINT stackLevel);
 	int                GetLineNumber(asUINT stackLevel, int *column, const char **sectionName);
 	int                GetVarCount(asUINT stackLevel);
+	int                GetVar(asUINT varIndex, asUINT stackLevel, const char** name, int* typeId, asETypeModifiers* typeModifiers, bool* isVarOnHeap, int* stackOffset);
+#ifdef AS_DEPRECATED
 	const char        *GetVarName(asUINT varIndex, asUINT stackLevel);
+#endif
 	const char        *GetVarDeclaration(asUINT varIndex, asUINT stackLevel, bool includeNamespace);
-	int                GetVarTypeId(asUINT varIndex, asUINT stackLevel, asETypeModifiers *typeModifiers, bool* isVarOnHeap);
-	void              *GetAddressOfVar(asUINT varIndex, asUINT stackLevel, bool dontDereference, bool returnAddressOfUnitializedObjects, int *outStackOffset);
+#ifdef AS_DEPRECATED
+	int                GetVarTypeId(asUINT varIndex, asUINT stackLevel);
+#endif
+	void              *GetAddressOfVar(asUINT varIndex, asUINT stackLevel, bool dontDereference, bool returnAddressOfUnitializedObjects);
 	bool               IsVarInScope(asUINT varIndex, asUINT stackLevel);
 	int                GetThisTypeId(asUINT stackLevel);
     void              *GetThisPointer(asUINT stackLevel);

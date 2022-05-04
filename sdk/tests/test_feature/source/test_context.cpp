@@ -62,7 +62,7 @@ public:
 				// This is a nested call, so get the state registers instead
 				asIScriptFunction* callingSystemFunction;
 				asIScriptFunction* initialFunction;
-				asDWORD originalStackPointer; // TODO: Shouldn't this be a pointer?
+				asDWORD originalStackPointer;
 				asDWORD argumentSize;
 				asQWORD valueRegister;
 				void* objectRegister;
@@ -124,8 +124,9 @@ public:
 					if (!ctx->IsVarInScope(v, n))
 						continue;
 
+					int typeId;
 					asETypeModifiers typeModifiers;
-					int typeId = ctx->GetVarTypeId(v, n, &typeModifiers);
+					ctx->GetVar(v, n, 0, &typeId, &typeModifiers);
 					void* var = ctx->GetAddressOfVar(v, n);
 					if (typeModifiers == asTM_NONE)
 					{
@@ -331,7 +332,7 @@ public:
 
 								// Check if the variable is stored on the heap
 								bool isOnHeap = false;
-								ctx->GetVarTypeId(v, n, false, &isOnHeap);
+								ctx->GetVar(v, n, 0, 0, 0, &isOnHeap);
 								if( isOnHeap )
 								{
 									// When variable is stored on the heap, GetAddressOfVar should be called with doNotDerefence = true, 
@@ -426,11 +427,13 @@ public:
 			for (int v = 0; v < m_ctx->GetVarCount(stackLevel) ; v++)
 			{
 				int stackOffset = 0;
-				void* addr2 = m_ctx->GetAddressOfVar(v, stackLevel, false, false, &stackOffset);
+				m_ctx->GetVar(v, stackLevel, 0, 0, 0, 0, &stackOffset);
+				void* addr2 = m_ctx->GetAddressOfVar(v, stackLevel);
 				if (addr2 && (asPWORD)stackOffset == (asPWORD)addr)
 				{
 					int refType = 2; // variable placeholder
 					storage.Write(&refType, sizeof(refType));
+					// TODO: Instead of storing the stack offset, store the variable index. This way it will be 32bit/64bit agnostic
 					storage.Write(&stackOffset, sizeof(stackOffset));
 					return 0;
 				}

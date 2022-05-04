@@ -47,7 +47,6 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 		
-		const char *name = 0, *ns = 0;
 		asITypeInfo *info = mod->GetTypeInfoByName("A::Foo");
 		if( info == 0 || string(info->GetName()) != "Foo" || string(info->GetNamespace()) != "A" )
 			TEST_FAILED;
