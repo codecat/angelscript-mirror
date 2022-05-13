@@ -1,6 +1,7 @@
 
 #include <stdarg.h>
 #include "utils.h"
+#include "../../add_on/scriptany/scriptany.h"
 
 namespace TestDebug
 {
@@ -67,32 +68,32 @@ static const char *correct =
 "modl: Module2\n"
 "sect: :2\n"
 "line: 10,3\n"
-" int c = 3\n"
-" int[] a = {...}\n"
+" (in scope) int c = 3\n"
+" (in scope) int[] a = {...}\n"
 "--- call stack ---\n"
 "Module2:void Test2():4,3\n"
-" int b = 2\n"
+" (in scope) int b = 2\n"
 "Module1:void main():9,3\n"
-" int a = 1\n"
-" string s = 'text'\n"
-" c _c = {...}\n"
-" func_t@ t = {...}\n"
+" (in scope) int a = 1\n"
+" (in scope) string s = 'text'\n"
+" (in scope) c _c = {...}\n"
+" (in scope) func_t@ t = {...}\n"
 "--- exception ---\n"
 "desc: Index out of bounds\n"
 "func: void Test3()\n"
 "modl: Module2\n"
 "sect: :2\n"
 "line: 10,3\n"
-" int c = 3\n"
-" int[] a = {...}\n"
+" (in scope) int c = 3\n"
+" (in scope) int[] a = {...}\n"
 "--- call stack ---\n"
 "Module2:void Test2():4,3\n"
-" int b = 2\n"
+" (in scope) int b = 2\n"
 "Module1:void main():9,3\n"
-" int a = 1\n"
-" string s = 'text'\n"
-" c _c = {...}\n"
-" func_t@ t = {...}\n";
+" (in scope) int a = 1\n"
+" (in scope) string s = 'text'\n"
+" (in scope) c _c = {...}\n"
+" (in scope) func_t@ t = {...}\n";
 
 void print(const char *format, ...)
 {
@@ -125,6 +126,25 @@ void LineCallback(asIScriptContext *ctx, void * /*param*/)
 //	PrintVariables(ctx, 0);
 }
 
+void LineCallback2(asIScriptContext* ctx, void* /*param*/)
+{
+	if (ctx->GetState() != asEXECUTION_ACTIVE)
+		return;
+
+	int col;
+	int line = ctx->GetLineNumber(0, &col);
+	int indent = ctx->GetCallstackSize();
+	for (int n = 1; n < indent; n++)
+		print(" ");
+	const asIScriptFunction* function = ctx->GetFunction();
+	print("%s:%s:%d,%d\n", function->GetModuleName(),
+		function->GetDeclaration(),
+		line, col);
+
+	if( line == 9 || line == 14 )
+		PrintVariables(ctx, 0);
+}
+
 void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
 {
 	asIScriptEngine *engine = ctx->GetEngine();
@@ -145,10 +165,19 @@ void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
 		if (name == 0 || strlen(name) == 0)
 			continue;
 
+		if (ctx->IsVarInScope(n, stackLevel))
+			print(" (in scope)");
+		else
+			print(" (no scope)");
+
 		varPointer = ctx->GetAddressOfVar(n, stackLevel);
 		if( typeId == engine->GetTypeIdByDecl("int") )
 		{
 			print(" %s = %d\n", ctx->GetVarDeclaration(n, stackLevel), *(int*)varPointer);
+		}
+		else if (typeId == engine->GetTypeIdByDecl("uint"))
+		{
+			print(" %s = %u\n", ctx->GetVarDeclaration(n, stackLevel), *(asUINT*)varPointer);
 		}
 		else if( typeId == engine->GetTypeIdByDecl("string") )
 		{
@@ -158,9 +187,19 @@ void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
 			else
 				print(" %s = <null>\n", ctx->GetVarDeclaration(n, stackLevel));
 		}
+		else if (typeId == engine->GetTypeIdByDecl("foo"))
+		{
+			if (varPointer)
+				print(" %s = %d\n", ctx->GetVarDeclaration(n, stackLevel), *(int*)varPointer);
+			else
+				print(" %s = <null>\n", ctx->GetVarDeclaration(n, stackLevel));
+		}
 		else
 		{
-			print(" %s = {...}\n", ctx->GetVarDeclaration(n, stackLevel));
+			if( varPointer )
+				print(" %s = {...}\n", ctx->GetVarDeclaration(n, stackLevel));
+			else
+				print(" %s = <null>\n", ctx->GetVarDeclaration(n, stackLevel));
 		}
 	}
 }
@@ -205,11 +244,113 @@ void *TestLineNumber()
 }
 };
 
+int& foo_opAssign(int val, int* _this)
+{
+	*_this = val;
+	return *_this;
+}
+
 bool Test2();
 
 bool Test()
 {
 	bool fail = Test2();
+
+	// Test IsVarInScope and GetAddresOfVar for registered value types
+	// https://www.gamedev.net/forums/topic/712251-debugger-and-var-in-scope/
+	{
+		printBuffer = "";
+
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterScriptArray(engine, false);
+		RegisterStdString(engine);
+		RegisterScriptAny(engine);
+		engine->RegisterObjectType("foo", 4, asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterObjectMethod("foo", "foo &opAssign(int)", asFUNCTION(foo_opAssign), asCALL_CDECL_OBJLAST);
+
+		COutStream out;
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		asIScriptModule* mod = engine->GetModule("Module1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(":1", 
+			"interface IUnknown {} \n"
+			"class Script { void addNamedItem(const string &in, IUnknown @, foo) {}}"
+			"Script script;"
+			"void main() { \n"
+			"  array<array<any>@> connectedAddins; \n"
+			"  foo f = 42; array<any>@ i = {any(null),any('test'),any(f)}; \n"
+			"  connectedAddins.insertLast(@i); \n"
+			"  for (uint k = 0, km = connectedAddins.length(); k < km; k++) { \n"
+			"    array<any>@ a = connectedAddins[k]; \n"
+			"    IUnknown@ obj; \n"
+			"    string name; \n"
+			"    foo global; \n"
+			"    a[0].retrieve(@obj); \n"
+			"    a[1].retrieve(name); \n"
+			"    a[2].retrieve(global); \n"
+			"    script.addNamedItem(name, obj, global); \n" // << there is breakpoint and check variable 'name' and 'global'
+			"  } \n"
+			"} \n");
+		mod->Build();
+
+		asIScriptContext* ctx = engine->CreateContext();
+		ctx->SetLineCallback(asFUNCTION(LineCallback2), 0, asCALL_CDECL);
+		ctx->SetExceptionCallback(asFUNCTION(ExceptionCallback), 0, asCALL_CDECL);
+		ctx->Prepare(mod->GetFunctionByDecl("void main()"));
+		int r = ctx->Execute();
+		if (r == asEXECUTION_EXCEPTION)
+		{
+			// It is possible to examine the callstack even after the Execute() method has returned
+			ExceptionCallback(ctx, 0);
+		}
+		ctx->Release();
+		engine->ShutDownAndRelease();
+
+		if( printBuffer != 
+			"Module1:void main():3,3\n"
+			"Module1:void main():3,3\n"
+			" (null):array<array<any>@>@ $fact():0,0\n"
+			"Module1:void main():4,3\n"
+			"Module1:void main():4,15\n"
+			" (null):array<any>@ $list(int&in) { repeat any }:0,0\n"
+			"Module1:void main():5,3\n"
+			"Module1:void main():6,8\n"
+			"Module1:void main():6,51\n"
+			"Module1:void main():6,8\n"
+			"Module1:void main():7,5\n"
+			"Module1:void main():9,5\n"
+			" (in scope) array<array<any>@> connectedAddins = {...}\n"
+			" (in scope) foo f = 42\n"
+			" (in scope) array<any>@ i = {...}\n"
+			" (in scope) uint k = 0\n"
+			" (in scope) uint km = 1\n"
+			" (in scope) array<any>@ a = {...}\n"
+			" (in scope) IUnknown@ obj = {...}\n"
+			" (no scope) string name = <null>\n"
+			" (no scope) foo global = <null>\n"
+			"Module1:void main():10,5\n"
+			"Module1:void main():11,5\n"
+			"Module1:void main():12,5\n"
+			"Module1:void main():13,5\n"
+			"Module1:void main():14,5\n"
+			" (in scope) array<array<any>@> connectedAddins = {...}\n"
+			" (in scope) foo f = 42\n"
+			" (in scope) array<any>@ i = {...}\n"
+			" (in scope) uint k = 0\n"
+			" (in scope) uint km = 1\n"
+			" (in scope) array<any>@ a = {...}\n"
+			" (in scope) IUnknown@ obj = {...}\n"
+			" (in scope) string name = 'test'\n"
+			" (in scope) foo global = 42\n"
+			" Module1:void Script::addNamedItem(const string&in, IUnknown@, foo):2,71\n"
+			" Module1:void Script::addNamedItem(const string&in, IUnknown@, foo):2,71\n"
+			"Module1:void main():6,59\n"
+			"Module1:void main():6,51\n"
+			"Module1:void main():16,2\n" )
+		{
+			TEST_FAILED;
+			PRINTF("%s", printBuffer.c_str());
+		}
+	}
 
 	// GetTypeByDeclaration shouldn't write message on incorrect declaration
 	// http://www.gamedev.net/topic/649322-getting-rid-of-angelscript-prints/
@@ -279,12 +420,12 @@ bool Test()
 	// Test FindNextLineWithCode for class destructors
 	// Reported by Scott Bean
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 		RegisterStdString(engine);
 
-		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("test", 
+		asIScriptModule* mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
 			"class ssNode \n"
 			"{ \n"
 			"    ssNode()  \n"
@@ -295,116 +436,120 @@ bool Test()
 			"    string str; \n"
 			"} \n");
 		int r = mod->Build();
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
-		asITypeInfo *type = mod->GetTypeInfoByName("ssNode");
+		asITypeInfo* type = mod->GetTypeInfoByName("ssNode");
 		asEBehaviours behave;
 		asUINT behaveCount = type->GetBehaviourCount();
-		if( behaveCount != 9 )
+		if (behaveCount != 9)
 			TEST_FAILED;
-		asIScriptFunction *func = type->GetBehaviourByIndex(8, &behave);
-		if( behave != asBEHAVE_CONSTRUCT )
+		asIScriptFunction* func = type->GetBehaviourByIndex(8, &behave);
+		if (behave != asBEHAVE_CONSTRUCT)
 			TEST_FAILED;
 		int line = func->FindNextLineWithCode(5);
-		if( line != 5 )
+		if (line != 5)
 			TEST_FAILED;
 		line = func->FindNextLineWithCode(8);
-		if( line != 8 )
+		if (line != 8)
 			TEST_FAILED;
 
 		engine->Release();
 	}
 
-    // Test crash in GetLineNumber
-    // http://www.gamedev.net/topic/638656-crash-in-ctx-getlinenumber/
+	// Test crash in GetLineNumber
+	// http://www.gamedev.net/topic/638656-crash-in-ctx-getlinenumber/
 	SKIP_ON_MAX_PORT
-    {
-        asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-        engine->RegisterInterface("foo");
-        engine->RegisterObjectType("Test", 0, asOBJ_REF | asOBJ_NOCOUNT);
-        engine->RegisterObjectMethod("Test", "foo @TestLineNumber()", asMETHOD(TestLN, TestLineNumber), asCALL_THISCALL);
- 
-        TestLN t;
-        engine->RegisterGlobalProperty("Test test", &t);
- 
-        asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
-        mod->AddScriptSection("b"," // nothing to compile");
-        mod->AddScriptSection("a","foo @f = test.TestLineNumber();");
-        int r = mod->Build();
-        if( r < 0 )
-            TEST_FAILED;
+	{
+		asIScriptEngine * engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->RegisterInterface("foo");
+		engine->RegisterObjectType("Test", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectMethod("Test", "foo @TestLineNumber()", asMETHOD(TestLN, TestLineNumber), asCALL_THISCALL);
+
+		TestLN t;
+		engine->RegisterGlobalProperty("Test test", &t);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("b"," // nothing to compile");
+		mod->AddScriptSection("a","foo @f = test.TestLineNumber();");
+		int r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
 
 		CBytecodeStream stream("test");
 		mod->SaveByteCode(&stream);
 
-        engine->Release();
+		engine->Release();
 
 		// Load the bytecode
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-        engine->RegisterInterface("foo");
-        engine->RegisterObjectType("Test", 0, asOBJ_REF | asOBJ_NOCOUNT);
-        engine->RegisterObjectMethod("Test", "foo @TestLineNumber()", asMETHOD(TestLN, TestLineNumber), asCALL_THISCALL);
-        engine->RegisterGlobalProperty("Test test", &t);
+		engine->RegisterInterface("foo");
+		engine->RegisterObjectType("Test", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectMethod("Test", "foo @TestLineNumber()", asMETHOD(TestLN, TestLineNumber), asCALL_THISCALL);
+		engine->RegisterGlobalProperty("Test test", &t);
 
-        mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&stream);
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
-        engine->Release();
-    }
-
-	int number = 0;
-
- 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	RegisterScriptArray(engine, true);
-	RegisterScriptString_Generic(engine);
-
-	// Test GetTypeIdByDecl
-	if( engine->GetTypeIdByDecl("int") != engine->GetTypeIdByDecl("const int") )
-		TEST_FAILED;
-	if( engine->GetTypeIdByDecl("string") != engine->GetTypeIdByDecl("const string") )
-		TEST_FAILED;
-
-	// A handle to a const is different from a handle to a non-const
-	if( engine->GetTypeIdByDecl("string@") == engine->GetTypeIdByDecl("const string@") )
-		TEST_FAILED;
-
-	// Test debugging
-	engine->RegisterGlobalProperty("int number", &number);
-
-	COutStream out;
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	asIScriptModule *mod = engine->GetModule("Module1", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(":1", script1, strlen(script1), 0);
-	mod->Build();
-
-	mod = engine->GetModule("Module2", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(":2", script2, strlen(script2), 0);
-	mod->Build();
-
-	// Bind all functions that the module imports
-	mod = engine->GetModule("Module1");
-	mod->BindAllImportedFunctions();
-
-	asIScriptContext *ctx =	engine->CreateContext();
-	ctx->SetLineCallback(asFUNCTION(LineCallback), 0, asCALL_CDECL);
-	ctx->SetExceptionCallback(asFUNCTION(ExceptionCallback), 0, asCALL_CDECL);
-	ctx->Prepare(mod->GetFunctionByDecl("void main()"));
-	int r = ctx->Execute();
-	if( r == asEXECUTION_EXCEPTION )
-	{
-		// It is possible to examine the callstack even after the Execute() method has returned
-		ExceptionCallback(ctx, 0);
+		engine->Release();
 	}
-	ctx->Release();
-	engine->Release();
 
-	if( printBuffer != correct )
+	// Test basic debugging capability
 	{
-		TEST_FAILED;
-		PRINTF("%s", printBuffer.c_str());
+		printBuffer = "";
+		int number = 0;
+
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterScriptArray(engine, true);
+		RegisterScriptString_Generic(engine);
+
+		// Test GetTypeIdByDecl
+		if (engine->GetTypeIdByDecl("int") != engine->GetTypeIdByDecl("const int"))
+			TEST_FAILED;
+		if (engine->GetTypeIdByDecl("string") != engine->GetTypeIdByDecl("const string"))
+			TEST_FAILED;
+
+		// A handle to a const is different from a handle to a non-const
+		if (engine->GetTypeIdByDecl("string@") == engine->GetTypeIdByDecl("const string@"))
+			TEST_FAILED;
+
+		// Test debugging
+		engine->RegisterGlobalProperty("int number", &number);
+
+		COutStream out;
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		asIScriptModule* mod = engine->GetModule("Module1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(":1", script1, strlen(script1), 0);
+		mod->Build();
+
+		mod = engine->GetModule("Module2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(":2", script2, strlen(script2), 0);
+		mod->Build();
+
+		// Bind all functions that the module imports
+		mod = engine->GetModule("Module1");
+		mod->BindAllImportedFunctions();
+
+		asIScriptContext* ctx = engine->CreateContext();
+		ctx->SetLineCallback(asFUNCTION(LineCallback), 0, asCALL_CDECL);
+		ctx->SetExceptionCallback(asFUNCTION(ExceptionCallback), 0, asCALL_CDECL);
+		ctx->Prepare(mod->GetFunctionByDecl("void main()"));
+		int r = ctx->Execute();
+		if (r == asEXECUTION_EXCEPTION)
+		{
+			// It is possible to examine the callstack even after the Execute() method has returned
+			ExceptionCallback(ctx, 0);
+		}
+		ctx->Release();
+		engine->Release();
+
+		if (printBuffer != correct)
+		{
+			TEST_FAILED;
+			PRINTF("%s", printBuffer.c_str());
+		}
 	}
 
 	// Success

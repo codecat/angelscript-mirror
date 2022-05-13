@@ -994,11 +994,11 @@ int asCCompiler::CallDefaultConstructor(const asCDataType &type, int offset, boo
 						asCExprContext ctxCall(engine);
 						PerformFunctionCall(func, &ctxCall, false, 0, CastToObjectType(type.GetTypeInfo()));
 						bc->AddCode(&ctxCall.bc);
-
-						// TODO: value on stack: This probably needs to be done in PerformFunctionCall
-						// Mark the object as initialized
-						bc->ObjInfo(offset, asOBJ_INIT);
 					}
+
+					// TODO: value on stack: This probably needs to be done in PerformFunctionCall
+					// Mark the object as initialized
+					bc->ObjInfo(offset, asOBJ_INIT);
 				}
 				else if( isVarGlobOrMem == 2 )
 				{
