@@ -145,6 +145,25 @@ void LineCallback2(asIScriptContext* ctx, void* /*param*/)
 		PrintVariables(ctx, 0);
 }
 
+void LineCallback3(asIScriptContext* ctx, void* /*param*/)
+{
+	if (ctx->GetState() != asEXECUTION_ACTIVE)
+		return;
+
+	int col;
+	int line = ctx->GetLineNumber(0, &col);
+	int indent = ctx->GetCallstackSize();
+	for (int n = 1; n < indent; n++)
+		print(" ");
+	const asIScriptFunction* function = ctx->GetFunction();
+	print("%s:%s:%d,%d\n", function->GetModuleName(),
+		function->GetDeclaration(),
+		line, col);
+
+	if (line == 8 || line == 13 || line == 18)
+		PrintVariables(ctx, 0);
+}
+
 void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
 {
 	asIScriptEngine *engine = ctx->GetEngine();
@@ -255,6 +274,123 @@ bool Test2();
 bool Test()
 {
 	bool fail = Test2();
+
+	// Test IsVarInScope and GetAddresOfVar for registered value types when variable slot is reused in multiple scopes
+	// https://www.gamedev.net/forums/topic/712251-debugger-and-var-in-scope/
+	{
+		printBuffer = "";
+
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterScriptArray(engine, false);
+		RegisterStdString(engine);
+		RegisterScriptAny(engine);
+		engine->RegisterObjectType("foo", 4, asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterObjectMethod("foo", "foo &opAssign(int)", asFUNCTION(foo_opAssign), asCALL_CDECL_OBJLAST);
+
+		COutStream out;
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		asIScriptModule* mod = engine->GetModule("Module1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(":1",
+			"interface IUnknown {} \n"
+			"class Script { void addNamedItem(const string &in, IUnknown @, foo) {}}"
+			"Script script;"
+			"void main() { \n"
+			"  array<array<any>@> connectedAddins; \n"
+			"  foo f = 42; array<any>@ i = {any(null),any('test'),any(f)}; \n"
+			"  connectedAddins.insertLast(@i); \n"
+			"  { \n"
+			"    string name2 = 'pre-scope'; \n"
+			"    string test2; \n"
+			"  } \n"
+			"  for (uint k = 0, km = connectedAddins.length(); k < km; k++) { \n"
+			"    array<any>@ a = connectedAddins[k]; \n"
+			"    IUnknown@ obj; \n"
+			"    string name; \n"
+			"    foo global; \n"
+			"    a[0].retrieve(@obj); \n"
+			"    a[1].retrieve(name); \n"
+			"    a[2].retrieve(global); \n"
+			"    script.addNamedItem(name, obj, global); \n" // << there is breakpoint and check variable 'name' and 'global'
+			"  } \n"
+			"} \n");
+		mod->Build();
+
+		asIScriptContext* ctx = engine->CreateContext();
+		ctx->SetLineCallback(asFUNCTION(LineCallback3), 0, asCALL_CDECL);
+		ctx->SetExceptionCallback(asFUNCTION(ExceptionCallback), 0, asCALL_CDECL);
+		ctx->Prepare(mod->GetFunctionByDecl("void main()"));
+		int r = ctx->Execute();
+		if (r == asEXECUTION_EXCEPTION)
+		{
+			// It is possible to examine the callstack even after the Execute() method has returned
+			ExceptionCallback(ctx, 0);
+		}
+		ctx->Release();
+		engine->ShutDownAndRelease();
+
+		if (printBuffer !=
+			"Module1:void main():3,3\n"
+			"Module1:void main():3,3\n"
+			" (null):array<array<any>@>@ $fact():0,0\n"
+			"Module1:void main():4,3\n"
+			"Module1:void main():4,15\n"
+			" (null):array<any>@ $list(int&in) { repeat any }:0,0\n"
+			"Module1:void main():5,3\n"
+			"Module1:void main():7,5\n"
+			"Module1:void main():8,5\n"
+			" (in scope) array<array<any>@> connectedAddins = {...}\n"
+			" (in scope) foo f = 42\n"
+			" (in scope) array<any>@ i = {...}\n"
+			" (in scope) string name2 = 'pre-scope'\n"
+			" (no scope) string test2 = <null>\n"
+			" (no scope) uint k = 3452816845\n"
+			" (no scope) uint km = 3452816845\n"
+			" (no scope) array<any>@ a = {...}\n"
+			" (no scope) IUnknown@ obj = {...}\n"
+			" (no scope) string name = <null>\n"
+			" (no scope) foo global = <null>\n"
+			"Module1:void main():10,8\n"
+			"Module1:void main():10,51\n"
+			"Module1:void main():10,8\n"
+			"Module1:void main():11,5\n"
+			"Module1:void main():13,5\n"
+			" (in scope) array<array<any>@> connectedAddins = {...}\n"
+			" (in scope) foo f = 42\n"
+			" (in scope) array<any>@ i = {...}\n"
+			" (no scope) string name2 = <null>\n"
+			" (no scope) string test2 = <null>\n"
+			" (in scope) uint k = 0\n"
+			" (in scope) uint km = 1\n"
+			" (in scope) array<any>@ a = {...}\n"
+			" (in scope) IUnknown@ obj = {...}\n"
+			" (no scope) string name = <null>\n"
+			" (no scope) foo global = <null>\n"
+			"Module1:void main():14,5\n"
+			"Module1:void main():15,5\n"
+			"Module1:void main():16,5\n"
+			"Module1:void main():17,5\n"
+			"Module1:void main():18,5\n"
+			" (in scope) array<array<any>@> connectedAddins = {...}\n"
+			" (in scope) foo f = 42\n"
+			" (in scope) array<any>@ i = {...}\n"
+			" (no scope) string name2 = <null>\n"
+			" (no scope) string test2 = <null>\n"
+			" (in scope) uint k = 0\n"
+			" (in scope) uint km = 1\n"
+			" (in scope) array<any>@ a = {...}\n"
+			" (in scope) IUnknown@ obj = {...}\n"
+			" (in scope) string name = 'test'\n"
+			" (in scope) foo global = 42\n"
+			" Module1:void Script::addNamedItem(const string&in, IUnknown@, foo):2,71\n"
+			" Module1:void Script::addNamedItem(const string&in, IUnknown@, foo):2,71\n"
+			"Module1:void main():10,59\n"
+			"Module1:void main():10,51\n"
+			"Module1:void main():20,2\n")
+		{
+			TEST_FAILED;
+			PRINTF("%s", printBuffer.c_str());
+		}
+	}
 
 	// Test IsVarInScope and GetAddresOfVar for registered value types
 	// https://www.gamedev.net/forums/topic/712251-debugger-and-var-in-scope/

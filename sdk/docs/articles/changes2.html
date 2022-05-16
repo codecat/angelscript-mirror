@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.36.0 WIP - 2022/05/12</h2>
+<h2>Version 2.36.0 WIP - 2022/05/16</h2>
 
 <ul>
 <li>Bug fixes
@@ -27,6 +27,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash that could happen on cleaning up stack when unsafe references is used (Thanks Polyak Istvan)
 <li>Fixed crash in context stack unwind if it happened at a position after a branch return that returns a value object by value (Thanks Miss)
 <li>Fixed GetAddressOfVar returning null for registered value pod types without constructor (Thanks mghughes)
+<li>Fixed GetAddressOfVar returning null for registered value types when the same offset is shared in multiple scopes (Thanks Alexander Orefkov)
 </ul>
 <li>Script language
 <ul>

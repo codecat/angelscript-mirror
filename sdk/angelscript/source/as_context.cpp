@@ -5094,27 +5094,31 @@ void asCContext::DetermineLiveObjects(asCArray<int> &liveObjects, asUINT stackLe
 				case asOBJ_UNINIT: // Object was destroyed
 					{
 						// TODO: optimize: This should have been done by the compiler already
-						// Which variable is this?
-						asUINT var = 0;
+						// Which variable is this? Use IsVarInScope to get the correct variable in case there are multiple variables sharing the same offset
+						asUINT var = asUINT(-1);
 						for (asUINT v = 0; v < func->scriptData->variables.GetLength(); v++)
-							if (func->scriptData->variables[v]->stackOffset == func->scriptData->objVariableInfo[n].variableOffset)
+							if (func->scriptData->variables[v]->stackOffset == func->scriptData->objVariableInfo[n].variableOffset && 
+								IsVarInScope(v, stackLevel) )
 							{
 								var = v;
 								break;
 							}
+						asASSERT(var != asUINT(-1));
 						liveObjects[var] -= 1;
 					}
 					break;
 				case asOBJ_INIT: // Object was created
 					{
-						// Which variable is this?
-						asUINT var = 0;
+						// Which variable is this? Use IsVarInScope to get the correct variable in case there are multiple variables sharing the same offset
+						asUINT var = asUINT(-1);
 						for (asUINT v = 0; v < func->scriptData->variables.GetLength(); v++)
-							if (func->scriptData->variables[v]->stackOffset == func->scriptData->objVariableInfo[n].variableOffset)
+							if (func->scriptData->variables[v]->stackOffset == func->scriptData->objVariableInfo[n].variableOffset &&
+								IsVarInScope(v, stackLevel) )
 							{
 								var = v;
 								break;
 							}
+						asASSERT(var != asUINT(-1));
 						liveObjects[var] += 1;
 					}
 					break;
