@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.36.0 WIP - 2022/05/16</h2>
+<h2>Version 2.36.0 WIP - 2022/06/29</h2>
 
 <ul>
 <li>Bug fixes
@@ -28,6 +28,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash in context stack unwind if it happened at a position after a branch return that returns a value object by value (Thanks Miss)
 <li>Fixed GetAddressOfVar returning null for registered value pod types without constructor (Thanks mghughes)
 <li>Fixed GetAddressOfVar returning null for registered value types when the same offset is shared in multiple scopes (Thanks Alexander Orefkov)
+<li>asIScriptEngine::AssignScriptObject didn't return any error when a type didn't have a value assignment operator
 </ul>
 <li>Script language
 <ul>
@@ -51,6 +52,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Add-ons &amp; Samples
 <ul>
 <li>Fixed script array comparison for 64bit integers (Thanks Violet CLM)
+<li>CScriptArray with CScriptHandle as sub type can now be correctly copied (Thanks Cyprinus Carpio)
+<li>CScriptArray::SetValue now works with CScriptHandle as sub type (Thanks Cyprinus Carpio)
 </ul>
 <li>Project
 <ul>

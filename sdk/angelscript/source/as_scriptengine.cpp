@@ -5428,21 +5428,28 @@ int asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, const asITyp
 	}
 
 	// Must not copy if the opAssign is not available and the object is not a POD object
-	if( objType->beh.copy )
+	if (objType->beh.copy)
 	{
-		asCScriptFunction *func = scriptFunctions[objType->beh.copy];
-		if( func->funcType == asFUNC_SYSTEM )
+		asCScriptFunction* func = scriptFunctions[objType->beh.copy];
+		if (func->funcType == asFUNC_SYSTEM)
 			CallObjectMethod(dstObj, srcObj, objType->beh.copy);
 		else
 		{
 			// Call the script class' opAssign method
-			asASSERT( objType->flags & asOBJ_SCRIPT_OBJECT );
+			asASSERT(objType->flags & asOBJ_SCRIPT_OBJECT);
 			reinterpret_cast<asCScriptObject*>(dstObj)->CopyFrom(reinterpret_cast<asCScriptObject*>(srcObj));
 		}
 	}
-	else if( objType->size && (objType->flags & asOBJ_POD) )
+	else if (objType->size && (objType->flags & asOBJ_POD))
 	{
 		memcpy(dstObj, srcObj, objType->size);
+	}
+	else
+	{
+		asIScriptContext* ctx = asGetActiveContext();
+		if (ctx)
+			ctx->SetException("Cannot do value assignment");
+		return asNOT_SUPPORTED;
 	}
 
 	return asSUCCESS;
