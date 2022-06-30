@@ -139,6 +139,38 @@ static bool Test3();
 static bool Test4();
 static bool Test5();
 
+int blah(int) { return 1; }
+int blah(unsigned int) { return 2; }
+
+class BigInt
+{
+public:
+	// If the value can be stored in i32, it is stored here. Otherwise, this field is -1 or +1.
+	int signOrShortValue_;
+
+public:
+	BigInt(int value = 0)
+		: signOrShortValue_(value)
+	{
+	}
+
+	BigInt(asUINT )
+		: signOrShortValue_(+1)
+	{
+	}
+};
+
+// BigInt::BigInt(i32 value = 0)
+static void BigInt__BigInt_i32(BigInt* _ptr, asINT32 value)
+{
+	new(_ptr) BigInt(value);
+}
+// BigInt::BigInt(u32 value)
+static void BigInt__BigInt_u32(BigInt* _ptr, asUINT value)
+{
+	new(_ptr) BigInt(value);
+}
+
 bool Test()
 {
 	RET_ON_MAX_PORT
@@ -151,12 +183,119 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
 
-	// Test implicit cast in arg using the constructor
-	// TODO: Add this support (only for value types for now)
-	// http://www.gamedev.net/topic/660695-passing-strings-inline/
-/*	{
+	// Test implicit conv for constant while matching function calls
+	// https://www.gamedev.net/forums/topic/712254-vs-as-type-detection/5447679/
+	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		engine->RegisterObjectType("BigInt", sizeof(BigInt), asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterObjectBehaviour("BigInt", asBEHAVE_CONSTRUCT, "void f(int = 0)", asFUNCTION(BigInt__BigInt_i32), asCALL_CDECL_OBJFIRST);
+		engine->RegisterObjectBehaviour("BigInt", asBEHAVE_CONSTRUCT, "void f(uint)", asFUNCTION(BigInt__BigInt_u32), asCALL_CDECL_OBJFIRST);
+		engine->RegisterObjectProperty("BigInt", "int signOrShortValue_", asOFFSET(BigInt, signOrShortValue_));
+/*
+		BigInt i1(2147483647);
+		BigInt u1(2147483648);
+		BigInt i2(0xFF);
+		BigInt u2(0xFFFFFFFF);
+*/
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void Start() \n"
+			"{ \n"
+			"	BigInt i1(2147483647); \n"
+			"	assert(i1.signOrShortValue_ == 2147483647); \n" // print 2147483647 (used int constructor)
+//			"	BigInt u1(2147483648); \n"
+//			"	assert(u1.signOrShortValue_ == -2147483648); \n" // print -2147483648 (used int constructor)
+			"	BigInt i2(0xFF); \n"
+			"	assert(i2.signOrShortValue_ == 1); \n" // print 1 (used uint constructor)
+			"	BigInt u2(0xFFFFFFFF); \n"
+			"	assert(u2.signOrShortValue_ == 1); \n"  // print 1 (used uint constructor)
+			"} \n");
+		mod->Build();
+
+		r = ExecuteString(engine, "Start();", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		// This fails to compile with multiple matching constructors
+		mod->AddScriptSection("test",
+			"void Start2() \n"
+			"{ \n"
+			"	BigInt u1(2147483648); \n"
+			"	assert(u1.signOrShortValue_ == -2147483648); \n"
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 1) : Info    : Compiling void Start2()\n"
+						   "test (3, 11) : Error   : Multiple matching signatures to 'BigInt(const int64)'\n"
+						   "test (3, 11) : Info    : BigInt::BigInt(int = 0)\n"
+						   "test (3, 11) : Info    : BigInt::BigInt(uint)\n")
+		{
+			PRINTF("%s\n", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
+	// Test implicit conv for constant while matching function calls
+	// https://www.gamedev.net/forums/topic/712254-vs-as-type-detection/5447679/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		bout.buffer = "";
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int test(int ) { return 1; } \n"
+			"int test(uint ) { return 2; } \n");
+		mod->Build();
+
+		/*
+			blah(2147483647);
+			blah(2147483648);  // fails to compile with multiple matching functions
+			blah(12147483647); // fails to compile with multiple matching functions
+		*/
+
+		r = ExecuteString(engine, "assert( test(2147483647) == 1 );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "assert( test(2147483648) == 2 );", mod);
+		if (r >= 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "assert( test(12147483647) == 1 );", mod);
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer !=
+			"ExecuteString (1, 9) : Error   : Multiple matching signatures to 'test(const int64)'\n"
+			"ExecuteString (1, 9) : Info    : int test(int)\n"
+			"ExecuteString (1, 9) : Info    : int test(uint)\n"
+			"ExecuteString (1, 9) : Error   : Multiple matching signatures to 'test(const int64)'\n"
+			"ExecuteString (1, 9) : Info    : int test(int)\n"
+			"ExecuteString (1, 9) : Info    : int test(uint)\n")
+		{
+			PRINTF("%s\n", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
+	// Test implicit cast in arg using the constructor
+	// http://www.gamedev.net/topic/660695-passing-strings-inline/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 
 		RegisterStdString(engine);
 
@@ -175,14 +314,21 @@ bool Test()
 			"  sendEvent(123, 'string', 1.234f); \n"
 			"  string str = 'string'; \n"
 			"  sendEvent(123, str, 1.234f); \n"
-			"  EventArg a = 'string'; \n"
+			"  EventArg a = 'string'; \n" // TODO: This should be compiled as EventArg a('string');
 			"} \n");
 		r = mod->Build();
-		if( r < 0 )
+		if( r >= 0 )
 			TEST_FAILED;
 
+		if (bout.buffer != "test (1, 1) : Info    : Compiling void main()\n"
+						   "test (5, 12) : Error   : No appropriate opAssign method found in 'EventArg' for value assignment\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		engine->Release();
-	} */
+	}
 
 	// Test implicit conv/cast when function is expecting &in  (ref arg, but as input only, thus allow object to be transformed)
 	// problem reported by Thomas Grip
