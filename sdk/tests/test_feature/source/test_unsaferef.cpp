@@ -102,6 +102,25 @@ private:
 	int m1_;
 };
 
+std::string toUtf8(const std::string& str)
+{
+	return str;
+}
+
+std::string lastString;
+asPWORD cstr(const std::string& str)
+{
+	lastString = str;
+	return (asPWORD)str.c_str();
+}
+
+bool validString = false;
+int sqlite3_exec(asUINT, asPWORD pstr)
+{
+	validString = (lastString == (char*)pstr);
+	return 0;
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -110,6 +129,54 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 	asIScriptEngine *engine;
+
+	// Test nested calls that return a camoflaged reference to a temporary object
+	// The compiler has no way of knowing the temporary object is being referenced
+	// https://www.gamedev.net/forums/topic/712250-temprary-object-lifetime-bug-or-feature/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
+		bout.buffer = "";
+
+		engine->RegisterTypedef("int_ptr", "uint");
+		RegisterStdString(engine);
+		engine->RegisterObjectMethod("string", "string toUtf8() const", asFUNCTION(toUtf8), asCALL_CDECL_OBJLAST);
+#ifdef AS_PTR_SIZE == 1
+		engine->RegisterObjectMethod("string", "uint get_cstr() const property", asFUNCTION(cstr), asCALL_CDECL_OBJLAST);
+		engine->RegisterGlobalFunction("int sqlite3_exec(uint, uint)", asFUNCTION(sqlite3_exec), asCALL_CDECL);
+#else
+		engine->RegisterObjectMethod("string", "uint64 get_cstr() const property", asFUNCTION(cstr), asCALL_CDECL_OBJLAST);
+		engine->RegisterGlobalFunction("int sqlite3_exec(uint, uint64)", asFUNCTION(sqlite3_exec), asCALL_CDECL);
+#endif
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class sqlite { \n"
+			"	int_ptr db; \n"
+			"	int exec(const string & in query) { \n"
+			"		return sqlite3_exec(db, query.toUtf8().cstr); \n" // As get_cstr returns an uint, the compiler destroys the string returned by toUtf8 before calling sqlite3_exec
+			"	} \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "sqlite s; s.exec('query');", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (!validString)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test cleanup of temporary reference to string constant
 	// Reported by Polyak Istvan

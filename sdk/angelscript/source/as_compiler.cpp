@@ -2984,6 +2984,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 								ctx.bc.ObjInfo(offset, asOBJ_INIT);
 							}
 						}
+						ProcessDeferredParams(&ctx);
 						bc->AddCode(&ctx.bc);
 					}
 				}
@@ -3173,6 +3174,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 						ctx.bc.ObjInfo(offset, asOBJ_INIT);
 					}
 				}
+				ProcessDeferredParams(&ctx);
 				bc->AddCode(&ctx.bc);
 			}
 		}
@@ -11108,7 +11110,7 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 
 				ImplicitConversion(args[0], dt, node->lastChild, asIC_EXPLICIT_VAL_CAST);
 
-				ctx->bc.AddCode(&args[0]->bc);
+				MergeExprBytecode(ctx, args[0]);
 				ctx->type = args[0]->type;
 
 				asDELETE(args[0], asCExprContext);
@@ -15989,16 +15991,31 @@ void asCCompiler::PerformFunctionCall(int funcId, asCExprContext *ctx, bool isCo
 			ctx->bc.InstrSHORT(asBC_STOREOBJ, (short)returnOffset);
 		}
 
-		ReleaseTemporaryVariable(tmpExpr, &ctx->bc);
+		// If the context holds a variable that needs cleanup and the application uses unsafe
+		// references then store it as a deferred parameter so it will be cleaned up afterwards.
+		if (tmpExpr.isTemporary && engine->ep.allowUnsafeReferences)
+		{
+			asSDeferredParam defer;
+			defer.argNode = 0;
+			defer.argType = tmpExpr;
+			defer.argInOutFlags = asTM_INOUTREF;
+			defer.origExpr = 0;
+			ctx->deferredParams.PushLast(defer);
+		}
+		else
+			ReleaseTemporaryVariable(tmpExpr, &ctx->bc);
 
 		ctx->type.dataType.MakeReference(IsVariableOnHeap(returnOffset));
 		ctx->type.isLValue = false; // It is a reference, but not an lvalue
 
 		// Clean up arguments
+		// If application is using unsafe references, then don't clean up arguments yet because
+		// the returned object might be referencing one of the arguments.
 		if( args )
-			AfterFunctionCall(funcId, *args, ctx, false);
+			AfterFunctionCall(funcId, *args, ctx, engine->ep.allowUnsafeReferences ? true : false);
 
-		ProcessDeferredParams(ctx);
+		if (!engine->ep.allowUnsafeReferences)
+			ProcessDeferredParams(ctx);
 
 		ctx->bc.InstrSHORT(asBC_PSF, (short)returnOffset);
 	}
@@ -16078,15 +16095,30 @@ void asCCompiler::PerformFunctionCall(int funcId, asCExprContext *ctx, bool isCo
 		else
 			ctx->type.Set(descr->returnType);
 
-		ReleaseTemporaryVariable(tmpExpr, &ctx->bc);
+		// If the context holds a variable that needs cleanup and the application uses unsafe
+		// references then store it as a deferred parameter so it will be cleaned up afterwards.
+		if (tmpExpr.isTemporary && engine->ep.allowUnsafeReferences )
+		{
+			asSDeferredParam defer;
+			defer.argNode = 0;
+			defer.argType = tmpExpr;
+			defer.argInOutFlags = asTM_INOUTREF;
+			defer.origExpr = 0;
+			ctx->deferredParams.PushLast(defer);
+		}
+		else
+			ReleaseTemporaryVariable(tmpExpr, &ctx->bc);
 
 		ctx->type.isLValue = false;
 
 		// Clean up arguments
+		// If application is using unsafe references, then don't clean up arguments yet because
+		// the returned value might represent a reference to one of the arguments, e.g. an integer might in truth be a pointer
 		if( args )
-			AfterFunctionCall(funcId, *args, ctx, false);
+			AfterFunctionCall(funcId, *args, ctx, engine->ep.allowUnsafeReferences ? true : false);
 
-		ProcessDeferredParams(ctx);
+		if( !engine->ep.allowUnsafeReferences )
+			ProcessDeferredParams(ctx);
 	}
 }
 

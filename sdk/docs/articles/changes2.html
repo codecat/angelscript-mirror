@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.36.0 WIP - 2022/06/29</h2>
+<h2>Version 2.36.0 WIP - 2022/07/04</h2>
 
 <ul>
 <li>Bug fixes
@@ -40,6 +40,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added engine property asEP_IGNORE_DUPLICATE_SHARED_INTF to add backwards compatibility with 2.35.0 when scripts include declaration of shared interfaces more than once (Thanks Violet CLM)
 <li>Compiler now stores info on temporary variables too to allow these to be inspected at runtime
 <li>Added engine property to dynamically turn off debug output
+<li>When asEP_ALLOW_UNSAFE_REFERENCES is turned on the destruction of temporary objects will be deferred to end of expressions (Thanks Alexander Orefkov)
 </ul>
 <li>Library interface
 <ul>
