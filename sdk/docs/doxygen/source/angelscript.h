@@ -399,21 +399,23 @@ enum asEBehaviours
 enum asEContextState
 {
 	//! The context has successfully completed the execution.
-	asEXECUTION_FINISHED      = 0,
+	asEXECUTION_FINISHED        = 0,
 	//! The execution is suspended and can be resumed.
-	asEXECUTION_SUSPENDED     = 1,
+	asEXECUTION_SUSPENDED       = 1,
 	//! The execution was aborted by the application.
-	asEXECUTION_ABORTED       = 2,
+	asEXECUTION_ABORTED         = 2,
 	//! The execution was terminated by an unhandled script exception.
-	asEXECUTION_EXCEPTION     = 3,
+	asEXECUTION_EXCEPTION       = 3,
 	//! The context has been prepared for a new execution.
-	asEXECUTION_PREPARED      = 4,
+	asEXECUTION_PREPARED        = 4,
 	//! The context is not initialized.
-	asEXECUTION_UNINITIALIZED = 5,
+	asEXECUTION_UNINITIALIZED   = 5,
 	//! The context is currently executing a function call.
-	asEXECUTION_ACTIVE        = 6,
+	asEXECUTION_ACTIVE          = 6,
 	//! The context has encountered an error and must be reinitialized.
-	asEXECUTION_ERROR         = 7
+	asEXECUTION_ERROR           = 7,
+	//! The context is currently in deserialization mode.
+	asEXECUTION_DESERIALIZATION = 8
 };
 
 // Message types
@@ -630,7 +632,7 @@ typedef unsigned int   asUINT;
 #endif
 
 // Is the target a 64bit system?
-#if defined(__LP64__) || defined(__amd64__) || defined(__x86_64__) || defined(_M_X64)
+#if defined(__LP64__) || defined(__amd64__) || defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__) || defined(_M_ARM64)
 	#ifndef AS_64BIT_PTR
 		#define AS_64BIT_PTR
 	#endif
@@ -1839,7 +1841,7 @@ public:
 	//! \param[in] type The type of the objects.
 	//! \return A negative value on error
 	//! \retval asINVALID_ARG One of the arguments is null
-	//! \retval asNOT_SUPPORTED The object type is a ref type and value assignment has been turned off
+	//! \retval asNOT_SUPPORTED The object type is a ref type and value assignment has been turned off, or the object doesn't have an appropriate assignment operator.
 	//!
 	//! This calls the assignment operator to copy the object from one to the other.
 	//!
@@ -3167,26 +3169,48 @@ public:
 	//!
 	//! Returns the number of declared variables, including the parameters, in the function on the stack.
 	virtual int                GetVarCount(asUINT stackLevel = 0) = 0;
+	//! \brief Returns information on a local variable at the specified callstack level.
+	//! \param[in] varIndex The index of the variable.
+	//! \param[in] stackLevel The index on the call stack.
+	//! \param[out] name This will be set to the name of the variable or null if the variable is unnamed.
+	//! \param[out] typeId This will be set to the type id of the variable.
+	//! \param[out] typeModifiers This will be set with the type modifiers of the variable.
+	//! \param[out] isVarOnHeap This will be set to true if the variable memory is allocated on the heap.
+	//! \param[out] stackOffset This will be set to the offset on the stack where the variable is allocated.
+	//! \return Returns a negative value on error.
+	//! \retval asINVALID_ARG The index or stack level is invalid.
+	//! \retval asNOT_SUPPORTED The function is not a script function.
+	virtual int                GetVar(asUINT varIndex, asUINT stackLevel, const char** name, int* typeId = 0, asETypeModifiers* typeModifiers = 0, bool* isVarOnHeap = 0, int* stackOffset = 0) = 0;
+#ifdef AS_DEPRECATED
+	// deprecated since 2022-05-04, 2.36.0
 	//! \brief Returns the name of local variable at the specified callstack level.
 	//! \param[in] varIndex The index of the variable.
 	//! \param[in] stackLevel The index on the call stack.
 	//! \return A null terminated string with the name of the variable.
+	//! \deprecated Since 2.36.0. Use \ref asIScriptContext::GetVar instead
 	virtual const char        *GetVarName(asUINT varIndex, asUINT stackLevel = 0) = 0;
+#endif
 	//! \brief Returns the declaration of a local variable at the specified callstack level.
 	//! \param[in] varIndex The index of the variable.
 	//! \param[in] stackLevel The index on the call stack.
 	//! \param[in] includeNamespace Set to true if the namespace should be included in the declaration.
 	//! \return A null terminated string with the declaration of the variable.
 	virtual const char        *GetVarDeclaration(asUINT varIndex, asUINT stackLevel = 0, bool includeNamespace = false) = 0;
+#ifdef AS_DEPRECATED
+	// deprecated since 2022-05-04, 2.36.0
 	//! \brief Returns the type id of a local variable at the specified callstack level.
 	//! \param[in] varIndex The index of the variable.
 	//! \param[in] stackLevel The index on the call stack.
 	//! \return The type id of the variable, or a negative value on error.
 	//! \retval asINVALID_ARG The index or stack level is invalid.
+	//! \deprecated Since 2.36.0. Use \ref asIScriptContext::GetVar instead
 	virtual int                GetVarTypeId(asUINT varIndex, asUINT stackLevel = 0) = 0;
+#endif
 	//! \brief Returns a pointer to a local variable at the specified callstack level.
 	//! \param[in] varIndex The index of the variable.
 	//! \param[in] stackLevel The index on the call stack.
+	//! \param[in] dontDereference Do not dereference the variable, i.e. get the location where the address to the memory is stored.
+	//! \param[in] returnAddressOfUnitializedObjects Return the address even if the variable is not initialized yet.
 	//! \return A pointer to the variable.
 	//!
 	//! Returns a pointer to the variable, so that its value can be read and written. The 
@@ -3194,7 +3218,10 @@ public:
 	//!
 	//! Note that object variables may not be initalized at all moments, thus you must verify 
 	//! if the address returned points to a null pointer, before you try to dereference it.
-	virtual void              *GetAddressOfVar(asUINT varIndex, asUINT stackLevel = 0) = 0;
+	//! 
+	//! When deserializing a context, it may be necessary to set \a dontDereference and/or 
+	//! \a returnAddressOfUnitializedObjects in order to allocate and initialize memory for local variables.
+	virtual void              *GetAddressOfVar(asUINT varIndex, asUINT stackLevel = 0, bool dontDereference = false, bool returnAddressOfUnitializedObjects = false) = 0;
 	//! \brief Informs whether the variable is in scope at the current program position.
 	//! \param[in] varIndex The index of the variable.
 	//! \param[in] stackLevel The index on the call stack.
@@ -3238,6 +3265,39 @@ public:
 	//! \param[in] type An identifier specifying the user data to set.
 	//! \return The pointer to the user data.
 	virtual void *GetUserData(asPWORD type = 0) const = 0;
+	//! \}
+
+	// Serialization
+	//! \name Serialization
+	//! \{
+
+	//! \brief Start a deserialization of a context.
+	//! \todo document this
+	virtual int StartDeserialization() = 0;
+	//! \brief Finish a deserialization of a context.
+	//! \todo document this
+	virtual int FinishDeserialization() = 0;
+	//! \brief Push a function call onto the context stack for deserialization.
+	//! \todo document this
+	virtual int PushFunction(asIScriptFunction *func, void *object, int typeId) = 0;
+	//! \brief Get the state registers for serialization.
+	//! \todo document this
+	virtual int GetStateRegisters(asUINT stackLevel, asIScriptFunction **callingSystemFunction, asIScriptFunction **initialFunction, asDWORD *origStackPointer, asDWORD *argumentsSize, asQWORD *valueRegister, void **objectRegister, asITypeInfo **objectTypeRegister) = 0;
+	//! \brief Get the call state registers for serialization.
+	//! \todo document this
+	virtual int GetCallStateRegisters(asUINT stackLevel, asDWORD *stackFramePointer, asIScriptFunction **currentFunction, asDWORD *programPointer, asDWORD *stackPointer, asDWORD *stackIndex) = 0;
+	//! \brief Set the state registers for deserialization.
+	//! \todo document this
+	virtual int SetStateRegisters(asUINT stackLevel, asIScriptFunction *callingSystemFunction, asIScriptFunction *initialFunction, asDWORD origStackPointer, asDWORD argumentsSize, asQWORD valueRegister, void *objectRegister, asITypeInfo *objectTypeRegister) = 0;
+	//! \brief Set the call state registers for deserialization.
+	//! \todo document this
+	virtual int SetCallStateRegisters(asUINT stackLevel, asDWORD stackFramePointer, asIScriptFunction *currentFunction, asDWORD programPointer, asDWORD stackPointer, asDWORD stackIndex) = 0;
+	//! \brief Get the number of args pushed on the stack for serialization.
+	//! \todo document this
+	virtual int GetArgsOnStackCount(asUINT stackLevel) = 0;
+	//! \brief Get the argument pushed on the stack for serialization and deserialization.
+	//! \todo document this
+	virtual int GetArgOnStack(asUINT stackLevel, asUINT arg, int* typeId, asUINT *flags, void** address) = 0;
 	//! \}
 
 protected:

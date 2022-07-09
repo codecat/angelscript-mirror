@@ -136,4 +136,8 @@ In version 2.33.0 the language was improved to support try-catch statements, and
 
 With version 2.34.0 virtual property access must be explicitly flagged with the property keyword so that functions starting with get_ or set_ won't automatically be interpreted as virtual properties.
 
+\subsection doc_versions_2022 2022 - Serialization of the context stack
+
+With version 2.36.0 the ability to serialize the context stack was implemented.
+
 */

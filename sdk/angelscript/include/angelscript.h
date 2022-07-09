@@ -948,7 +948,7 @@ public:
 	virtual const char        *GetVarName(asUINT varIndex, asUINT stackLevel = 0) = 0;
 #endif
 	virtual const char        *GetVarDeclaration(asUINT varIndex, asUINT stackLevel = 0, bool includeNamespace = false) = 0;
-#ifdef AS_DEPRECATED	
+#ifdef AS_DEPRECATED
 	// deprecated since 2022-05-04, 2.36.0
 	virtual int                GetVarTypeId(asUINT varIndex, asUINT stackLevel = 0) = 0;
 #endif

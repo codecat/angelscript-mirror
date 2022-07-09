@@ -62,6 +62,10 @@ By turning on unsafe references you allow in-out references to be used for primi
 Normally this will work fine, just as it does in ordinary languages such as C++, but know that it is 
 quite possible to write scripts that will cause memory invasions or crashes if the references are not properly
 guarded. With this option turned on you cannot consider the scripts to be sand-boxed any longer.
+
+Turning this option on also makes temporary objects created within expressions to be destroyed only at the 
+end of expressions, rather than as soon as possible. This makes it possible to pass references to temporary objects
+to function calls within the expression, without the references becoming invalid too early.
  
 \ref asEP_USE_CHARACTER_LITERALS, \ref asEP_ALLOW_MULTILINE_STRINGS, \ref asEP_SCRIPT_SCANNER, \ref asEP_STRING_ENCODING
 
@@ -231,7 +235,9 @@ If the behaviour used before 2.33.0 is desired for backwards compatibility, then
 generic calling convention will always release references for handles received in arguments, and never increment references 
 for returned handles. 
 
+\ref asEP_NO_DEBUG_OUTPUT
 
+When the library is built with AS_DEBUG it will write debug output to the folder AS_DEBUG by default. By turning on this engine property this debug output is disabled.
 
 
 
