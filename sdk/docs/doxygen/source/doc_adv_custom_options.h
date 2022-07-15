@@ -145,7 +145,8 @@ can be encoded in UTF-8 format and compiler normally.
 
 \ref asEP_IGNORE_DUPLICATE_SHARED_INTF
 
-\todo document the behaviour
+By turning on this option the compiler will silently accept duplicate declarations of shared interfaces in modules. 
+This option was added to provide backwards compatibility with 2.35.0.
 
 
 

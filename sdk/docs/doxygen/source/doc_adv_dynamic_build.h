@@ -123,7 +123,11 @@ the members and set their values or references according to the backed up data.
    can have a special event handler to provide the initial value of the new member?
  - The \ref doc_addon_serializer "Serializer" add-on has been implemented to aid the implementation of hot reloading
    scripts, though it may not suit all types of applications.
-   
+ - Although it is possible to serialize a script context, if any function on the context's call stack is modified
+   the program position cannot be reliably restored. Therefore it is recommended that you design your application
+   so that contexts can be aborted when hot reloading and any long running scripts restarted, or avoid scripts 
+   that over multiple frames all together so that it is guaranteed that no contexts are active when hot reloading.
+
 \see \ref doc_addon_serializer, \ref doc_adv_reflection
 
 */

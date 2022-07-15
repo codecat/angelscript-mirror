@@ -98,8 +98,10 @@ public:
 The <code>CSerializer</code> implements support for serializing the values of global variables in a 
 module, for example in order to reload a slightly modified version of the script without reinitializing
 everything. It will resolve primitives and script classes automatically, including references and handles.
+
 For application registered types, the application needs to implement callback objects to show how
-these should be serialized.
+these should be serialized. The exception is for pod types, as the serializer will simply keep a bitwise copy. 
+Registered reference types without factories will not be serialized, i.e. the object will be kept as-is.
 
 The implementation currently has some limitations:
 
@@ -111,13 +113,6 @@ The implementation currently has some limitations:
    differently in this case.
  - If the module holds references to objects from another module it will probably fail in 
    restoring the values.
-
-
-\todo Show how to serialize extra objects too. And explain about memory management for restored objects
-
-\todo Explain that handles to registered types without factories will be kept as-is
-
-\todo Registered pod-types do not need a special user type as the serializer will simply keep a bitwise copy
 
 \section doc_addon_serializer_1 Public C++ interface
 
@@ -146,6 +141,8 @@ public:
 \endcode
 
 \section doc_addon_serializer_2 Example usage
+
+This first example shows how to serialize a script module that uses application registered types.
 
 \code
 struct CStringType;
@@ -210,6 +207,40 @@ struct CArrayType : public CUserType
       val->m_children[i]->Restore(arr->At(asUINT(i)), arr->GetElementTypeId());
   }
 };
+\endcode
+
+The following example shows how to serialize additional objects, not stored in the module itself.
+
+\code
+// This object is stored outside of the module, so it has to be explicitly informed to the serializer
+asIScriptObject *scriptObj = reinterpret_cast<asIScriptObject*>(engine->CreateScriptObject(mod->GetTypeInfoByName("CTest")));
+
+void RecompileModule(asIScriptEngine *engine, asIScriptModule *mod)
+{
+  string modName = mod->GetName();
+  
+  // Tell the serializer about the additional object stored outside of the module
+  CSerializer backup;
+  backup.AddExtraObjectToStore(scriptObj);
+
+  // Backup the values of the global variables and the additional object
+  r = backup.Store(mod);
+  if( r < 0 )
+    TEST_FAILED;
+
+  // Application can now recompile the module
+  CompileModule(modName);
+
+  // Restore the values of the global variables in the new module
+  mod = engine->GetModule(modName.c_str(), asGM_ONLY_IF_EXISTS);
+  backup.Restore(mod);
+
+  // Restore the extra object by looking up the new instance using the address of the old instance as key
+  asIScriptObject *obj2 = (asIScriptObject*)backup.GetPointerToRestoredObject(scriptObj);
+  scriptObj->Release();
+  scriptObj = obj2;
+  scriptObj->AddRef();
+}
 \endcode
 
 
