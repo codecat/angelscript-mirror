@@ -1,6 +1,6 @@
 //
 //  AngelCode Scripting Library
-//  Copyright (c) 2020-2021 Andreas Jonsson
+//  Copyright (c) 2020-2022 Andreas Jonsson
 //
 //  This software is provided 'as-is', without any express or implied
 //  warranty. In no event will the authors be held liable for any
@@ -50,6 +50,7 @@
 .global CallARM64Float
 .global CallARM64
 
+#if !defined(__MACH__)
 .type GetHFAReturnDouble, %function
 .type GetHFAReturnFloat, %function
 .type CallARM64Ret128, %function
@@ -57,6 +58,7 @@
 .type CallARM64Double, %function
 .type CallARM64Float, %function
 .type CallARM64, %function
+#endif /* __MACH__ */
 
 .align  2
 GetHFAReturnDouble:
