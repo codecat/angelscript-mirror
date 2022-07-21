@@ -98,10 +98,10 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_adv_dynamic_config
  - \subpage doc_adv_custom_options
  - \subpage doc_adv_reflection
+ - \subpage doc_serialization
  - \subpage doc_adv_inheritappclass
  - \subpage doc_adv_jit_topic
 
-\todo Add page on serialization
 
 
 

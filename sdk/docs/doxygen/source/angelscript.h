@@ -3272,10 +3272,18 @@ public:
 	//! \{
 
 	//! \brief Start a deserialization of a context.
-	//! \todo document this
+	//! \return A negative value to indicate an error.
+	//! \retval asCONTEXT_ACTIVE The context is currently active or suspended.
+	//! 
+	//! Call this method to initiate a deserialization of a previously serialized context. After deserializing the call stack call \ref FinishDeserialization.
+	//! 
+	//! \see \ref doc_serialization_contexts
 	virtual int StartDeserialization() = 0;
 	//! \brief Finish a deserialization of a context.
-	//! \todo document this
+	//! \return A negative value to indicate an error.
+	//! \retval asCONTEXT_NOT_PREPARED The deserialization was not initiated, or the context was not successfully deserialized.
+	//! 
+	//! Call this method to finish the deserialization previously initiated with \ref StartDeserialization.
 	virtual int FinishDeserialization() = 0;
 	//! \brief Push a function call onto the context stack for deserialization.
 	//! \todo document this

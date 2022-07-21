@@ -128,6 +128,6 @@ the members and set their values or references according to the backed up data.
    so that contexts can be aborted when hot reloading and any long running scripts restarted, or avoid scripts 
    that over multiple frames all together so that it is guaranteed that no contexts are active when hot reloading.
 
-\see \ref doc_addon_serializer, \ref doc_adv_reflection
+\see \ref doc_addon_serializer, \ref doc_adv_reflection, \ref doc_serialization
 
 */
