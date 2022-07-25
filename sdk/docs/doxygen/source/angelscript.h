@@ -3301,10 +3301,32 @@ public:
 	//! \todo document this
 	virtual int SetCallStateRegisters(asUINT stackLevel, asDWORD stackFramePointer, asIScriptFunction *currentFunction, asDWORD programPointer, asDWORD stackPointer, asDWORD stackIndex) = 0;
 	//! \brief Get the number of args pushed on the stack for serialization.
-	//! \todo document this
+	//! \param[in] stackLevel The index on the call stack.
+	//! \return The number of args currently pushed on the stack or a negative value on error.
+	//! \retval asERROR The programPointer is not set for this function, e.g. \ref Execute has not been called yet.
+	//! \retval asINVALID_ARG The \a stackLevel is out of range.
+	//! 
+	//! This method will determine the number of arguments currently pushed on the stack in preparation for a function call.
+	//! Use this during serialization of the context, followed by calls to \ref GetArgOnStack to serialize the arguments.
 	virtual int GetArgsOnStackCount(asUINT stackLevel) = 0;
 	//! \brief Get the argument pushed on the stack for serialization and deserialization.
-	//! \todo document this
+	//! \param[in] stackLevel The index on the call stack.
+	//! \param[in] arg The argument to retrieve.
+	//! \param[out] typeId Set to the typeId of the argument.
+	//! \param[out] flags A combination of \ref asETypeModifiers.
+	//! \param[out] address Set to the address of the argument.
+	//! \return A negative value to indicate an error.
+	//! \retval asERROR The programPointer is not set
+	//! \retval asINVALID_ARG The \a stackLevel is out of range
+	//!
+	//! This method should be used to retrieve the typeId and type modifiers as well as the address of the argument pushed
+	//! on the stack for serialization. It should also be used during deserialization to restore the argument on the stack.
+	//!
+	//! If the \a typeId indicate that the argument is an object type, or the \a flags indicate that it is a reference, then
+	//! the \a address may be either an address to the value, or an integer place holder refering to the local variable 
+	//! holding the actual value. The latter is often used to avoid storing unsafe references on the stack until just before
+	//! the function call. The method \ref GetVar can be used to determine the stackOffset of local variables to match the 
+	//! value in \a address if it is an integer place holder.
 	virtual int GetArgOnStack(asUINT stackLevel, asUINT arg, int* typeId, asUINT *flags, void** address) = 0;
 	//! \}
 

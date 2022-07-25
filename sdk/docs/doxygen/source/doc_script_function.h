@@ -157,12 +157,16 @@ The type of conversion that needs to be performed on the argument to get to the 
 parameter determines how well a function matches. The following list gives the order of how one 
 type of conversion compares to another.
 
-\todo Update list with new degrees. See EConvCost in as_compiler.h
-
  - no conversion needed
  - conversion to const
- - size of primitive changes 
- - integer type to float type and vice versa
+ - conversion of enum to integer of same size
+ - conversion of enum to integer of different size
+ - size of primitive type increases
+ - size of primitive type decreases
+ - signed integer to unsigned integer conversion
+ - unsigned integer to signed integer conversion
+ - integer type to float type
+ - float type to integer type
  - reference cast
  - object to primitive conversion
  - conversion to object
