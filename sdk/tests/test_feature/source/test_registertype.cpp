@@ -1,7 +1,11 @@
 #include "utils.h"
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
 #include "../../../add_on/scriptmath/scriptmathcomplex.h"
+#ifndef __clang__
 #include <malloc.h> // gnuc: memalign
+#else
+#include <stdlib.h>
+#endif
 
 // olc::vX2d - A generic 2D vector type
 // https://github.com/OneLoneCoder/olcPixelGameEngine/blob/master/olcPixelGameEngine.h#L608-L671
@@ -426,9 +430,21 @@ bool Test()
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		r = engine->RegisterObjectType("vi2d", sizeof(olc::vi2d), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<olc::vi2d>());
+#ifndef AS_MAX_PORTABILITY
 		r = engine->RegisterObjectBehaviour("vi2d", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(v2d_Constructor_def<int>, (void*), void), asCALL_CDECL_OBJLAST);
 		r = engine->RegisterObjectBehaviour("vi2d", asBEHAVE_CONSTRUCT, "void f(int, int)", asFUNCTIONPR(v2d_Constructor<int>, (int, int, void*), void), asCALL_CDECL_OBJLAST);
 		r = engine->RegisterObjectBehaviour("vi2d", asBEHAVE_CONSTRUCT, "void f(const vi2d &in)", asFUNCTIONPR(v2d_Constructor_copy<int>, (const olc::v2d_generic<int>&, void*), void), asCALL_CDECL_OBJLAST);
+#else
+		// Alternative 1
+		r = engine->RegisterObjectBehaviour("vi2d", asBEHAVE_CONSTRUCT, "void f()", WRAP_OBJ_LAST_PR(v2d_Constructor_def<int>, (void*), void), asCALL_GENERIC);
+		r = engine->RegisterObjectBehaviour("vi2d", asBEHAVE_CONSTRUCT, "void f(int, int)", WRAP_OBJ_LAST_PR(v2d_Constructor<int>, (int, int, void*), void), asCALL_GENERIC);
+		r = engine->RegisterObjectBehaviour("vi2d", asBEHAVE_CONSTRUCT, "void f(const vi2d &in)", WRAP_OBJ_LAST_PR(v2d_Constructor_copy<int>, (const olc::v2d_generic<int>&, void*), void), asCALL_GENERIC);
+/*		// Alternative 2
+		r = engine->RegisterObjectBehaviour("vi2d", asBEHAVE_CONSTRUCT, "void f()", WRAP_CON(olc::vi2d, ()), asCALL_GENERIC);
+		r = engine->RegisterObjectBehaviour("vi2d", asBEHAVE_CONSTRUCT, "void f(int, int)", WRAP_CON(olc::vi2d, (int, int)), asCALL_GENERIC);
+		r = engine->RegisterObjectBehaviour("vi2d", asBEHAVE_CONSTRUCT, "void f(const vi2d &in)", WRAP_CON(olc::vi2d, (const olc::vi2d&)), asCALL_GENERIC);
+*/
+#endif
 
 		r = engine->RegisterObjectProperty("vi2d", "int x", asOFFSET(olc::vi2d, x));
 		r = engine->RegisterObjectProperty("vi2d", "int y", asOFFSET(olc::vi2d, y));
@@ -2403,8 +2419,11 @@ __attribute__((aligned(16)))
 #endif
 ;
 
-#if !defined(_WIN32) && (defined(__psp2__) || defined(__CELLOS_LV2__) || defined(__GNUC__))
+#if !defined(_WIN32) && (defined(__psp2__) || defined(__CELLOS_LV2__) || defined(__GNUC__)) && !defined(__clang__)
 	#define _aligned_malloc(s, a) memalign(a, s)
+	#define _aligned_free free
+#elif !defined(_WIN32) && defined(__clang__)
+	#define _aligned_malloc(s, a) aligned_alloc(s, a)
 	#define _aligned_free free
 #endif
 

@@ -226,7 +226,7 @@ public:
 				storage.Read(&stackIndex, sizeof(stackIndex));
 
 				// Set the stack frame
-				r = ctx->PushFunction(currentFunction, 0, 0); // TODO: Set object if method call (or delegate)
+				r = ctx->PushFunction(currentFunction, 0); // TODO: Set object if method call (not for delegate)
 				r = ctx->SetCallStateRegisters(0, stackFramePointer, currentFunction, programPointer, stackPointer, stackIndex);
 				if (r < 0)
 					TEST_FAILED;

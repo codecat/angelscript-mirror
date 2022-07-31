@@ -114,7 +114,12 @@ bool Test()
 		RegisterScriptArray(engine, false);
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+#ifndef AS_MAX_PORTABILITY
 		engine->RegisterGlobalFunction("array<ref@> @getEntities(uint a)", asFUNCTION(getEntities), asCALL_CDECL);
+#else
+		engine->RegisterGlobalFunction("array<ref@> @getEntities(uint a)", WRAP_FN(getEntities), asCALL_GENERIC);
+#endif
 		bout.buffer = "";
 
 		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
@@ -134,7 +139,7 @@ bool Test()
 		if (r < 0)
 			TEST_FAILED;
 
-		asIScriptContext* ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "testArray()", mod, ctx);
 		if (r != asEXECUTION_FINISHED)
 		{

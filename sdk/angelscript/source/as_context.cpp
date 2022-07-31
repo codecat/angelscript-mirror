@@ -374,7 +374,7 @@ asIScriptFunction *asCContext::GetSystemFunction()
 }
 
 // interface
-int asCContext::PushFunction(asIScriptFunction *func, void *object, int typeId)
+int asCContext::PushFunction(asIScriptFunction *func, void *object)
 {
 	asCScriptFunction *realFunc = static_cast<asCScriptFunction*>(func);
 
@@ -396,11 +396,10 @@ int asCContext::PushFunction(asIScriptFunction *func, void *object, int typeId)
 
 	if( realFunc->funcType == asFUNC_DELEGATE )
 	{
-		asASSERT(object == 0 && typeId == asTYPEID_VOID);
+		asASSERT(object == 0);
 
 		object   = realFunc->objForDelegate;
 		realFunc = realFunc->funcForDelegate;
-		typeId   = realFunc->GetObjectType()->GetTypeId();
 	}
 
 	realFunc = GetRealFunc(realFunc, &object);
@@ -409,7 +408,8 @@ int asCContext::PushFunction(asIScriptFunction *func, void *object, int typeId)
 	{
 		m_status = asEXECUTION_UNINITIALIZED;
 		Prepare(realFunc);
-		if(object) *(asPWORD*)&m_regs.stackFramePointer[0] = (asPWORD)object;
+		if(object) 
+			*(asPWORD*)&m_regs.stackFramePointer[0] = (asPWORD)object;
 		m_status = asEXECUTION_DESERIALIZATION;
 	}
 	else
@@ -419,7 +419,8 @@ int asCContext::PushFunction(asIScriptFunction *func, void *object, int typeId)
 		else
 			CallScriptFunction(realFunc);
 
-		if(object) *(asPWORD*)&m_regs.stackFramePointer[0] = (asPWORD)object;
+		if(object) 
+			*(asPWORD*)&m_regs.stackFramePointer[0] = (asPWORD)object;
 	}
 
 	asASSERT(m_currentFunction->funcType != asFUNC_DELEGATE);

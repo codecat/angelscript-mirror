@@ -3286,8 +3286,16 @@ public:
 	//! Call this method to finish the deserialization previously initiated with \ref StartDeserialization.
 	virtual int FinishDeserialization() = 0;
 	//! \brief Push a function call onto the context stack for deserialization.
-	//! \todo document this
-	virtual int PushFunction(asIScriptFunction *func, void *object, int typeId) = 0;
+	//! \param[in] func The function that should be pushed on the call stack.
+	//! \param[in] object The object pointer, if the function is a class method.
+	//! \return A negative value to indicate an error.
+	//! \retval asINVALID_ARG \a func is null
+	//! \retval asCONTEXT_NOT_PREPARED The context is not in deserialization mode
+	//!
+	//! Use this after calling \ref StartDeserialization to push functions on the call stack. This will prepare the stack frame
+	//! so that call state registers can be restored with \ref SetCallStateRegisters, the local variables with 
+	//! \ref GetAddressOfVar, and arguments on the stack with \ref GetArgOnStack.
+	virtual int PushFunction(asIScriptFunction *func, void *object) = 0;
 	//! \brief Get the state registers for serialization.
 	//! \todo document this
 	virtual int GetStateRegisters(asUINT stackLevel, asIScriptFunction **callingSystemFunction, asIScriptFunction **initialFunction, asDWORD *origStackPointer, asDWORD *argumentsSize, asQWORD *valueRegister, void **objectRegister, asITypeInfo **objectTypeRegister) = 0;

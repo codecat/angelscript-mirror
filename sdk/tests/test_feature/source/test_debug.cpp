@@ -273,6 +273,7 @@ bool Test2();
 
 bool Test()
 {
+	int r;
 	bool fail = Test2();
 
 	// Test IsVarInScope and GetAddresOfVar for registered value types when variable slot is reused in multiple scopes
@@ -285,7 +286,11 @@ bool Test()
 		RegisterStdString(engine);
 		RegisterScriptAny(engine);
 		engine->RegisterObjectType("foo", 4, asOBJ_VALUE | asOBJ_POD);
-		engine->RegisterObjectMethod("foo", "foo &opAssign(int)", asFUNCTION(foo_opAssign), asCALL_CDECL_OBJLAST);
+#ifndef AS_MAX_PORTABILITY
+		r = engine->RegisterObjectMethod("foo", "foo &opAssign(int)", asFUNCTION(foo_opAssign), asCALL_CDECL_OBJLAST); assert(r >= 0);
+#else
+		r = engine->RegisterObjectMethod("foo", "foo &opAssign(int)", WRAP_OBJ_LAST(foo_opAssign), asCALL_GENERIC); assert(r >= 0);
+#endif
 
 		COutStream out;
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
@@ -402,7 +407,11 @@ bool Test()
 		RegisterStdString(engine);
 		RegisterScriptAny(engine);
 		engine->RegisterObjectType("foo", 4, asOBJ_VALUE | asOBJ_POD);
+#ifndef AS_MAX_PORTABILITY
 		engine->RegisterObjectMethod("foo", "foo &opAssign(int)", asFUNCTION(foo_opAssign), asCALL_CDECL_OBJLAST);
+#else
+		engine->RegisterObjectMethod("foo", "foo &opAssign(int)", WRAP_OBJ_LAST(foo_opAssign), asCALL_GENERIC);
+#endif
 
 		COutStream out;
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);

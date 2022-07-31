@@ -141,13 +141,24 @@ bool Test()
 
 		engine->RegisterTypedef("int_ptr", "uint");
 		RegisterStdString(engine);
+#ifndef AS_MAX_PORTABILITY
 		engine->RegisterObjectMethod("string", "string toUtf8() const", asFUNCTION(toUtf8), asCALL_CDECL_OBJLAST);
-#ifdef AS_PTR_SIZE == 1
+#if AS_PTR_SIZE == 1
 		engine->RegisterObjectMethod("string", "uint get_cstr() const property", asFUNCTION(cstr), asCALL_CDECL_OBJLAST);
 		engine->RegisterGlobalFunction("int sqlite3_exec(uint, uint)", asFUNCTION(sqlite3_exec), asCALL_CDECL);
 #else
 		engine->RegisterObjectMethod("string", "uint64 get_cstr() const property", asFUNCTION(cstr), asCALL_CDECL_OBJLAST);
 		engine->RegisterGlobalFunction("int sqlite3_exec(uint, uint64)", asFUNCTION(sqlite3_exec), asCALL_CDECL);
+#endif
+#else
+		engine->RegisterObjectMethod("string", "string toUtf8() const", WRAP_OBJ_LAST(toUtf8), asCALL_GENERIC);
+#if AS_PTR_SIZE == 1
+		engine->RegisterObjectMethod("string", "uint get_cstr() const property", WRAP_OBJ_LAST(cstr), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("int sqlite3_exec(uint, uint)", WRAP_FN(sqlite3_exec), asCALL_GENERIC);
+#else
+		engine->RegisterObjectMethod("string", "uint64 get_cstr() const property", WRAP_OBJ_LAST(cstr), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("int sqlite3_exec(uint, uint64)", WRAP_FN(sqlite3_exec), asCALL_GENERIC);
+#endif
 #endif
 
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
