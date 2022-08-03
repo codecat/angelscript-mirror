@@ -324,7 +324,7 @@ bool Test()
 		ctx->SetLineCallback(asFUNCTION(LineCallback3), 0, asCALL_CDECL);
 		ctx->SetExceptionCallback(asFUNCTION(ExceptionCallback), 0, asCALL_CDECL);
 		ctx->Prepare(mod->GetFunctionByDecl("void main()"));
-		int r = ctx->Execute();
+		r = ctx->Execute();
 		if (r == asEXECUTION_EXCEPTION)
 		{
 			// It is possible to examine the callstack even after the Execute() method has returned
@@ -348,8 +348,8 @@ bool Test()
 			" (in scope) array<any>@ i = {...}\n"
 			" (in scope) string name2 = 'pre-scope'\n"
 			" (no scope) string test2 = <null>\n"
-			" (no scope) uint k = 3452816845\n"
-			" (no scope) uint km = 3452816845\n"
+			" (no scope) uint k = 3452816845\n" // TODO: Don't validate the value as it is random, due to the variable not being initialized yet
+			" (no scope) uint km = 3452816845\n" // TODO: Don't validate the value as it is random, due to the variable not being initialized yet
 			" (no scope) array<any>@ a = {...}\n"
 			" (no scope) IUnknown@ obj = {...}\n"
 			" (no scope) string name = <null>\n"
@@ -441,7 +441,7 @@ bool Test()
 		ctx->SetLineCallback(asFUNCTION(LineCallback2), 0, asCALL_CDECL);
 		ctx->SetExceptionCallback(asFUNCTION(ExceptionCallback), 0, asCALL_CDECL);
 		ctx->Prepare(mod->GetFunctionByDecl("void main()"));
-		int r = ctx->Execute();
+		r = ctx->Execute();
 		if (r == asEXECUTION_EXCEPTION)
 		{
 			// It is possible to examine the callstack even after the Execute() method has returned
@@ -535,7 +535,7 @@ bool Test()
 			"    // comment \n" // 3
 			"    return 1; \n"  // 4
 			"} \n");            // 5
-		int r = mod->Build();
+		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
 
@@ -580,7 +580,7 @@ bool Test()
 			"    int n; \n"
 			"    string str; \n"
 			"} \n");
-		int r = mod->Build();
+		r = mod->Build();
 		if (r < 0)
 			TEST_FAILED;
 
@@ -617,7 +617,7 @@ bool Test()
 		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("b"," // nothing to compile");
 		mod->AddScriptSection("a","foo @f = test.TestLineNumber();");
-		int r = mod->Build();
+		r = mod->Build();
 		if (r < 0)
 			TEST_FAILED;
 
@@ -681,7 +681,7 @@ bool Test()
 		ctx->SetLineCallback(asFUNCTION(LineCallback), 0, asCALL_CDECL);
 		ctx->SetExceptionCallback(asFUNCTION(ExceptionCallback), 0, asCALL_CDECL);
 		ctx->Prepare(mod->GetFunctionByDecl("void main()"));
-		int r = ctx->Execute();
+		r = ctx->Execute();
 		if (r == asEXECUTION_EXCEPTION)
 		{
 			// It is possible to examine the callstack even after the Execute() method has returned

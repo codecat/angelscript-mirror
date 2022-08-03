@@ -3297,13 +3297,45 @@ public:
 	//! \ref GetAddressOfVar, and arguments on the stack with \ref GetArgOnStack.
 	virtual int PushFunction(asIScriptFunction *func, void *object) = 0;
 	//! \brief Get the state registers for serialization.
-	//! \todo document this
+	//! \param[in] stackLevel The index on the call stack.
+	//! \param[out] callingSystemFunction Will be set to the system function that is being called, or null if no system function is being called.
+	//! \param[out] initialFunction Will be set to the initial function with which the context was prepared.
+	//! \param[out] origStackPointer Will be set to a DWORD representing the original stack pointer.
+	//! \param[out] argumentsSize Will be set to the size reserved on the stack for the arguments in the initial function with which the context was prepared.
+	//! \param[out] valueRegister Will be set to the content of the value register.
+	//! \param[out] objectRegister Will be set to the address of the object held in the object register, or null if no object is currently held.
+	//! \param[out] objectTypeRegister Will be set to the object type of the object held in the object register, or null if no object is currently held.
+	//! \return A negative value to indicate an error.
+	//! \retval asERROR The \a stackLevel is not 0 or doesn't represent a pushed state for nested calls.
+	//! \retval asINVALID_ARG The \a stackLevel is out of bounds.
+	//!
+	//! Call this to get the context state registers for serialization. During serialization the current state registers must be stored. If the context
+	//! has been used for nested calls, then this method must also be used to retrieve any pushed states by passing the \a stackLevel representing the push state.
+	//! 
+	//! During deserialization use these values to restore the state with \ref SetStateRegisters.
+	//!
+	//! \see \ref PushState
 	virtual int GetStateRegisters(asUINT stackLevel, asIScriptFunction **callingSystemFunction, asIScriptFunction **initialFunction, asDWORD *origStackPointer, asDWORD *argumentsSize, asQWORD *valueRegister, void **objectRegister, asITypeInfo **objectTypeRegister) = 0;
 	//! \brief Get the call state registers for serialization.
 	//! \todo document this
 	virtual int GetCallStateRegisters(asUINT stackLevel, asDWORD *stackFramePointer, asIScriptFunction **currentFunction, asDWORD *programPointer, asDWORD *stackPointer, asDWORD *stackIndex) = 0;
 	//! \brief Set the state registers for deserialization.
-	//! \todo document this
+	//! \param[in] stackLevel The index on the call stack.
+	//! \param[in] callingSystemFunction Give the system function that was called when serializing the context, or null if none.
+	//! \param[in] initialFunction Give the initial function with which the serialized context was originally prepared.
+	//! \param[in] origStackPointer Give the DWORD representing the original stack pointer for the serialized context.
+	//! \param[in] argumentsSize Give the size reserved for the arguments in the initial function in the serialized context.
+	//! \param[in] valueRegister Give the content of the value register from the serialized context.
+	//! \param[in] objectRegister Give the address of the object that was held in the register by the serialized context, or null if no object was held.
+	//! \param[in] objectTypeRegister Give the object type of the object held in the object register by serialized context, or null if no object was held.
+	//! \return A negative value to indicate an error.
+	//! \retval asCONTEXT_ACTIVE The context is not currently in deserialization mode.
+	//! \retval asINVALID_ARG The \a stackLevel is out of bounds.
+	//! \retval asERROR The \a stackLevel is not 0 or doesn't represent a pushed state for nested calls.
+	//!
+	//! Use this method to restore the context state registers during deserialization with the values obtained by \ref GetStateRegister.
+	//!
+	//! To restore a nested call, first call \ref PushState to allocate the memory for the callstack entry that will be restored.
 	virtual int SetStateRegisters(asUINT stackLevel, asIScriptFunction *callingSystemFunction, asIScriptFunction *initialFunction, asDWORD origStackPointer, asDWORD argumentsSize, asQWORD valueRegister, void *objectRegister, asITypeInfo *objectTypeRegister) = 0;
 	//! \brief Set the call state registers for deserialization.
 	//! \todo document this

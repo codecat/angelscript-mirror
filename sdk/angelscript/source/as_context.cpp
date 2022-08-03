@@ -439,6 +439,9 @@ int asCContext::GetStateRegisters(asUINT stackLevel, asIScriptFunction **_callin
 	void *              objectRegister;
 	asITypeInfo *       objectType;
 
+	if (stackLevel >= GetCallstackSize()) 
+		return asINVALID_ARG;
+
 	if( stackLevel == 0 )
 	{
 		callingSystemFunction = m_callingSystemFunction;
@@ -447,7 +450,7 @@ int asCContext::GetStateRegisters(asUINT stackLevel, asIScriptFunction **_callin
 		argumentsSize         = m_argumentsSize;
 
 		// Need to push the value of registers so they can be restored
-		valueRegister         = *(asQWORD*)(&m_regs.valueRegister);
+		valueRegister         = m_regs.valueRegister;
 		objectRegister        = m_regs.objectRegister;
 		objectType            = m_regs.objectType;
 	}
@@ -455,6 +458,7 @@ int asCContext::GetStateRegisters(asUINT stackLevel, asIScriptFunction **_callin
 	{
 		asPWORD const *tmp = &m_callStack[m_callStack.GetLength() - CALLSTACK_FRAME_SIZE*stackLevel];
 
+		// Only return state registers for a nested call, see PushState()
 		if( tmp[0] != 0 )
 			return asERROR;
 
@@ -489,6 +493,9 @@ int asCContext::GetCallStateRegisters(asUINT stackLevel, asDWORD *_stackFramePoi
 	asDWORD           *programPointer;
 	asDWORD           *stackPointer;
 	int                stackIndex;
+
+	if (stackLevel >= GetCallstackSize())
+		return asINVALID_ARG;
 
 	if( stackLevel == 0 )
 	{
@@ -532,12 +539,15 @@ int asCContext::SetStateRegisters(asUINT stackLevel, asIScriptFunction *callingS
 		return asCONTEXT_ACTIVE;
 	}
 
+	if (stackLevel >= GetCallstackSize())
+		return asINVALID_ARG;
+
 	if( stackLevel == 0 )
 	{
 		m_callingSystemFunction = reinterpret_cast<asCScriptFunction*>(callingSystemFunction);
 		m_initialFunction       = reinterpret_cast<asCScriptFunction*>(initialFunction);
 		m_originalStackPointer  = DeserializeStackPointer(originalStackPointer);
-		m_argumentsSize         = argumentsSize;
+		m_argumentsSize         = argumentsSize; // TODO: Calculate this from the initialFunction so it doesn't need to be serialized
 
 		// Need to push the value of registers so they can be restored
 		m_regs.valueRegister  = valueRegister;
@@ -555,7 +565,7 @@ int asCContext::SetStateRegisters(asUINT stackLevel, asIScriptFunction *callingS
 		tmp[1] = (asPWORD)callingSystemFunction;
 		tmp[2] = (asPWORD)initialFunction;
 		tmp[3] = (asPWORD)DeserializeStackPointer(originalStackPointer);
-		tmp[4] = (asPWORD)argumentsSize;
+		tmp[4] = (asPWORD)argumentsSize; // TODO: Calculate this from the initialFunction so it doesn't need to be serialized
 
 		// Need to push the value of registers so they can be restored
 		tmp[5] = (asPWORD)asDWORD(valueRegister);
@@ -577,6 +587,9 @@ int asCContext::SetCallStateRegisters(asUINT stackLevel, asDWORD stackFramePoint
 		m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 		return asCONTEXT_ACTIVE;
 	}
+
+	if (stackLevel >= GetCallstackSize())
+		return asINVALID_ARG;
 
 	// TODO: The arg _currentFunction is just used in debug mode to validate that it is the same that is already given in m_currentFunction or on the call stack. Do we really need to take this argument?
 	asCScriptFunction *currentFunction =  static_cast<asCScriptFunction*>(_currentFunction);
@@ -6079,6 +6092,7 @@ asDWORD asCContext::SerializeStackPointer(asDWORD *v) const
 	uint64_t min = ~0llu;
 	int best     = -1;
 
+	// Find the stack block that is used, and the offset into that block
 	for(asUINT i = 0; i < m_stackBlocks.GetLength(); ++i)
 	{
 		uint64_t delta = v - m_stackBlocks[i];
@@ -6092,6 +6106,7 @@ asDWORD asCContext::SerializeStackPointer(asDWORD *v) const
 
 	asASSERT(min < 0x03FFFFFF && (asUINT)best < 0x3F);
 
+	// Return the seriaized pointer as the offset in the lower 26 bits + the index of the stack block in the upper 6 bits
 	return (min & 0x03FFFFFF) | (( best & 0x3F) << (32-6));
 }
 
