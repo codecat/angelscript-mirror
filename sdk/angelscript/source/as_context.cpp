@@ -519,11 +519,11 @@ int asCContext::GetCallStateRegisters(asUINT stackLevel, asDWORD *_stackFramePoi
 	if( stackFramePointer == 0 )
 		return asERROR; // TODO: This is not really an error. It just means that the stackLevel represent a pushed state
 
-	if(_stackFramePointer) *_stackFramePointer = SerializeStackPointer(stackFramePointer);
+	if(_stackFramePointer) *_stackFramePointer = SerializeStackPointer(stackFramePointer); // TODO: Calculate stack frame pointer as delta from previous stack frame pointer (Or perhaps it will always be the same as the stack pointer in previous function?)
 	if(_currentFunction)   *_currentFunction   = currentFunction;
 	if(_programPointer)    *_programPointer    = programPointer != 0? asUINT(programPointer - currentFunction->scriptData->byteCode.AddressOf()) : -1;
-	if(_stackPointer)      *_stackPointer      = SerializeStackPointer(stackPointer);
-	if(_stackIndex)        *_stackIndex        = stackIndex;
+	if(_stackPointer)      *_stackPointer      = SerializeStackPointer(stackPointer); // TODO: Calculate the stack pointer as offset from the stack frame pointer
+	if(_stackIndex)        *_stackIndex        = stackIndex; // TODO: This shouldn't be returned, as it should be calculated during deserialization
 
 	return asSUCCESS;
 }

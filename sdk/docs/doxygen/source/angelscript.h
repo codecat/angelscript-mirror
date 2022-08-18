@@ -3317,7 +3317,23 @@ public:
 	//! \see \ref PushState
 	virtual int GetStateRegisters(asUINT stackLevel, asIScriptFunction **callingSystemFunction, asIScriptFunction **initialFunction, asDWORD *origStackPointer, asDWORD *argumentsSize, asQWORD *valueRegister, void **objectRegister, asITypeInfo **objectTypeRegister) = 0;
 	//! \brief Get the call state registers for serialization.
-	//! \todo document this
+	//! \param[in] stackLevel The index on the call stack.
+	//! \param[out] stackFramePointer Will be set to a DWORD representing the stack frame pointer.
+	//! \param[out] currentFunction Will be set to the current function.
+	//! \param[out] programPointer Will be set to the offset from the start of the bytecode representing the current program position.
+	//! \param[out] stackPointer Will be set to a DWORD representing the stack pointer.
+	//! \param[out] stackIndex Will be set to the index of the stack memory block.
+	//! \return A negative value to indicate an error.
+	//! \retval asINVALID_ARG The \a stackLevel is out of bounds.
+	//! \retval asERROR The \a stackLevel represent a pushed state for nested calls.
+	//!
+	//! Use this method to get the call state registers for serialization. Each function on the call stack must be stored during serialization. 
+	//! The number of functions on the call stack can be obtained with \ref GetCallstackSize.
+	//! 
+	//! If the context has been used for nested calls, this will return asERROR on the stack levels representing pushed states. In this case 
+	//! use \ref GetStateRegisters to obtain the pushed state.
+	//!
+	//! \see \ref PushState
 	virtual int GetCallStateRegisters(asUINT stackLevel, asDWORD *stackFramePointer, asIScriptFunction **currentFunction, asDWORD *programPointer, asDWORD *stackPointer, asDWORD *stackIndex) = 0;
 	//! \brief Set the state registers for deserialization.
 	//! \param[in] stackLevel The index on the call stack.
@@ -3336,9 +3352,24 @@ public:
 	//! Use this method to restore the context state registers during deserialization with the values obtained by \ref GetStateRegister.
 	//!
 	//! To restore a nested call, first call \ref PushState to allocate the memory for the callstack entry that will be restored.
+	//!
+	//! \see \ref StartDeserialization
 	virtual int SetStateRegisters(asUINT stackLevel, asIScriptFunction *callingSystemFunction, asIScriptFunction *initialFunction, asDWORD origStackPointer, asDWORD argumentsSize, asQWORD valueRegister, void *objectRegister, asITypeInfo *objectTypeRegister) = 0;
 	//! \brief Set the call state registers for deserialization.
-	//! \todo document this
+	//! \param[in] stackLevel The index on the call stack.
+	//! \param[out] stackFramePointer Give the DWORD representing the stack frame pointer for the serialized context.
+	//! \param[out] currentFunction Give the current function for the serialized context.
+	//! \param[out] programPointer Give the offset from the start of the bytecode representing the current program position for the serialized context.
+	//! \param[out] stackPointer Give the DWORD representing the stack pointer for the serialized context.
+	//! \param[out] stackIndex Give the index of the stack memory block for the serialized context.
+	//! \return A negative value to indicate an error.
+	//! \retval asCONTEXT_ACTIVE The context is not currently in deserialization mode.
+	//! \retval asINVALID_ARG The \a stackLevel is out of bounds.
+	//! 
+	//! Use this method to restore the context call state registers for each function on the call stack during deserialization. 
+	//! Call \ref PushFunction before each call to allocate the memory for the callstack entry that will be restored.
+	//!
+	//! \see \ref StartDeserialization
 	virtual int SetCallStateRegisters(asUINT stackLevel, asDWORD stackFramePointer, asIScriptFunction *currentFunction, asDWORD programPointer, asDWORD stackPointer, asDWORD stackIndex) = 0;
 	//! \brief Get the number of args pushed on the stack for serialization.
 	//! \param[in] stackLevel The index on the call stack.
