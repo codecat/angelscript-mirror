@@ -19,5 +19,6 @@ when passing objects between AngelScript and C++.
 
 \todo Add article on sandboxing
 
+\todo Add article explaining the type id
 
 */

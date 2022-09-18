@@ -1144,6 +1144,8 @@ public:
 	//! \retval asINVALID_ARG Invalid property.
 	//!
 	//! With this method you can change the way the script engine works in some regards.
+	//!
+	//! \see \ref doc_adv_custom_options
 	virtual int     SetEngineProperty(asEEngineProp property, asPWORD value) = 0;
 	//! \brief Retrieve current engine property settings.
 	//! \param[in] property One of the \ref asEEngineProp values.
