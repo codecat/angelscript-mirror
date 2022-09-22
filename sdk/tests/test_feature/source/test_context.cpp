@@ -117,7 +117,7 @@ public:
 				// Get variables on the stack frame
 				int thisTypeId = ctx->GetThisTypeId(n);
 				storage.Write(&thisTypeId, sizeof(thisTypeId)); // TODO: Serialize the type id
-				int varCount = ctx->GetVarCount(n); // TODO: Must return also temporary variables so these can be serialized too. The asCScriptFunction::variables must hold info on temporary vars too. The information must be serialized to the saved bytecode even if the debug info is skipped. Only the name of the variable can be skipped. Temporary variables should probably be marked as declared at position 0 so they are always in scope. The type of temporary primitives should be either asQWORD or asDWORD depending on the allocated size
+				int varCount = ctx->GetVarCount(n); 
 				storage.Write(&varCount, sizeof(varCount));
 				for (int v = 0; v < varCount; v++)
 				{

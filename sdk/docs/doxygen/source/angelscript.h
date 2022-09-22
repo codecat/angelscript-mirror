@@ -1831,6 +1831,8 @@ public:
 	//!
 	//! This method is meant for objects that will be initialized manually 
 	//! by the application, e.g. when restoring a serialized object.
+	//!
+	//! \see \ref doc_serialization_objects
 	virtual void                  *CreateUninitializedScriptObject(const asITypeInfo *type) = 0;
 	//! \brief Create a delegate for an object and method
 	//! \param[in] func The object method
@@ -3351,7 +3353,7 @@ public:
 	//! \retval asINVALID_ARG The \a stackLevel is out of bounds.
 	//! \retval asERROR The \a stackLevel is not 0 or doesn't represent a pushed state for nested calls.
 	//!
-	//! Use this method to restore the context state registers during deserialization with the values obtained by \ref GetStateRegister.
+	//! Use this method to restore the context state registers during deserialization with the values obtained by \ref GetStateRegisters.
 	//!
 	//! To restore a nested call, first call \ref PushState to allocate the memory for the callstack entry that will be restored.
 	//!

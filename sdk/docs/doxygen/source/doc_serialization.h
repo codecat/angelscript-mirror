@@ -35,11 +35,39 @@ address of the memory that needs to be restored with the serialized content.
 
 \section doc_serialization_objects Serialization of objects
 
-\todo Refer to reflection for serialization. Mention CreateUnitializedScriptObject for deserialization.
+To serialize script objects you'll use the \ref asIScriptObject interface to iterate over the members to store the content. Remember that objects can hold 
+references to other objects and even to itself so it is important to keep track of object instances already serialized and just store a reference if 
+the same object comes up again.
+
+When deserializing the script objects you should first allocate the memory using \ref asIScriptEngine::CreateUninitializedScriptObject so that the constructor 
+is not executed, and then iterate over the members to restore their content.
+
+For application registered types you obviously need to provide your own implementation as the script engine doesn't know the full content of the types 
+and thus cannot provide an interface for serialization.
 
 \section doc_serialization_contexts Serialization of contexts
 
-\todo Give overview of the steps to serialize contexts.
+Serialization of a script context involves storing the full call stack with all the function calls, local variables, registers, etc. To do this you'll
+use the \ref asIScriptContext interface. 
+
+ - Use \ref asIScriptContext::GetCallstackSize "GetCallstackSize" to get the size of the call stack
+ - For each call stack entry do:
+   - Use \ref asIScriptContext::GetCallStateRegisters "GetCallStateRegisters" to store the registers, i.e. program pointer, stack pointer, etc.
+   - Use \ref asIScriptContext::GetVarCount "GetVarCount", \ref asIScriptContext::GetVar "GetVar", and \ref asIScriptContext::GetAddressOfVar "GetAddressOfVar" to store all local variables, including unnamed temporary variables
+   - Use \ref asIScriptContext::GetArgsOnStackCount "GetArgsOnStackCount" and \ref asIScriptContext::GetArgOnStack "GetArgOnStack" to store values pushed on the stack for a subsequent function call
+ - Use \ref asIScriptContext::GetStateRegisters "GetStateRegisters" to store additional context registers   
+
+To deserialize a context follow these steps:
+
+ - Call \ref asIScriptContext::StartDeserialization "StartDeserialization" to tell the context that a deserialization will be done
+ - For each call stack entry previously stored do:
+   - Call \ref asIScriptContext::PushFunction "PushFunction" to reserve space for a call stack entry
+   - Call \ref asIScriptContext::SetCallStateRegisters "SetCallStateRegisters" to restore the registers
+   - Use \ref asIScriptContext::GetVar "GetVar" and \ref asIScriptContext::GetAddressOfVar "GetAddressOfVar" to restore all local variables
+   - Use \ref asIScriptContext::GetArgOnStack "GetArgOnStack" to restore values pushed on the stack
+ - Call \ref asIScriptContext::SetStateRegisters "SetStateRegisters" to restore additional context registers
+ - Call \ref asIScriptContext::FinishDeserialization "FinishDeserialization" to conclude the serialization and allow the execution to resume
+
 
 
 
