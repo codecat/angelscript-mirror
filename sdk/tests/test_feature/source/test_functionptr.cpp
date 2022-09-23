@@ -85,6 +85,36 @@ bool Test()
 	asIScriptContext *ctx;
 	CBufferedOutStream bout;
 
+	// Test declaring funcdef with same name in two different classes
+	// https://www.gamedev.net/forums/topic/713057-bug-with-funcdef-behavior/5451080/
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class ClassA { \n"
+			"	funcdef void CALLBACK(int); \n"
+			"	CALLBACK@ func; \n"
+			"} \n"
+			"class ClassB { \n"
+			"	funcdef void CALLBACK(int); \n"
+			"	CALLBACK@ func; \n"
+			" } \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test anonymous functions in delegate
 	// Reported by Phong Ba
 	{

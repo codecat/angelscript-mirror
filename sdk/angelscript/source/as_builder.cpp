@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2021 Andreas Jonsson
+   Copyright (c) 2003-2022 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1993,6 +1993,7 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 
 			if( fdt2->name == fdt->name &&
 				fdt2->nameSpace == fdt->nameSpace &&
+				fdt2->parentClass == fdt->parentClass &&
 				fdt2->funcdef->IsSignatureExceptNameEqual(func) )
 			{
 				// Replace our funcdef for the existing one
