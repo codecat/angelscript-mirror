@@ -6238,13 +6238,11 @@ int asCContext::GetArgOnStack(asUINT stackLevel, asUINT arg, int* outTypeId, asU
 	if (stackLevel >= GetCallstackSize()) return asINVALID_ARG;
 
 	asCScriptFunction* func;
-	asDWORD* sf;
 	asDWORD* sp;
 	asDWORD* progPointer;
 	if (stackLevel == 0)
 	{
 		func = m_currentFunction;
-		sf = m_regs.stackFramePointer;
 		sp = m_regs.stackPointer;
 		progPointer = m_regs.programPointer;
 	}
@@ -6252,7 +6250,6 @@ int asCContext::GetArgOnStack(asUINT stackLevel, asUINT arg, int* outTypeId, asU
 	{
 		asPWORD* s = m_callStack.AddressOf() + (GetCallstackSize() - stackLevel - 1) * CALLSTACK_FRAME_SIZE;
 		func = (asCScriptFunction*)s[1];
-		sf = (asDWORD*)s[0];
 		sp = (asDWORD*)s[3];
 		progPointer = (asDWORD*)s[2];
 	}
