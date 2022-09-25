@@ -184,19 +184,29 @@ void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
 		if (name == 0 || strlen(name) == 0)
 			continue;
 
+		bool inScope = false;
 		if (ctx->IsVarInScope(n, stackLevel))
+		{
 			print(" (in scope)");
+			inScope = true;
+		}
 		else
 			print(" (no scope)");
 
 		varPointer = ctx->GetAddressOfVar(n, stackLevel);
 		if( typeId == engine->GetTypeIdByDecl("int") )
 		{
-			print(" %s = %d\n", ctx->GetVarDeclaration(n, stackLevel), *(int*)varPointer);
+			if (inScope)
+				print(" %s = %d\n", ctx->GetVarDeclaration(n, stackLevel), *(int*)varPointer);
+			else
+				print(" %s = {uninitialized}\n", ctx->GetVarDeclaration(n, stackLevel));
 		}
 		else if (typeId == engine->GetTypeIdByDecl("uint"))
 		{
-			print(" %s = %u\n", ctx->GetVarDeclaration(n, stackLevel), *(asUINT*)varPointer);
+			if (inScope)
+				print(" %s = %u\n", ctx->GetVarDeclaration(n, stackLevel), *(asUINT*)varPointer);
+			else
+				print(" %s = {uninitialized}\n", ctx->GetVarDeclaration(n, stackLevel));
 		}
 		else if( typeId == engine->GetTypeIdByDecl("string") )
 		{
@@ -348,8 +358,8 @@ bool Test()
 			" (in scope) array<any>@ i = {...}\n"
 			" (in scope) string name2 = 'pre-scope'\n"
 			" (no scope) string test2 = <null>\n"
-			" (no scope) uint k = 3452816845\n" // TODO: Don't validate the value as it is random, due to the variable not being initialized yet
-			" (no scope) uint km = 3452816845\n" // TODO: Don't validate the value as it is random, due to the variable not being initialized yet
+			" (no scope) uint k = {uninitialized}\n"
+			" (no scope) uint km = {uninitialized}\n"
 			" (no scope) array<any>@ a = {...}\n"
 			" (no scope) IUnknown@ obj = {...}\n"
 			" (no scope) string name = <null>\n"

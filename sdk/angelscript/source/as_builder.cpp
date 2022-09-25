@@ -1762,6 +1762,8 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 			}
 		}
 	}
+#else
+	UNUSED_VAR(isSharedIntf);
 #endif
 
 	return 0;
