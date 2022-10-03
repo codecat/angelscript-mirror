@@ -68,7 +68,7 @@ To deserialize a context follow these steps:
  - Call \ref asIScriptContext::SetStateRegisters "SetStateRegisters" to restore additional context registers
  - Call \ref asIScriptContext::FinishDeserialization "FinishDeserialization" to conclude the serialization and allow the execution to resume
 
-
+\todo Add information on known restrictions, e.g. serialized contexts can only be restored on same cpu architecture, etc
 
 
 

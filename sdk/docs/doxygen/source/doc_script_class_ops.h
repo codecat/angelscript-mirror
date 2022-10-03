@@ -205,6 +205,10 @@ opImplConv on the source type that returns the target type.
 This should only be used for value conversions and not reference casts. That is, the methods are expected to return
 a new instance of the value with the new type.
 
+\note When compiling the boolean expressions in conditions the compiler will not use the <tt>bool opImplConv</tt> on 
+reference types even if the class method is implemented. This is because it is ambigous if it is the handle 
+that is verified or the actual object.
+
 If a reference cast is desired, i.e. a different type of handle to the same object instance, then the opCast 
 method should be implemented instead. The compiler will attempt to rewrite an expression <tt>cast&lt;type>(expr)</tt>
 as <tt>expr.opCast()</tt>, and chose the opCast overload that returns a handle of the desired type. Here too the 

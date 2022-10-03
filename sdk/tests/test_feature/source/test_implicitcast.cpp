@@ -183,6 +183,75 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
 
+	// Test opImplConv to bool in conditions for value types
+	// https://www.gamedev.net/forums/topic/713122-opimplconv-to-bool-doesnt-work-in-a-ternary-operator-condition/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterObjectType("Test", 1, asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterObjectMethod("Test", "bool opImplConv() const", asFUNCTION(0), asCALL_GENERIC);
+
+		RegisterStdString(engine);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() \n"
+			"{ \n"
+			"	Test t; \n"
+			"   int a = 0; \n"
+			"   if( t ) a = 1; else a = 0; \n"
+			"   int b = 0; \n"
+			"   b = t ? 1 : 0; \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s\n", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test opImplConv to bool in conditions is not allowed for reference types
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Test { \n"
+			"  bool opImplConv() const { return true; } \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"	Test t; \n"
+			"   int a = 0; \n"
+			"   if( t ) a = 1; else a = 0; \n"
+			"   int b = 0; \n"
+			"   b = t ? 1 : 0; \n"
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (4, 1) : Info    : Compiling void main()\n"
+						   "test (8, 8) : Error   : Expression must be of boolean type, instead found 'Test&'\n"
+						   "test (10, 8) : Error   : Expression must be of boolean type, instead found 'Test&'\n")
+		{
+			PRINTF("%s\n", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test implicit conv for constant while matching function calls
 	// https://www.gamedev.net/forums/topic/712254-vs-as-type-detection/5447679/
 	{

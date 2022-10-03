@@ -135,7 +135,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "ExecuteString (3, 7) : Error   : Expression must be of boolean type\n"
+		if( bout.buffer != "ExecuteString (3, 7) : Error   : Expression must be of boolean type, instead found 'int'\n"
 						   "ExecuteString (7, 7) : Error   : No conversion from 'const int' to 'const bool' available.\n"
 						   "ExecuteString (11, 9) : Error   : No conversion from 'int' to 'bool' available.\n"
 						   "ExecuteString (15, 7) : Error   : Illegal operation on this datatype\n" )

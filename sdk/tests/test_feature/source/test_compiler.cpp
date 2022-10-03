@@ -4311,7 +4311,7 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "script (1, 1) : Info    : Compiling void main()\n"
-		                   "script (3, 9) : Error   : Expression must be of boolean type\n" )
+		                   "script (3, 9) : Error   : Expression must be of boolean type, instead found 'void'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

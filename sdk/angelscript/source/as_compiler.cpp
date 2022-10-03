@@ -4384,8 +4384,12 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 		if( expr.type.dataType.GetTypeInfo() && (expr.type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE) )
 			ImplicitConversion(&expr, asCDataType::CreatePrimitive(ttBool, false), inode, asIC_IMPLICIT_CONV);
 
-		if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
-			Error(TXT_EXPR_MUST_BE_BOOL, inode->firstChild);
+		if (!expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)))
+		{
+			asCString str;
+			str.Format(TXT_EXPR_MUST_BE_BOOL_s, expr.type.dataType.Format(outFunc->nameSpace).AddressOf());
+			Error(str, inode->firstChild);
+		}
 		else
 		{
 			if( !expr.type.isConstant )
@@ -4539,8 +4543,12 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 			if( expr.type.dataType.GetTypeInfo() && (expr.type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE) )
 				ImplicitConversion(&expr, asCDataType::CreatePrimitive(ttBool, false), second->firstChild, asIC_IMPLICIT_CONV);
 
-			if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
-				Error(TXT_EXPR_MUST_BE_BOOL, second);
+			if (!expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)))
+			{
+				asCString str;
+				str.Format(TXT_EXPR_MUST_BE_BOOL_s, expr.type.dataType.Format(outFunc->nameSpace).AddressOf());
+				Error(str, second);
+			}
 			else
 			{
 				if( ProcessPropertyGetAccessor(&expr, second) < 0 )
@@ -4652,8 +4660,12 @@ void asCCompiler::CompileWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 		if( expr.type.dataType.GetTypeInfo() && (expr.type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE) )
 			ImplicitConversion(&expr, asCDataType::CreatePrimitive(ttBool, false), wnode->firstChild, asIC_IMPLICIT_CONV);
 
-		if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
-			Error(TXT_EXPR_MUST_BE_BOOL, wnode->firstChild);
+		if (!expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)))
+		{
+			asCString str;
+			str.Format(TXT_EXPR_MUST_BE_BOOL_s, expr.type.dataType.Format(outFunc->nameSpace).AddressOf());
+			Error(str, wnode->firstChild);
+		}
 		else
 		{
 			if( ProcessPropertyGetAccessor(&expr, wnode) < 0 )
@@ -4742,8 +4754,12 @@ void asCCompiler::CompileDoWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 	if( expr.type.dataType.GetTypeInfo() && (expr.type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE) )
 		ImplicitConversion(&expr, asCDataType::CreatePrimitive(ttBool, false), wnode->lastChild, asIC_IMPLICIT_CONV);
 
-	if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
-		Error(TXT_EXPR_MUST_BE_BOOL, wnode->firstChild);
+	if (!expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)))
+	{
+		asCString str;
+		str.Format(TXT_EXPR_MUST_BE_BOOL_s, expr.type.dataType.Format(outFunc->nameSpace).AddressOf());
+		Error(str, wnode->firstChild);
+	}
 	else
 	{
 		if( ProcessPropertyGetAccessor(&expr, wnode) < 0 )
@@ -8693,7 +8709,9 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asCExprContext *ctx)
 
 		if( r >= 0 && !e.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
 		{
-			Error(TXT_EXPR_MUST_BE_BOOL, cexpr);
+			asCString str;
+			str.Format(TXT_EXPR_MUST_BE_BOOL_s, e.type.dataType.Format(outFunc->nameSpace).AddressOf());
+			Error(str, cexpr);
 			e.type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), true);
 		}
 		ctype = e.type;
