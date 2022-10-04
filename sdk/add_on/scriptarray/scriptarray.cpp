@@ -189,8 +189,9 @@ static bool ScriptArrayTemplateCallback(asITypeInfo *ti, bool &dontGarbageCollec
 			if( !found )
 			{
 				// No default factory
-				// TODO: Should format the message to give the name of the subtype for better understanding
-				ti->GetEngine()->WriteMessage("array", 0, 0, asMSGTYPE_ERROR, "The subtype has no default factory");
+				char buffer[1024];
+				snprintf(buffer, sizeof(buffer), "The subtype '%s' has no default factory", subtype ? subtype->GetEngine()->GetTypeDeclaration(subtype->GetTypeId()) : "UNKNOWN");
+				ti->GetEngine()->WriteMessage("array", 0, 0, asMSGTYPE_ERROR, buffer);
 				return false;
 			}
 		}
@@ -1055,7 +1056,7 @@ bool CScriptArray::Less(const void *a, const void *b, bool asc)
 			case asTYPEID_UINT64: return COMPARE(asQWORD);
 			case asTYPEID_FLOAT:  return COMPARE(float);
 			case asTYPEID_DOUBLE: return COMPARE(double);
-			default: return COMPARE(signed int); // All enums fall in this case
+			default: return COMPARE(signed int); // All enums fall in this case. TODO: update this when enums can have different sizes and types
 			#undef COMPARE
 		}
 	}

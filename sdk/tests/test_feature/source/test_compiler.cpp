@@ -2201,7 +2201,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "array (0, 0) : Error   : The subtype has no default factory\n"
+		if( bout.buffer != "array (0, 0) : Error   : The subtype 'C' has no default factory\n"
 						   "Test (2, 7) : Error   : Attempting to instantiate invalid template type 'array<C>'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());

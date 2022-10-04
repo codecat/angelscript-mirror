@@ -659,7 +659,7 @@ bool Test()
 		if (r >= 0)
 			TEST_FAILED;
 		if (bout.buffer != "test (5, 1) : Info    : Compiling void main2()\n"
-						   "array (0, 0) : Error   : The subtype has no default factory\n"
+						   "array (0, 0) : Error   : The subtype 'FD' has no default factory\n"
 						   "test (7, 8) : Error   : Attempting to instantiate invalid template type 'array<FD>'\n"
 						   "test (8, 3) : Warning : 'a' is not initialized.\n"
 						   "test (8, 3) : Error   : Illegal operation on 'int'\n")

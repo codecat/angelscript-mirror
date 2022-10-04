@@ -1342,7 +1342,7 @@ bool Test()
 		r = ExecuteString(engine, "array<single> a;");
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "array (0, 0) : Error   : The subtype has no default factory\n"
+		if( bout.buffer != "array (0, 0) : Error   : The subtype 'single' has no default factory\n"
 						   "ExecuteString (1, 7) : Error   : Attempting to instantiate invalid template type 'array<single>'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
@@ -1763,7 +1763,7 @@ bool Test()
 		r = mod->Build();
 		if( r > 0 ) 
 			TEST_FAILED;
-		if( bout.buffer != "array (0, 0) : Error   : The subtype has no default factory\n"
+		if( bout.buffer != "array (0, 0) : Error   : The subtype 'CTest' has no default factory\n"
 						   "script (5, 7) : Error   : Attempting to instantiate invalid template type 'array<CTest>'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
@@ -2028,12 +2028,11 @@ bool Test()
 		RegisterScriptArray(engine, false);
 
 		// array<array<float>> is not valid since it is not allowed to copy the subarray
-		// TODO: The error message should be clearer
 		bout.buffer = "";
 		r = ExecuteString(engine, "array<array<float>> a;");
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "array (0, 0) : Error   : The subtype has no default factory\n"
+		if( bout.buffer != "array (0, 0) : Error   : The subtype 'array<float>' has no default factory\n"
 						   "ExecuteString (1, 7) : Error   : Attempting to instantiate invalid template type 'array<array<float>>'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
