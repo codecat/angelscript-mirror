@@ -450,6 +450,9 @@ so a port from script to C++ and vice versa might be easier if STL names are use
 
 Compile the add-on with the pre-processor define AS_USE_ACCESSORS=1 to register length as a virtual property instead of the method length().
 
+Compile the add-on with the pre-processor define AS_NO_IMPL_OPS_WITH_STRING_AND_PRIMITIVE=1 to disable the implicit operations with 
+primitives that automatically formats the primitive values to strings.
+
 \section doc_addon_array_1 Public C++ interface
 
 \code
