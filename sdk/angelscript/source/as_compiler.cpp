@@ -3999,8 +3999,10 @@ void asCCompiler::CompileStatement(asCScriptNode *statement, bool *hasReturn, as
 		asASSERT(false);
 }
 
-void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCode *bc)
+void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *hasReturn, asCByteCode *bc)
 {
+	*hasReturn = false;
+
 	// TODO: inheritance: Must guarantee that all options in the switch case call a constructor, or that none call it.
 
 	// Reserve label for break statements
@@ -4250,6 +4252,12 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
     // Output case implementations
 	//----------------------------------
 
+	// Switch cases must be able to report if all paths have return too
+	// If the switch case has no default case, then it doesn't return
+	// If a case has a break without first return then the switch has no return
+	// If a case doesn't have a return, but falls through to a case that does return then the case can be said to have a return too
+	*hasReturn = true;
+
 	// Compile case implementations, each one with the label before it
 	cnode = snode->firstChild->next;
 	while( cnode )
@@ -4259,7 +4267,12 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 		{
 			expr.bc.Label((short)firstCaseLabel++);
 
-			CompileCase(cnode->firstChild->next, &expr.bc);
+			bool caseHasReturn, caseHasBreak;
+			CompileCase(cnode->firstChild->next, &expr.bc, &caseHasReturn, &caseHasBreak);
+
+			// If the case does not return and have a break, then we know the switch doesn't return in all paths
+			if (!caseHasReturn && caseHasBreak)
+				*hasReturn = false;
 		}
 		else
 		{
@@ -4272,11 +4285,20 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 				break;
 			}
 
-			CompileCase(cnode->firstChild, &expr.bc);
+			bool caseHasReturn, caseHasBreak;
+			CompileCase(cnode->firstChild, &expr.bc, &caseHasReturn, &caseHasBreak);
+
+			// If the default case does not return then we know the switch doesn't return in all paths
+			if (!caseHasReturn)
+				*hasReturn = false;
 		}
 
 		cnode = cnode->next;
 	}
+
+	// If there is no default case, then the switch cannot be said to return in all paths
+	if (defaultLabel == breakLabel)
+		*hasReturn = false;
 
 	//--------------------------------
 
@@ -4289,14 +4311,14 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 	RemoveVariableScope();
 }
 
-void asCCompiler::CompileCase(asCScriptNode *node, asCByteCode *bc)
+void asCCompiler::CompileCase(asCScriptNode *node, asCByteCode *bc, bool *hasReturn, bool *hasBreak)
 {
-	bool isFinished = false;
-	bool hasReturn = false;
+	*hasBreak = false;
+	*hasReturn = false;
 	bool hasUnreachableCode = false;
 	while( node )
 	{
-		if( !hasUnreachableCode && (hasReturn || isFinished) )
+		if( !hasUnreachableCode && (*hasReturn || *hasBreak) )
 		{
 			hasUnreachableCode = true;
 			Warning(TXT_UNREACHABLE_CODE, node);
@@ -4304,7 +4326,7 @@ void asCCompiler::CompileCase(asCScriptNode *node, asCByteCode *bc)
 		}
 
 		if( node->nodeType == snBreak || node->nodeType == snContinue )
-			isFinished = true;
+			*hasBreak = true;
 
 		asCByteCode statement(engine);
 		if( node->nodeType == snDeclaration )
@@ -4315,7 +4337,7 @@ void asCCompiler::CompileCase(asCScriptNode *node, asCByteCode *bc)
 			CompileDeclaration(node, &statement);
 		}
 		else
-			CompileStatement(node, &hasReturn, &statement);
+			CompileStatement(node, hasReturn, &statement);
 
 		LineInstr(bc, node->tokenPos);
 		bc->AddCode(&statement);

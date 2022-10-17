@@ -236,7 +236,7 @@ protected:
 	void CompileStatement(asCScriptNode *statement, bool *hasReturn, asCByteCode *bc);
 	void CompileIfStatement(asCScriptNode *node, bool *hasReturn, asCByteCode *bc);
 	void CompileSwitchStatement(asCScriptNode *node, bool *hasReturn, asCByteCode *bc);
-	void CompileCase(asCScriptNode *node, asCByteCode *bc);
+	void CompileCase(asCScriptNode *node, asCByteCode *bc, bool *hasReturn, bool *hasBreak);
 	void CompileForStatement(asCScriptNode *node, asCByteCode *bc);
 	void CompileWhileStatement(asCScriptNode *node, asCByteCode *bc);
 	void CompileDoWhileStatement(asCScriptNode *node, asCByteCode *bc);

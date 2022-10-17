@@ -29,6 +29,59 @@ bool TestSwitch()
 {
 	bool fail = false;
 
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		CBufferedOutStream bout;
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule* mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int a; \n"
+			"int hasReturn() { \n"
+			"  switch(a) { \n"
+			"    case 0: \n"  // has return
+			"      if(true) return 0; else return 0; \n"
+			"      break; \n" // unreachable code
+			"    case 1: \n"  // no return, but falls through to next case
+			"    case 2: \n"  // has return 
+			"      return 0;"
+			"    default: \n"
+			"      return 0; \n"
+			"  } \n"
+			"  return 0; \n" // unreachable code
+			"} \n"
+			"int noReturn1() { \n"
+			"  switch(a) { \n"
+			"    case 0: \n"  // no return and ends
+			"      break; \n"
+			"  } \n"
+			"} \n"
+			"int noReturn2() { \n"
+			"  switch(a) { \n"
+			"    case 0: \n"  // has return but no default
+			"      return 0; \n"
+			"  } \n"
+			"} \n");
+		int r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "test (2, 1) : Info    : Compiling int hasReturn()\n"
+						   "test (6, 7) : Warning : Unreachable code\n"
+						   "test (12, 3) : Warning : Unreachable code\n"
+						   "test (14, 1) : Info    : Compiling int noReturn1()\n"
+						   "test (14, 17) : Error   : Not all paths return a value\n"
+						   "test (20, 1) : Info    : Compiling int noReturn2()\n"
+						   "test (20, 17) : Error   : Not all paths return a value\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+
+
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	RegisterScriptString(engine);
