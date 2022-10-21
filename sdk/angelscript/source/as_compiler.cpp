@@ -5586,6 +5586,16 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asCExprContext *rctx
 	if( ProcessPropertyGetAccessor(rctx, node) < 0 )
 		return;
 
+	// Don't allow any operators on void expressions
+	if (rctx->type.IsVoid())
+	{
+		asCString str;
+		str.Format(TXT_DATA_TYPE_CANT_BE_s, "void");
+		Error(str, node);
+		rctx->type.SetDummy();
+		return;
+	}
+
 	// Make sure the rvalue is initialized if it is a variable
 	IsVariableInitialized(&rctx->type, node);
 

@@ -180,6 +180,43 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test void expressions in initialization list
+	// https://www.gamedev.net/forums/topic/713226-bug-with-assigning-void-return-types/5451859/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Testing {\n"
+			"  Testing() {}\n"
+			"  void NoReturn() {\n"
+			"    //print('testing'); \n"
+			"  }\n"
+			"}\n"
+			"void Main() { \n"
+			"	auto testClass = Testing(); \n"
+			"	dictionary test = { {'testValue', testClass.NoReturn()} }; \n"
+			"}\n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (7, 1) : Info    : Compiling void Main()\n"
+			"test (9, 36) : Error   : Data type can't be 'void'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test bytecode sequence on calling method on explicitly created temporary objects
 	// https://www.gamedev.net/forums/topic/708821-crash-on-temp-string-objects/5434393/
 	{
@@ -3518,8 +3555,11 @@ bool Test()
 		if (r >= 0)
 			TEST_FAILED;
 		if (bout.buffer != "TestCompiler (2, 1) : Info    : Compiling void crash()\n"
-			"TestCompiler (2, 25) : Error   : Can't implicitly convert from 'void' to 'bool'.\n")
+			               "TestCompiler (2, 25) : Error   : Data type can't be 'void'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
+		}
 
 		// test 6
 		// Verify that script class methods can have the same signature as
@@ -3635,7 +3675,7 @@ bool Test()
 			TEST_FAILED;
 		}
 		if (bout.buffer != "script (2, 1) : Info    : Compiling void test()\n"
-			"script (2, 26) : Error   : Can't implicitly convert from 'void' to 'int'.\n")
+						   "script (2, 26) : Error   : Data type can't be 'void'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
