@@ -130,6 +130,43 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptEngine *engine;
 
+	// Test unsafe ref with copy constructor and destruction of temporary objects deferred to end of expression
+	// Reported by Istvan Polyak
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
+		bout.buffer = "";
+
+		r = engine->RegisterObjectType("C1", 4, asOBJ_VALUE);
+		r = engine->RegisterObjectBehaviour("C1", asBEHAVE_CONSTRUCT, "void f ()", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectBehaviour("C1", asBEHAVE_CONSTRUCT, "void f (const C1 &)", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectBehaviour("C1", asBEHAVE_DESTRUCT, "void f ()", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectMethod("C1", "C1 & opAssign (const C1 &)", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectType("C2", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		r = engine->RegisterObjectMethod("C2", "C1 & f1 ()", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterGlobalFunction("C2 @ f2 ()", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterGlobalFunction("void f (C1 &in)", asFUNCTION(0), asCALL_GENERIC);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main () \n"
+			"{ \n"
+			"	f(f2().f1()); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test nested calls that return a camoflaged reference to a temporary object
 	// The compiler has no way of knowing the temporary object is being referenced
 	// https://www.gamedev.net/forums/topic/712250-temprary-object-lifetime-bug-or-feature/
