@@ -78,6 +78,30 @@ bool Test()
 
 	// TODO: Preprocessor directives should be alone on the line
 
+	// Test #include with a non-terminated string
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		CScriptBuilder builder;
+		builder.StartNewModule(engine, 0);
+		builder.AddSectionFromMemory("test", "#include \"test.as\\\"  \n// the included file is written incorrectly with a backslash before the quote \n");
+		r = builder.BuildModule();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (0, 0) : Error   : Invalid file name for #include; it contains a line-break: 'test.as\\\"  '\n"
+						   "test (1, 1) : Error   : Unexpected token '<unrecognized token>'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+
 	// Test gathering metadata for class members when class has been declared with decorators
 	// https://www.gamedev.net/forums/topic/709284-property-accessors-in-mixins/5436118/?page=2
 #if AS_PROCESS_METADATA == 1
