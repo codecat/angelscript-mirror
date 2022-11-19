@@ -121,6 +121,26 @@ int sqlite3_exec(asUINT, asPWORD pstr)
 	return 0;
 }
 
+void C_constr(asIScriptGeneric* /*gen*/)
+{
+}
+	
+int C_destr_call_counter = 0;
+void C_destr(asIScriptGeneric* /*gen*/)
+{
+	C_destr_call_counter++;
+}
+
+bool C_f1_return_value = false;
+void C_f1(asIScriptGeneric* gen)
+{
+	gen->SetReturnByte(C_f1_return_value);
+}
+
+void f2(asIScriptGeneric* /*gen*/)
+{
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -129,6 +149,59 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 	asIScriptEngine *engine;
+
+	// Test unsafe ref with temporary objects deferred to end of expression and conditional expressions
+	// Reported by Istvan Polyak
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
+		bout.buffer = "";
+
+		r = engine->RegisterObjectType("C", 4, asOBJ_VALUE);
+		r = engine->RegisterObjectBehaviour("C", asBEHAVE_CONSTRUCT, "void f ()", asFUNCTION(C_constr), asCALL_GENERIC);
+		r = engine->RegisterObjectBehaviour("C", asBEHAVE_DESTRUCT, "void f ()", asFUNCTION(C_destr), asCALL_GENERIC);
+		r = engine->RegisterObjectMethod("C", "bool f1 () const", asFUNCTION(C_f1), asCALL_GENERIC);
+		r = engine->RegisterGlobalFunction("C f2 ()",asFUNCTION(f2), asCALL_GENERIC);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main () \n"
+			"{ \n"
+			"	if (f2().f1() || \n" // both operands create temporary objects, the second operand may not always be executed, so the destructor must not be executed
+			"		f2().f1()) \n"
+			"		return; \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// When C::f1 returns false, only the first operand is evaluated, hence only one destruction is expected
+		C_f1_return_value = true;
+		C_destr_call_counter = 0;
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (C_destr_call_counter != 1)
+			TEST_FAILED;
+
+		// When C::f1 returns true, both operands are evaluated, hence two destructions are expected
+		C_f1_return_value = false;
+		C_destr_call_counter = 0;
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (C_destr_call_counter != 2)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test unsafe ref with copy constructor and destruction of temporary objects deferred to end of expression
 	// Reported by Istvan Polyak

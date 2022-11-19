@@ -15598,6 +15598,14 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asCExprContext *lc
 			ConvertToVariable(rctx);
 			ReleaseTemporaryVariable(rctx->type, &rctx->bc);
 			rctx->bc.InstrW_W(asBC_CpyVtoV4, offset, rctx->type.stackOffset);
+
+			// Make sure temporary variables created within this expression are destroyed within it. 
+			// Without this, the compiler would add the code to clean-up the temporary variables after the label,
+			// which means the clean-up code might be executed without the variables actually being created first.
+			// This is especially true when unsafe references is turned on as then destruction of temporaries 
+			// will be deferred to the end of expressions by default.
+			ProcessDeferredParams(rctx);
+
 			MergeExprBytecode(ctx, rctx);
 			ctx->bc.Label((short)label2);
 
