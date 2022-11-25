@@ -150,6 +150,34 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptEngine *engine;
 
+	// Test crash when passing null to param expecting ?&inout with unsafe references turned on
+	// https://www.gamedev.net/forums/topic/713412-crash-when-passing-null-to-an-ampinout-parameter/
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterObjectType("ptr", 1, asOBJ_VALUE);
+		r = engine->RegisterObjectBehaviour("ptr", asBEHAVE_CONSTRUCT, "void f(?&inout)", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectBehaviour("ptr", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
+
+		auto mod = engine->GetModule("Module", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("Section", "void Main() { ptr(null); }");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "Section (1, 1) : Info    : Compiling void Main()\n"
+			"Section (1, 19) : Error   : Not a valid reference\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test unsafe ref with temporary objects deferred to end of expression and conditional expressions
 	// Reported by Istvan Polyak
 	{
