@@ -28,7 +28,64 @@ static void Log(asIScriptGeneric *gen)
 bool TestSwitch()
 {
 	bool fail = false;
+	int r;
 
+	// Test case with declared global constants
+	{
+		asIScriptEngine* engine;
+		CBufferedOutStream bout;
+
+		engine = asCreateScriptEngine();
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"const int B = 0; \n"
+			// when compiled together it works
+			"void func1() { int i; switch( i ) { case B: } } \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		// TODO: This currently fails, because when compiled separately the global B isn't interpreted as a literal constant
+		r = ExecuteString(engine, "int i; switch( i ) { case B: }", mod);
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "ExecuteString (1, 27) : Error   : Case expressions must be literal constants\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test attempt to use register global const property as switch case
+	{
+		asIScriptEngine* engine;
+		CBufferedOutStream bout;
+
+		engine = asCreateScriptEngine();
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		int B;
+		r = engine->RegisterGlobalProperty("const int B", (void*)&B);
+
+		r = ExecuteString(engine, "int i; switch( i ) { case B: }");
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "ExecuteString (1, 27) : Error   : Case expressions must be literal constants\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test that compiler is able to detect if all paths in a switch has return statement
 	{
 		asIScriptEngine* engine = asCreateScriptEngine();
 		CBufferedOutStream bout;
@@ -62,7 +119,7 @@ bool TestSwitch()
 			"      return 0; \n"
 			"  } \n"
 			"} \n");
-		int r = mod->Build();
+		r = mod->Build();
 		if (r >= 0)
 			TEST_FAILED;
 		if (bout.buffer != "test (2, 1) : Info    : Compiling int hasReturn()\n"
@@ -117,7 +174,7 @@ bool TestSwitch()
 		"}                               \n"; // 22
 
 	mod->AddScriptSection("switch", script);
-	int r = mod->Build();
+	r = mod->Build();
 	if( r < 0 )
 	{
 		PRINTF("%s: Failed to build script\n", TESTNAME);

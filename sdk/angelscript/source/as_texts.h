@@ -264,7 +264,7 @@
 #define TXT_SECTION_IS_EMPTY                           "The script section is empty"
 #define TXT_SIGNED_UNSIGNED_MISMATCH                   "Signed/Unsigned mismatch"
 #define TXT_STRINGS_NOT_RECOGNIZED                     "Strings are not recognized by the application"
-#define TXT_SWITCH_CASE_MUST_BE_CONSTANT               "Case expressions must be constants"
+#define TXT_SWITCH_CASE_MUST_BE_CONSTANT               "Case expressions must be literal constants"
 #define TXT_SWITCH_MUST_BE_INTEGRAL                    "Switch expressions must be integral numbers"
 
 #define TXT_TMPL_s_EXPECTS_d_SUBTYPES          "Template '%s' expects %d sub type(s)"

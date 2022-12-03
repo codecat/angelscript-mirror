@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.36.1 WIP - 2022/11/25</h2>
+<h2>Version 2.36.1 WIP - 2022/12/02</h2>
 
 <ul>
 <li>Bug fixes
@@ -25,6 +25,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash when doing handle assign from object handle received by reference parameter (Thanks Miss)
 <li>Fixed error in compiler with unsafe references turned on and destruction of temporary variables in boolean expressions (Thanks Polyak Istvan)
 <li>Fixed crash when passing null to a ?&amp;inout param with unsafe references turned on (Thanks donadigo)
+<li>Fixed assert failure when compiling switch case with registered global const property
 </ul>
 <li>Library
 <ul>

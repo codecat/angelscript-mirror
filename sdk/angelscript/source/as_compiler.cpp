@@ -4070,9 +4070,12 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *hasReturn, 
 			asCExprContext c(engine);
 			CompileExpression(cnode->firstChild, &c);
 
-			// Verify that the result is a constant
-			if( !c.type.isConstant )
+			// Verify that the result is a literal constant
+			if (!c.type.isConstant)
+			{
 				Error(TXT_SWITCH_CASE_MUST_BE_CONSTANT, cnode->firstChild);
+				c.type.SetConstantData(asCDataType::CreatePrimitive(ttInt, true), 0);
+			}
 
 			// Verify that the result is an integral number
 			if (!c.type.dataType.IsIntegerType() && !c.type.dataType.IsUnsignedType())
