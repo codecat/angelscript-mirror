@@ -1243,7 +1243,9 @@ void asCParser::ParseMethodAttributes(asCScriptNode *funcNode)
 #ifndef AS_NO_COMPILER
 
 // nextToken is only modified if the current position can be interpreted as
-// type, in this case it is set to the next token after the type tokens
+// type, in this case it is set to the next token after the type tokens.
+// Note, the function doesn't actually verify that an identifier is a declared type
+// TODO: Should perhaps be renamed to FindTokenAfterType to be more clear
 bool asCParser::IsType(sToken &nextToken)
 {
 	// Set a rewind point
@@ -2021,8 +2023,12 @@ asCScriptNode *asCParser::ParseExprTerm()
 	sToken t;
 	GetToken(&t);
 	sToken t2 = t, t3;
-	if (IsDataType(t2) && CheckTemplateType(t2))
+	RewindTo(&t);
+	if (IsDataType(t2) && CheckTemplateType(t2) && IsType(t2))
 	{
+		// Move to token after the type
+		RewindTo(&t2);
+
 		// The next token must be a = followed by a {
 		GetToken(&t2);
 		GetToken(&t3);

@@ -180,6 +180,48 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test assert failure after failing to identify type
+	// Reported by Patrick Jeeves
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, true);
+
+		r = engine->SetDefaultNamespace("Gui");
+		r = engine->RegisterObjectType("LayoutSpan", 0, asOBJ_REF);
+		r = engine->RegisterObjectBehaviour("LayoutSpan", asBEHAVE_FACTORY, "LayoutSpan @f()", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectBehaviour("LayoutSpan", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectBehaviour("LayoutSpan", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectType("BasicLayout", 0, asOBJ_REF);
+		r = engine->RegisterObjectBehaviour("BasicLayout", asBEHAVE_FACTORY, "BasicLayout @f(array<LayoutSpan> @, array<LayoutSpan> @)", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectBehaviour("BasicLayout", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectBehaviour("BasicLayout", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+	//	mod->AddScriptSection("test1", "void func1() { auto layout = Gui::BasicLayout(array<LayoutSpan> = { }, array<LayoutSpan> = { }); }\n");
+		mod->AddScriptSection("test2", "void func2() { auto layout = Gui::BasicLayout(LayoutSpan[] = { }, LayoutSpan[] = { }); }\n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != 
+			"test2 (1, 1) : Info    : Compiling void func2()\n"
+			"test2 (1, 67) : Error   : Identifier 'LayoutSpan' is not a data type in global namespace\n"
+			"test2 (1, 82) : Error   : Initialization lists cannot be used with 'int'\n"
+			"test2 (1, 47) : Error   : Identifier 'LayoutSpan' is not a data type in global namespace\n"
+			"test2 (1, 62) : Error   : Initialization lists cannot be used with 'int'\n"
+			"test2 (1, 30) : Error   : No matching signatures to 'Gui::BasicLayout(int, int)'\n"
+			"test2 (1, 30) : Info    : Candidates are:\n"
+			"test2 (1, 30) : Info    : Gui::BasicLayout@ BasicLayout(Gui::LayoutSpan[]@, Gui::LayoutSpan[]@)\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		engine->ShutDownAndRelease();
+	}
+
 	// Test void expressions in initialization list
 	// https://www.gamedev.net/forums/topic/713226-bug-with-assigning-void-return-types/5451859/
 	{
