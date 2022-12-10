@@ -13,6 +13,38 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test use of partial scope within a namespce
+	// https://www.gamedev.net/forums/topic/712496-bug-with-namespaces/5448593/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"class DictOfChallenge_WriteLog : _DictOfChallenge_WriteLog::DictOfChallenge_WriteLog {} \n"
+			"namespace _DictOfChallenge_WriteLog { \n"
+			"  class DictOfChallenge_WriteLog {} \n"
+			"} \n"
+			"namespace DictOfChallenge_WriteLog { \n"
+			"  class KvPair : _KvPair::KvPair {} \n"
+			"  namespace _KvPair {	\n"
+			"    class KvPair {} \n"
+			"  }\n"
+			"}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test multiple nested namespaces in same statement
 	// Contributed by Stefan Koch
 	{
