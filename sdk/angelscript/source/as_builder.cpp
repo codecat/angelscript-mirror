@@ -1999,7 +1999,6 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 				fdt2->funcdef->IsSignatureExceptNameEqual(func) )
 			{
 				// Replace our funcdef for the existing one
-				funcDef->idx = fdt2->funcdef->id;
 				module->ReplaceFuncDef(fdt, fdt2);
 				fdt2->AddRefInternal();
 
@@ -2022,7 +2021,7 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 
 	// Remember if the type was declared as external so the saved bytecode can be flagged accordingly
 	if (funcTraits.GetTrait(asTRAIT_EXTERNAL) && found)
-		module->m_externalTypes.PushLast(engine->scriptFunctions[funcDef->idx]->funcdefType);
+		module->m_externalTypes.PushLast(engine->scriptFunctions[module->m_funcDefs[funcDef->idx]->GetFuncdefSignature()->GetId()]->funcdefType);
 }
 
 int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns)

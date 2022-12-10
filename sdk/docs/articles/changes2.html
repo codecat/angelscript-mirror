@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.36.1 WIP - 2022/12/06</h2>
+<h2>Version 2.36.1 WIP - 2022/12/10</h2>
 
 <ul>
 <li>Bug fixes
@@ -27,6 +27,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash when passing null to a ?&amp;inout param with unsafe references turned on (Thanks donadigo)
 <li>Fixed assert failure when compiling switch case with registered global const property
 <li>Fixed error in parser with default array and initialization lists
+<li>Fixed crash in compiler when same funcdef declaration is compiled multiple times in different modules (Thanks Alexander Orefkov)
 </ul>
 <li>Library
 <ul>

@@ -85,6 +85,41 @@ bool Test()
 	asIScriptContext *ctx;
 	CBufferedOutStream bout;
 
+	// Test compiling funcdefs within a namespace with same name as function in global scope
+	// https://www.gamedev.net/forums/topic/713472-crash-at-building-new-module-after-existing-one/5453276/
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func() {} \n"
+			"namespace a { \n"
+			"  funcdef void func(); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptFunction* func = mod->GetFunctionByName("func");
+		func->AddRef();
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func() {} \n"
+			"namespace a { \n"
+			"  funcdef void func(); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		func->Release();
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test declaring funcdef with same name in two different classes
 	// https://www.gamedev.net/forums/topic/713057-bug-with-funcdef-behavior/5451080/
 	{
