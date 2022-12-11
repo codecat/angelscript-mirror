@@ -420,6 +420,35 @@ bool Test()
 	COutStream out;
  	asIScriptEngine *engine;
 
+	// Test with incorrect opImplCast signature
+	// Reported by Patrick Jeeves
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterObjectType("base", 0, asOBJ_REF | asOBJ_NOCOUNT);
+
+		engine->RegisterObjectType("test", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectBehaviour("test", asBEHAVE_FACTORY, "test @f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("test", "base @opImplCast(int)", asFUNCTION(0), asCALL_GENERIC);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "void func() { test @t; base @b = t; }");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 1) : Info    : Compiling void func()\n"
+						   "test (1, 34) : Error   : Can't implicitly convert from 'test@&' to 'base@&'.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test registering olc::vec2d
 	// https://www.gamedev.net/forums/topic/712002-registering-a-template-struct/
 	{
