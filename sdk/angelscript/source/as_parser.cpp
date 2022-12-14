@@ -1335,6 +1335,14 @@ bool asCParser::IsType(sToken &nextToken)
 				return false;
 			}
 		}
+		else if (t2.type == ttAmp)
+		{
+			// & can be followed by in, out, or inout
+			sToken t3;
+			GetToken(&t3);
+			if (t3.type != ttIn && t3.type != ttOut && t3.type != ttInOut)
+				RewindTo(&t3);
+		}
 
 		GetToken(&t2);
 	}
@@ -1672,7 +1680,7 @@ asCScriptNode *asCParser::ParseLambda()
 	}
 
 	// Parse optional type before parameter name
-	if( IsType(t) && (t.type == ttAmp || t.type == ttIdentifier) )
+	if( IsType(t) && t.type == ttIdentifier )
 	{
 		node->AddChildLast(ParseType(true));
 		if (isSyntaxError) return node;
@@ -1691,7 +1699,7 @@ asCScriptNode *asCParser::ParseLambda()
 		while( t.type == ttListSeparator )
 		{
 			// Parse optional type before parameter name
-			if (IsType(t) && (t.type == ttAmp || t.type == ttIdentifier)) 
+			if (IsType(t) && t.type == ttIdentifier) 
 			{
 				node->AddChildLast(ParseType(true));
 				if (isSyntaxError) return node;

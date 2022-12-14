@@ -85,6 +85,46 @@ bool Test()
 	asIScriptContext *ctx;
 	CBufferedOutStream bout;
 
+	// Test anonymous functions (lambda) with complex types in parameters
+	// Reported by Patrick Jeeves
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"namespace UI { enum MouseEvent {} }\n"
+			"namespace GUI {\n"
+			"  interface CallbackContext {} \n"
+			"  funcdef void boolMouseEventCallback(CallbackContext@,const UI::MouseEvent &in);\n"
+			"  void OnMouseButton(boolMouseEventCallback @) {}\n"
+			"}\n"
+			"void func() {\n"
+			"  GUI::OnMouseButton( function(GUI::CallbackContext@ ctx, const UI::MouseEvent &in event) { /*etc */} ); \n"
+			"  GUI::OnMouseButton( function(GUI::CallbackContext@ ctx, UI::MouseEvent &in event) { /*etc */} ); \n"
+			"  GUI::OnMouseButton( function(GUI::CallbackContext@ ctx, UI::MouseEvent event) { /*etc */} ); \n"
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != 
+			"test (7, 1) : Info    : Compiling void func()\n"
+			"test (9, 3) : Error   : No matching signatures to 'GUI::OnMouseButton($func@const)'\n" // TODO: Show the signature of the lambda function in the error message
+			"test (9, 3) : Info    : Candidates are:\n"
+			"test (9, 3) : Info    : void OnMouseButton(boolMouseEventCallback@)\n"
+			"test (10, 3) : Error   : No matching signatures to 'GUI::OnMouseButton($func@const)'\n" // TODO: Show the signature of the lambda function in the error message
+			"test (10, 3) : Info    : Candidates are:\n"
+			"test (10, 3) : Info    : void OnMouseButton(boolMouseEventCallback@)\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test compiling funcdefs within a namespace with same name as function in global scope
 	// https://www.gamedev.net/forums/topic/713472-crash-at-building-new-module-after-existing-one/5453276/
 	{
@@ -116,6 +156,12 @@ bool Test()
 			TEST_FAILED;
 
 		func->Release();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
 		engine->ShutDownAndRelease();
 	}
