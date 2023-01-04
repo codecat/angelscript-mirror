@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2022 Andreas Jonsson
+   Copyright (c) 2003-2023 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -57,6 +57,7 @@
 #define TXT_CANNOT_CALL_CONSTRUCTOR_IN_SWITCH      "Can't call a constructor in switch"
 #define TXT_CANNOT_CALL_CONSTRUCTOR_TWICE          "Can't call a constructor multiple times"
 #define TXT_CANNOT_CREATE_DELEGATE_FOR_NOREF_TYPES "Can't create delegate for types that do not support handles"
+#define TXT_CANNOT_FORM_ARRAY_OF_s                 "Can't form arrays of subtype '%s'"
 #define TXT_CANNOT_IMPLEMENT_SELF                  "Can't implement itself, or another interface that implements this interface"
 #define TXT_CANNOT_INHERIT_FROM_s_FINAL            "Can't inherit from class '%s' marked as final"
 #define TXT_CANNOT_INHERIT_FROM_MULTIPLE_CLASSES   "Can't inherit from multiple classes"
@@ -329,9 +330,9 @@
 #define TXT_TEMPLATE_LIST_FACTORY_EXPECTS_2_REF_PARAMS   "Template list factory expects two reference parameters. The last is the pointer to the initialization buffer"
 #define TXT_LIST_FACTORY_EXPECTS_1_REF_PARAM             "List factory expects only one reference parameter. The pointer to the initialization buffer will be passed in this parameter"
 #define TXT_FAILED_READ_SUBTYPE_OF_TEMPLATE_s            "Failed to read subtype of template type '%s'"
-#define TXT_FAILED_IN_FUNC_s_s_d                           "Failed in call to function '%s' (Code: %s, %d)"
-#define TXT_FAILED_IN_FUNC_s_WITH_s_s_d                    "Failed in call to function '%s' with '%s' (Code: %s, %d)"
-#define TXT_FAILED_IN_FUNC_s_WITH_s_AND_s_s_d              "Failed in call to function '%s' with '%s' and '%s' (Code: %s, %d)"
+#define TXT_FAILED_IN_FUNC_s_s_d                         "Failed in call to function '%s' (Code: %s, %d)"
+#define TXT_FAILED_IN_FUNC_s_WITH_s_s_d                  "Failed in call to function '%s' with '%s' (Code: %s, %d)"
+#define TXT_FAILED_IN_FUNC_s_WITH_s_AND_s_s_d            "Failed in call to function '%s' with '%s' and '%s' (Code: %s, %d)"
 #define TXT_GC_RECEIVED_NULL_PTR                         "AddScriptObjectToGC called with null pointer"
 #define TXT_EXCEPTION_IN_NESTED_CALL                     "An exception occurred in a nested call"
 #define TXT_TYPE_s_IS_STILL_USED_BY_FUNC_s               "Type '%s' is still used by function '%s'"

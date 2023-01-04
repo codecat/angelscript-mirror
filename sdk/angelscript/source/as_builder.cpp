@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2022 Andreas Jonsson
+   Copyright (c) 2003-2023 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -5923,6 +5923,9 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 							}
 							if (isValid)
 								*isValid = false;
+
+							// Return a dummy
+							return asCDataType::CreatePrimitive(ttInt, false);
 						}
 
 						// Create object data type
@@ -5944,6 +5947,9 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 					dt.SetTokenType(ttInt);
 					if (isValid)
 						*isValid = false;
+
+					// Return a dummy
+					return asCDataType::CreatePrimitive(ttInt, false);
 				}
 			}
 
@@ -6006,6 +6012,9 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 						WriteError(TXT_OBJECT_HANDLE_NOT_SUPPORTED, file, n);
 					if (isValid)
 						*isValid = false;
+
+					// Return a dummy
+					return asCDataType::CreatePrimitive(ttInt, false);
 				}
 				isImplicitHandle = false;
 			}
@@ -6028,16 +6037,30 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 				}
 				if (isValid)
 					*isValid = false;
+
+				// Return a dummy
+				return asCDataType::CreatePrimitive(ttInt, false);
 			}
 
 			// Make the type an array (or multidimensional array)
-			if( dt.MakeArray(engine, module) < 0 )
+			// TODO: If reportError is false, the errors in MakeArray must be suppressed
+			asCDataType origDt = dt;
+			int r = dt.MakeArray(engine, module);
+			if( r < 0 )
 			{
-				if( reportError )
+				if (reportError && r == asINVALID_TYPE)
 					WriteError(TXT_NO_DEFAULT_ARRAY_TYPE, file, n);
+				else
+				{
+					asCString msg;
+					msg.Format(TXT_CANNOT_FORM_ARRAY_OF_s, origDt.Format(ns).AddressOf());
+					WriteError(msg, file, n);
+				}
 				if (isValid)
 					*isValid = false;
-				break;
+
+				// Return a dummy
+				return asCDataType::CreatePrimitive(ttInt, false);
 			}
 		}
 		else
@@ -6049,7 +6072,9 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 					WriteError(TXT_HANDLE_OF_HANDLE_IS_NOT_ALLOWED, file, n);
 				if (isValid)
 					*isValid = false;
-				break;
+
+				// Return a dummy
+				return asCDataType::CreatePrimitive(ttInt, false);
 			}
 			else
 			{
@@ -6059,7 +6084,9 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 						WriteError(TXT_OBJECT_HANDLE_NOT_SUPPORTED, file, n);
 					if (isValid)
 						*isValid = false;
-					break;
+
+					// Return a dummy
+					return asCDataType::CreatePrimitive(ttInt, false);
 				}
 				
 				// Check if the handle should be read-only
@@ -6079,6 +6106,9 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 				WriteError(TXT_OBJECT_HANDLE_NOT_SUPPORTED, file, n);
 			if (isValid)
 				*isValid = false;
+
+			// Return a dummy
+			return asCDataType::CreatePrimitive(ttInt, false);
 		}
 	}
 
