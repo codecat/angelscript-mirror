@@ -205,6 +205,41 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test array of array when subtype doesn't have default constructor (must give appropriate error)
+	// Reported by Patrick Jeeves
+	{
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterObjectType("Test", 4, asOBJ_VALUE);
+		engine->RegisterObjectBehaviour("Test", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("Test", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		RegisterScriptArray(engine, true);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "void func() { Test[][] t; t = Test[][]();}");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != 
+			"test (1, 1) : Info    : Compiling void func()\n"
+			"array (0, 0) : Error   : The subtype has no default constructor\n"
+			"test (1, 19) : Error   : Can't form arrays of subtype 'Test'\n"
+			"array (0, 0) : Error   : The subtype has no default constructor\n"
+			"test (1, 35) : Error   : Can't form arrays of subtype 'Test'\n"
+			"test (1, 39) : Error   : A cast operator has one argument\n"
+			"array (0, 0) : Error   : The subtype has no default constructor\n"
+			"test (1, 35) : Error   : Can't form arrays of subtype 'Test'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Destructor for value template type must be unique for each template instance even though there are no differences in parameters
 	// https://www.gamedev.net/forums/topic/711330-unable-to-get-subtype-id-from-asiscriptgeneric-in-destructor/
 	{

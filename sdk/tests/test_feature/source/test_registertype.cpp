@@ -1414,7 +1414,6 @@ bool Test()
 		if (r >= 0)
 			TEST_FAILED;
 		if (bout.buffer != "ExecuteString (1, 5) : Error   : Object handle is not supported for this type\n"
-			"ExecuteString (1, 6) : Error   : Data type can't be 'ref'\n"
 			"System function (1, 4) : Error   : Object handle is not supported for this type\n"
 			" (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'ref@ func()' (Code: asINVALID_DECLARATION, -10)\n")
 		{
@@ -1610,7 +1609,7 @@ bool TestRefScoped()
 	if( sizeof(void*) == 4 )
 	{
 		if( bout.buffer != "ExecuteString (1, 8) : Error   : Object handle is not supported for this type\n"
-						   "ExecuteString (1, 13) : Error   : Can't implicitly convert from '<null handle>' to 'scoped&'.\n" )
+						   "ExecuteString (1, 13) : Error   : Can't implicitly convert from '<null handle>' to 'int'.\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -1619,7 +1618,7 @@ bool TestRefScoped()
 	else
 	{
 		if( bout.buffer != "ExecuteString (1, 8) : Error   : Object handle is not supported for this type\n"
-						   "ExecuteString (1, 13) : Error   : Can't implicitly convert from '<null handle>' to 'scoped&'.\n" )
+						   "ExecuteString (1, 13) : Error   : Can't implicitly convert from '<null handle>' to 'int'.\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

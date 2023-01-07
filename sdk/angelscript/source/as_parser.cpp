@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2022 Andreas Jonsson
+   Copyright (c) 2003-2023 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1245,8 +1245,7 @@ void asCParser::ParseMethodAttributes(asCScriptNode *funcNode)
 // nextToken is only modified if the current position can be interpreted as
 // type, in this case it is set to the next token after the type tokens.
 // Note, the function doesn't actually verify that an identifier is a declared type
-// TODO: Should perhaps be renamed to FindTokenAfterType to be more clear
-bool asCParser::IsType(sToken &nextToken)
+bool asCParser::FindTokenAfterType(sToken &nextToken)
 {
 	// Set a rewind point
 	sToken t, t1;
@@ -1523,19 +1522,13 @@ asCScriptNode *asCParser::ParseExprValue()
 		else
 		{
 			// Determine the last identifier in order to check if it is a type
+			FindIdentifierAfterScope(t2);
+			RewindTo(&t2);
+
+			// Get The token after the identifier to determine if it is an [
 			sToken t;
-			if( t1.type == ttScope ) t = t2; else t = t1;
-			RewindTo(&t);
-			GetToken(&t2);
-			while( t.type == ttIdentifier )
-			{
-				t2 = t;
-				GetToken(&t);
-				if( t.type == ttScope )
-					GetToken(&t);
-				else
-					break;
-			}
+			GetToken(&t); 
+			GetToken(&t);
 
 			bool isDataType = IsDataType(t2);
 			bool isTemplateType = false;
@@ -1657,7 +1650,47 @@ bool asCParser::IsLambda()
 	return isLambda;
 }
 
-// BNF:12: LAMBDA        ::= 'function' '(' [[TYPE TYPEMOD] IDENTIFIER {',' [TYPE TYPEMOD] IDENTIFIER}] ')' STATBLOCK
+// Finds the last identifier in a multiscope sequence.
+// Doesn't move the cursor.
+// Returns false if the sequence is not a scope, nor a identifier without scope.
+bool asCParser::FindIdentifierAfterScope(sToken& identifierToken)
+{
+	sToken t1, t2, t3;
+
+	// Determine the last identifier after scope in order to check if it is a type
+	GetToken(&t1);
+	GetToken(&t2);
+	RewindTo(&t1);
+
+	if (t1.type != ttScope && t2.type != ttScope)
+	{
+		if (t1.type == ttIdentifier)
+		{
+			identifierToken = t1;
+			return true;
+		}
+		return false;
+	}
+
+	if (t1.type == ttScope) t3 = t2; else t3 = t1;
+	RewindTo(&t3);
+	GetToken(&t2);
+	while (t3.type == ttIdentifier)
+	{
+		t2 = t3;
+		GetToken(&t3);
+		if (t3.type == ttScope)
+			GetToken(&t3);
+		else
+			break;
+	}
+	RewindTo(&t1);
+	identifierToken = t2;
+
+	return true;
+}
+
+// BNF:12: LAMBDA        ::= 'function' '(' [[TYPE TYPEMOD] [IDENTIFIER] {',' [TYPE TYPEMOD] [IDENTIFIER]}] ')' STATBLOCK
 asCScriptNode *asCParser::ParseLambda()
 {
 	asCScriptNode *node = CreateNode(snFunction);
@@ -1679,38 +1712,49 @@ asCScriptNode *asCParser::ParseLambda()
 		return node;
 	}
 
-	// Parse optional type before parameter name
-	if( IsType(t) && t.type == ttIdentifier )
-	{
-		node->AddChildLast(ParseType(true));
-		if (isSyntaxError) return node;
-		node->AddChildLast(ParseTypeMod(true));
-		if (isSyntaxError) return node;
-	}
-
 	GetToken(&t);
-	if( t.type == ttIdentifier )
+	while (t.type != ttCloseParenthesis && t.type != ttEnd )
 	{
 		RewindTo(&t);
-		node->AddChildLast(ParseIdentifier());
-		if (isSyntaxError) return node;
+
+		// Create node to represent the parameter, the datatype and identifier must be children of the node.
+		// If no datatype or identifier is given then the node is still there to be counted as the arg
+		asCScriptNode* param = CreateNode(snUndefined);
+		node->AddChildLast(param);
+
+		// Skip 'const' for the next check
+		sToken t1, t2 = t;
+		if (t.type == ttConst)
+			GetToken(&t1);
+
+		// Determine the last identifier after scope in order to check if it is a type
+		FindIdentifierAfterScope(t2);
+		RewindTo(&t);
+
+		// Parse optional type before parameter name
+		if (IsDataType(t2) && CheckTemplateType(t2) && FindTokenAfterType(t) && (t.type == ttIdentifier || t.type == ttListSeparator || t.type == ttCloseParenthesis))
+		{
+			param->AddChildLast(ParseType(true));
+			if (isSyntaxError) return node;
+			param->AddChildLast(ParseTypeMod(true));
+			if (isSyntaxError) return node;
+		}
+
+		// Parse optional parameter name
+		if (t.type == ttIdentifier)
+		{
+			param->AddChildLast(ParseIdentifier());
+			if (isSyntaxError) return node;
+		}
 
 		GetToken(&t);
-		while( t.type == ttListSeparator )
-		{
-			// Parse optional type before parameter name
-			if (IsType(t) && t.type == ttIdentifier) 
-			{
-				node->AddChildLast(ParseType(true));
-				if (isSyntaxError) return node;
-				node->AddChildLast(ParseTypeMod(true));
-				if (isSyntaxError) return node;
-			}
-
-			node->AddChildLast(ParseIdentifier());
-			if( isSyntaxError ) return node;
-
+		if (t.type == ttListSeparator)
 			GetToken(&t);
+		else if (t.type != ttCloseParenthesis)
+		{
+			const char *tokens[] = { ",", ")" };
+			Error(ExpectedOneOf(tokens, 2), &t);
+			return node;
 		}
 	}
 
@@ -2032,7 +2076,7 @@ asCScriptNode *asCParser::ParseExprTerm()
 	GetToken(&t);
 	sToken t2 = t, t3;
 	RewindTo(&t);
-	if (IsDataType(t2) && CheckTemplateType(t2) && IsType(t2))
+	if (IsDataType(t2) && CheckTemplateType(t2) && FindTokenAfterType(t2))
 	{
 		// Move to token after the type
 		RewindTo(&t2);
@@ -2750,7 +2794,7 @@ bool asCParser::IsVarDecl()
 		RewindTo(&t1);
 
 	// A variable decl starts with the type
-	if (!IsType(t1))
+	if (!FindTokenAfterType(t1))
 	{
 		RewindTo(&t);
 		return false;
@@ -2831,7 +2875,7 @@ bool asCParser::IsVirtualPropertyDecl()
 		RewindTo(&t1);
 
 	// A variable decl starts with the type
-	if (!IsType(t1))
+	if (!FindTokenAfterType(t1))
 	{
 		RewindTo(&t);
 		return false;
@@ -2889,7 +2933,7 @@ bool asCParser::IsFuncDecl(bool isMethod)
 
 	// A function decl starts with a type
 	sToken t1;
-	if (!IsType(t1))
+	if (!FindTokenAfterType(t1))
 	{
 		RewindTo(&t);
 		return false;

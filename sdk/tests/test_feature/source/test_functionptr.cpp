@@ -85,6 +85,32 @@ bool Test()
 	asIScriptContext *ctx;
 	CBufferedOutStream bout;
 
+	// Test anonymous functions (lambda) with nameless parameter
+	// Reported by Patrick Jeeves
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void f(int,int); \n"
+			"void func() {\n"
+			"  f@ f1 = function(int arg1, int ) {}; \n" // omitting the name of the arg should work
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test anonymous functions (lambda) with complex types in parameters
 	// Reported by Patrick Jeeves
 	{
@@ -1369,7 +1395,7 @@ bool Test()
 			TEST_FAILED;
 		if (bout.buffer != "glob (1, 1) : Error   : Identifier 'NotDeclared' is not a data type in global namespace\n"
 						   "glob (1, 14) : Info    : Compiling int nd\n"
-						   "glob (1, 28) : Error   : Can't implicitly convert from '$func@const' to 'int&'.\n")
+						   "glob (1, 31) : Error   : Can't implicitly convert from '$func@const' to 'int&'.\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -1420,7 +1446,7 @@ bool Test()
 		// TODO: The error messages should be more more explicit
 		if( bout.buffer != "name (2, 1) : Info    : Compiling void func()\n"
 						   "name (3, 23) : Error   : Can't implicitly convert from '$func@const' to 'CB1@&'.\n"
-						   "name (4, 21) : Error   : Can't implicitly convert from '$func@const' to 'CB1@&'.\n"
+						   "name (4, 26) : Error   : Can't implicitly convert from '$func@const' to 'CB1@&'.\n"
 						   "name (5, 15) : Error   : No matching signatures to '$func::opCall()'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());

@@ -4800,11 +4800,16 @@ asCScriptFunction *asCBuilder::RegisterLambda(asCScriptNode *node, asCScriptCode
 	asCScriptNode *args = node->firstChild;
 	while( args && args->nodeType != snStatementBlock )
 	{
-		if (args->nodeType == snIdentifier)
+		if (args->nodeType == snUndefined)
 		{
-			asCString argName;
-			argName.Assign(&file->code[args->tokenPos], args->tokenLength);
-			parameterNames.PushLast(argName);
+			if (args->lastChild && args->lastChild->nodeType == snIdentifier)
+			{
+				asCString argName;
+				argName.Assign(&file->code[args->lastChild->tokenPos], args->lastChild->tokenLength);
+				parameterNames.PushLast(argName);
+			}
+			else
+				parameterNames.PushLast("");
 			defaultArgs.PushLast(0);
 		}
 		args = args->next;
