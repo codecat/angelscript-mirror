@@ -2990,14 +2990,10 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 			// Cleanup
 			for( asUINT n = 0; n < args.GetLength(); n++ )
 				if( args[n] )
-				{
 					asDELETE(args[n], asCExprContext);
-				}
 			for( asUINT n = 0; n < namedArgs.GetLength(); n++ )
 				if( namedArgs[n].ctx )
-				{
 					asDELETE(namedArgs[n].ctx, asCExprContext);
-				}
 		}
 	}
 	else if( node && node->nodeType == snInitList )
@@ -11147,7 +11143,7 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 	if( CompileArgumentList(node->lastChild, args, namedArgs) >= 0 )
 	{
 		// Check for a value cast behaviour
-		if( args.GetLength() == 1 )
+		if( args.GetLength() == 1 && namedArgs.GetLength() == 0 )
 		{
 			asCExprContext conv(engine);
 			conv.Copy(args[0]);
@@ -11206,7 +11202,7 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 			funcs = beh->factories;
 
 		// Special case: Allow calling func(void) with a void expression.
-		if( args.GetLength() == 1 && args[0]->type.dataType == asCDataType::CreatePrimitive(ttVoid, false) )
+		if( args.GetLength() == 1 && args[0]->type.dataType == asCDataType::CreatePrimitive(ttVoid, false) && namedArgs.GetLength() == 0 )
 		{
 			// Evaluate the expression before the function call
 			MergeExprBytecode(ctx, args[0]);
@@ -11216,7 +11212,7 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 
 		// Special case: If this is an object constructor and there are no arguments use the default constructor.
 		// If none has been registered, just allocate the variable and push it on the stack.
-		if( args.GetLength() == 0 )
+		if( args.GetLength() == 0 && namedArgs.GetLength() == 0 )
 		{
 			beh = tempObj.dataType.GetBehaviour();
 			if( beh && beh->construct == 0 && !(dt.GetTypeInfo()->flags & asOBJ_REF) )
@@ -11239,7 +11235,7 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 		}
 
 		// Special case: If this is a construction of a delegate and the expression names an object method
-		if( dt.IsFuncdef() && args.GetLength() == 1 && args[0]->methodName != "" )
+		if( dt.IsFuncdef() && args.GetLength() == 1 && args[0]->methodName != "" && namedArgs.GetLength() == 0 )
 		{
 			// TODO: delegate: It is possible that the argument returns a function pointer already, in which
 			//                 case no object delegate will be created, but instead a delegate for a function pointer
@@ -11396,14 +11392,10 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 	// Cleanup
 	for( asUINT n = 0; n < args.GetLength(); n++ )
 		if( args[n] )
-		{
 			asDELETE(args[n], asCExprContext);
-		}
 	for( asUINT n = 0; n < namedArgs.GetLength(); n++ )
 		if( namedArgs[n].ctx )
-		{
 			asDELETE(namedArgs[n].ctx, asCExprContext);
-		}
 
 	return error ? -1 : 0;
 }
@@ -11615,7 +11607,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 	if( CompileArgumentList(node->lastChild, args, namedArgs) >= 0 )
 	{
 		// Special case: Allow calling func(void) with an expression that evaluates to no datatype, but isn't exactly 'void'
-		if( args.GetLength() == 1 && args[0]->type.IsVoid() && !args[0]->IsVoidExpression() )
+		if( args.GetLength() == 1 && args[0]->type.IsVoid() && !args[0]->IsVoidExpression() && namedArgs.GetLength() == 0 )
 		{
 			// Evaluate the expression before the function call
 			MergeExprBytecode(ctx, args[0]);
@@ -11698,14 +11690,10 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 	// Cleanup
 	for( asUINT n = 0; n < args.GetLength(); n++ )
 		if( args[n] )
-		{
 			asDELETE(args[n], asCExprContext);
-		}
 	for( asUINT n = 0; n < namedArgs.GetLength(); n++ )
 		if( namedArgs[n].ctx )
-		{
 			asDELETE(namedArgs[n].ctx, asCExprContext);
-		}
 
 	if( initializeMembers )
 	{
@@ -13170,6 +13158,13 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ct
 		asASSERT( node->firstChild->nodeType == snArgList );
 		if( CompileArgumentList(node->firstChild, args, namedArgs) >= 0 )
 		{
+			// TODO: Add support for named args on index operator too
+			if (namedArgs.GetLength() > 0)
+			{
+				Error(TXT_INVALID_USE_OF_NAMED_ARGS, node);
+				isOK = false;
+			}
+
 			// Check for the existence of the opIndex method
 			bool lookForProperty = true;
 			if( propertyName == "" )
@@ -13240,9 +13235,10 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ct
 		// Cleanup
 		for( asUINT n = 0; n < args.GetLength(); n++ )
 			if( args[n] )
-			{
 				asDELETE(args[n], asCExprContext);
-			}
+		for (asUINT n = 0; n < namedArgs.GetLength(); n++)
+			if (namedArgs[n].ctx)
+				asDELETE(namedArgs[n].ctx, asCExprContext);
 
 		if( !isOK )
 			return -1;
@@ -13322,14 +13318,10 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ct
 		// Cleanup
 		for( asUINT n = 0; n < args.GetLength(); n++ )
 			if( args[n] )
-			{
 				asDELETE(args[n], asCExprContext);
-			}
 		for( asUINT n = 0; n < namedArgs.GetLength(); n++ )
 			if( namedArgs[n].ctx )
-			{
 				asDELETE(namedArgs[n].ctx, asCExprContext);
-			}
 			
 		if( !isOK )
 			return -1;
