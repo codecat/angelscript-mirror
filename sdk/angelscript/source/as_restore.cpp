@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2022 Andreas Jonsson
+   Copyright (c) 2003-2023 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -4787,16 +4787,17 @@ void asCWriter::CalculateAdjustmentByPos(asCScriptFunction *func)
 	}
 
 	// Compute the sequence number of each bytecode instruction in order to update the jump offsets
-	asUINT length = func->scriptData->byteCode.GetLength();
+	asUINT length = func->scriptData->byteCode.GetLength() + 1; // accomodate one more for invisible instructions, e.g. scope end
 	asDWORD *bc = func->scriptData->byteCode.AddressOf();
-	bytecodeNbrByPos.SetLength(length);
+	bytecodeNbrByPos.SetLength(length); 
 	asUINT num;
-	for( offset = 0, num = 0; offset < length; )
+	for( offset = 0, num = 0; offset < length-1; )
 	{
 		bytecodeNbrByPos[offset] = num;
 		offset += asBCTypeSize[asBCInfo[*(asBYTE*)(bc+offset)].type];
 		num++;
 	}
+	bytecodeNbrByPos[offset] = num;
 
 	// Store the number of instructions in the last position of bytecodeNbrByPos, 
 	// so this can be easily queried in SaveBytecode. Normally this is already done

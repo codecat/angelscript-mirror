@@ -164,6 +164,7 @@ void LineCallback3(asIScriptContext* ctx, void* /*param*/)
 		PrintVariables(ctx, 0);
 }
 
+bool doSkipTemporary = true;
 void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
 {
 	asIScriptEngine *engine = ctx->GetEngine();
@@ -181,7 +182,7 @@ void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
 		// Skip temporary variables
 		const char* name;
 		ctx->GetVar(n, stackLevel, &name, &typeId);
-		if (name == 0 || strlen(name) == 0)
+		if ((name == 0 || strlen(name) == 0) && doSkipTemporary)
 			continue;
 
 		bool inScope = false;
@@ -197,38 +198,38 @@ void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
 		if( typeId == engine->GetTypeIdByDecl("int") )
 		{
 			if (inScope)
-				print(" %s = %d\n", ctx->GetVarDeclaration(n, stackLevel), *(int*)varPointer);
+				print(" %s%s = %d\n", ctx->GetVarDeclaration(n, stackLevel), (name == 0 || strlen(name) == 0) ? "(temp)" : "", *(int*)varPointer);
 			else
-				print(" %s = {uninitialized}\n", ctx->GetVarDeclaration(n, stackLevel));
+				print(" %s%s = {uninitialized}\n", ctx->GetVarDeclaration(n, stackLevel), (name == 0 || strlen(name) == 0) ? "(temp)" : "");
 		}
 		else if (typeId == engine->GetTypeIdByDecl("uint"))
 		{
 			if (inScope)
-				print(" %s = %u\n", ctx->GetVarDeclaration(n, stackLevel), *(asUINT*)varPointer);
+				print(" %s%s = %u\n", ctx->GetVarDeclaration(n, stackLevel), (name == 0 || strlen(name) == 0) ? "(temp)" : "", *(asUINT*)varPointer);
 			else
-				print(" %s = {uninitialized}\n", ctx->GetVarDeclaration(n, stackLevel));
+				print(" %s%s = {uninitialized}\n", ctx->GetVarDeclaration(n, stackLevel), (name == 0 || strlen(name) == 0) ? "(temp)" : "");
 		}
 		else if( typeId == engine->GetTypeIdByDecl("string") )
 		{
 			CScriptString *str = (CScriptString*)varPointer;
 			if( str )
-				print(" %s = '%s'\n", ctx->GetVarDeclaration(n, stackLevel), str->buffer.c_str());
+				print(" %s%s = '%s'\n", ctx->GetVarDeclaration(n, stackLevel), (name == 0 || strlen(name) == 0) ? "(temp)" : "", str->buffer.c_str());
 			else
-				print(" %s = <null>\n", ctx->GetVarDeclaration(n, stackLevel));
+				print(" %s%s = <null>\n", ctx->GetVarDeclaration(n, stackLevel), (name == 0 || strlen(name) == 0) ? "(temp)" : "");
 		}
 		else if (typeId == engine->GetTypeIdByDecl("foo"))
 		{
 			if (varPointer)
-				print(" %s = %d\n", ctx->GetVarDeclaration(n, stackLevel), *(int*)varPointer);
+				print(" %s%s = %d\n", ctx->GetVarDeclaration(n, stackLevel), (name == 0 || strlen(name) == 0) ? "(temp)" : "", *(int*)varPointer);
 			else
-				print(" %s = <null>\n", ctx->GetVarDeclaration(n, stackLevel));
+				print(" %s%s = <null>\n", ctx->GetVarDeclaration(n, stackLevel), (name == 0 || strlen(name) == 0) ? "(temp)" : "");
 		}
 		else
 		{
 			if( varPointer )
-				print(" %s = {...}\n", ctx->GetVarDeclaration(n, stackLevel));
+				print(" %s%s = {...}\n", ctx->GetVarDeclaration(n, stackLevel), (name == 0 || strlen(name) == 0) ? "(temp)" : "");
 			else
-				print(" %s = <null>\n", ctx->GetVarDeclaration(n, stackLevel));
+				print(" %s%s = <null>\n", ctx->GetVarDeclaration(n, stackLevel), (name == 0 || strlen(name) == 0) ? "(temp)" : "");
 		}
 	}
 }
@@ -285,6 +286,79 @@ bool Test()
 {
 	int r;
 	bool fail = Test2();
+
+	// Test IsVarInScope for variables declared in for-loop
+	// Reported by gmp3 labs
+	{
+		printBuffer = "";
+
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		COutStream out;
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		asIScriptModule* mod = engine->GetModule("Module1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(":1",
+			"void main() \n"
+			"{ \n"
+			"	for (int i = 0; i < 1; i++) \n"  // 3
+			"	{ \n"
+			"		bool hey = false; \n"        // 5
+			"	} \n"
+			"	for (int j = 0; j < 1; j++) \n"  // 7
+			"	{ \n"
+			"		bool hello = false; \n"      // 9
+			"	} \n"
+			"	int foo = 9; \n"                 // 11
+			"	print(666); \n"  //<<<DEBUG HERE // 12
+			"} \n"                               // 13
+			"void print(int) {} \n");            // 14
+		mod->Build();
+
+		asIScriptContext* ctx = engine->CreateContext();
+		doSkipTemporary = false;
+		ctx->SetLineCallback(asFUNCTION(LineCallback3), 0, asCALL_CDECL);
+		ctx->SetExceptionCallback(asFUNCTION(ExceptionCallback), 0, asCALL_CDECL);
+		ctx->Prepare(mod->GetFunctionByDecl("void main()"));
+		r = ctx->Execute();
+		if (r == asEXECUTION_EXCEPTION)
+		{
+			// It is possible to examine the callstack even after the Execute() method has returned
+			ExceptionCallback(ctx, 0);
+		}
+		ctx->Release();
+		doSkipTemporary = true;
+		engine->ShutDownAndRelease();
+
+		if (printBuffer !=
+			"Module1:void main():3,7\n"
+			"Module1:void main():3,7\n"
+			"Module1:void main():3,18\n"
+			"Module1:void main():3,7\n"
+			"Module1:void main():5,3\n"
+			"Module1:void main():3,25\n"
+			"Module1:void main():3,18\n"
+			"Module1:void main():7,7\n"
+			"Module1:void main():7,18\n"
+			"Module1:void main():7,7\n"
+			"Module1:void main():9,3\n"
+			"Module1:void main():7,25\n"
+			"Module1:void main():7,18\n"
+			"Module1:void main():11,2\n"
+			"Module1:void main():12,2\n"
+			" Module1:void print(int):14,19\n"
+			" Module1:void print(int):14,19\n"
+			"Module1:void main():13,2\n"
+			" (no scope) int i = {uninitialized}\n"
+			" (no scope) bool hey = {...}\n"
+			" (no scope) int j = {uninitialized}\n"
+			" (no scope) bool hello = {...}\n"
+			" (in scope) int foo = 9\n"
+			" (in scope) int (temp) = 0\n")
+		{
+			TEST_FAILED;
+			PRINTF("%s", printBuffer.c_str());
+		}
+	}
 
 	// Test IsVarInScope and GetAddresOfVar for registered value types when variable slot is reused in multiple scopes
 	// https://www.gamedev.net/forums/topic/712251-debugger-and-var-in-scope/
