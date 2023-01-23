@@ -6556,10 +6556,19 @@ asUINT asCCompiler::ImplicitConvLambdaToFunc(asCExprContext *ctx, const asCDataT
 	{
 		// Build a unique name for the anonymous function
 		asCString name;
-		if( m_globalVar )
-			name.Format("$%s$%d", m_globalVar->name.AddressOf(), numLambdas++);
-		else
-			name.Format("$%s$%d", outFunc->GetDeclaration(), numLambdas++);
+		for (int iterations = 0;; iterations++)
+		{
+			name.Format(iterations == 0 ? "$%s$%d" : "$%s$%d(%d)", m_globalVar ? m_globalVar->name.AddressOf() : outFunc->GetDeclaration(), numLambdas, iterations);
+
+			// Check if a function with the same name already exists (this can happen if the function 
+			// that declares the lambda has been removed and then is compiled again with 
+			// asIScriptModule::CompileFunction)
+			asCArray<int> funcs;
+			builder->GetFunctionDescriptions(name.AddressOf(), funcs, outFunc->nameSpace);
+			if (funcs.GetLength() == 0)
+				break;
+		}
+		numLambdas++;
 
 		// Register the lambda with the builder for later compilation
 		asCScriptFunction *func = builder->RegisterLambda(ctx->exprNode, script, funcDef, name, outFunc->nameSpace, outFunc->IsShared());

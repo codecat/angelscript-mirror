@@ -85,6 +85,46 @@ bool Test()
 	asIScriptContext *ctx;
 	CBufferedOutStream bout;
 
+	// Test dynamically compiling new functions containing lambda's multiple times
+	// Reported by gmp3 labs
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, false);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("blah", "array<int> myArray;");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		const char* script =
+			"void myDynamicallyCompiledFunction()\n"
+			"{\n"
+			"	myArray.sort(function(a, b) { return a < b; }); \n"
+			"}\n";
+
+		r = mod->CompileFunction("test", script, 0, asCOMP_ADD_TO_MODULE, 0);
+		if (r < 0)
+			TEST_FAILED;
+		mod->RemoveFunction(mod->GetFunctionByName("myDynamicallyCompiledFunction"));
+
+		// Since the dynamically function was removed it must now be possible to build it again without changing any code
+		r = mod->CompileFunction("test", script, 0, asCOMP_ADD_TO_MODULE, 0);
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test anonymous functions (lambda) with nameless parameter
 	// Reported by Patrick Jeeves
 	{
