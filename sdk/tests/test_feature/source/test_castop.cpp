@@ -1,6 +1,7 @@
 #include "utils.h"
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
 #include "../../../add_on/scriptany/scriptany.h"
+#include "../../../add_on/scripthandle/scripthandle.h"
 
 namespace TestCastOp
 {
@@ -166,6 +167,33 @@ bool Test()
 	// TODO: What should the compiler do when the class has both a valid opCast method 
 	//       and a related class in a class hierarchy? Should prefer calling opCast, right?
 	//       How does C++ do it?
+
+
+	// Test cast of anonymous array to function expecting ?. Should give an error about ambigous cast
+	// https://www.gamedev.net/forums/topic/713693-assertion-failure-when-doing-funky-stuff-with-refs/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptHandle(engine);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"ref @r = cast<ref>({1,2,3});\n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 6) : Info    : Compiling ref r\n"
+						   "test (1, 10) : Error   : No conversion from '<anonymous initialization list>' to 'ref' available.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test opCast(?&out) with CScriptAny
 	// https://www.gamedev.net/forums/topic/697067-refcounting-in-opcast/

@@ -10906,7 +10906,7 @@ int asCCompiler::CompileConversion(asCScriptNode *node, asCExprContext *ctx)
 	bool conversionOK = false;
 	if( !expr.type.isConstant && expr.type.dataType != asCDataType::CreatePrimitive(ttVoid, false) )
 	{
-		if( !expr.type.dataType.IsObject() )
+		if( !expr.type.dataType.IsObject() && !expr.IsAnonymousInitList() )
 			ConvertToTempVariable(&expr);
 
 		if( to.IsObjectHandle() &&
@@ -10929,7 +10929,10 @@ int asCCompiler::CompileConversion(asCScriptNode *node, asCExprContext *ctx)
 	asCString strTo, strFrom;
 
 	strTo = to.Format(outFunc->nameSpace);
-	strFrom = expr.type.dataType.Format(outFunc->nameSpace);
+	if (expr.IsAnonymousInitList())
+		strFrom = "<anonymous initialization list>";
+	else
+		strFrom = expr.type.dataType.Format(outFunc->nameSpace);
 
 	asCString msg;
 	msg.Format(TXT_NO_CONVERSION_s_TO_s, strFrom.AddressOf(), strTo.AddressOf());
