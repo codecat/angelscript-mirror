@@ -123,6 +123,9 @@ public:
   CSerializer();
   ~CSerializer();
 
+  // Clear the serializer to free references held internally
+  void Clear();
+	
   // Add implementation for serializing user types
   void AddUserType(CUserType *ref, const std::string &name);
 
@@ -172,6 +175,12 @@ void RecompileModule(asIScriptEngine *engine, asIScriptModule *mod)
 // This serializes the std::string type
 struct CStringType : public CUserType
 {
+  void *AllocateUnitializedMemory(CSerializedValue* value)
+  {
+	// This must not be done for strings
+	assert(false);
+	return 0;
+  }	
   void Store(CSerializedValue *val, void *ptr)
   {
     val->SetUserData(new std::string(*(std::string*)ptr));
@@ -191,6 +200,11 @@ struct CStringType : public CUserType
 // This serializes the CScriptArray type
 struct CArrayType : public CUserType
 {
+  void* AllocateUnitializedMemory(CSerializedValue* value)
+  {
+	CScriptArray* arr = CScriptArray::Create(value->GetType());
+	return arr;
+  }
   void Store(CSerializedValue *val, void *ptr)
   {
     CScriptArray *arr = (CScriptArray*)ptr;
