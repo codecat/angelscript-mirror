@@ -14864,6 +14864,10 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asCExprContext *lc
 			asCString str;
 			str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format(outFunc->nameSpace).AddressOf(), to.Format(outFunc->nameSpace).AddressOf());
 			Error(str, node);
+
+			// Set an integer value and allow the compiler to continue
+			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttInt, true), 0);
+			return;
 		}
 
 		// Convert right hand operand to same size as left hand
@@ -14880,6 +14884,10 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asCExprContext *lc
 			asCString str;
 			str.Format(TXT_NO_CONVERSION_s_TO_s, rctx->type.dataType.Format(outFunc->nameSpace).AddressOf(), lctx->type.dataType.Format(outFunc->nameSpace).AddressOf());
 			Error(str, node);
+
+			// Set an integer value and allow the compiler to continue
+			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttInt, true), 0);
+			return;
 		}
 
 		bool isConstant = lctx->type.isConstant && rctx->type.isConstant;
@@ -15008,6 +15016,10 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asCExprContext *lc
 			asCString str;
 			str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format(outFunc->nameSpace).AddressOf(), to.Format(outFunc->nameSpace).AddressOf());
 			Error(str, node);
+
+			// Set an integer value and allow the compiler to continue
+			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttInt, true), 0);
+			return;
 		}
 
 		// Right operand must be 32bit uint
@@ -15020,6 +15032,10 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asCExprContext *lc
 			asCString str;
 			str.Format(TXT_NO_CONVERSION_s_TO_s, rctx->type.dataType.Format(outFunc->nameSpace).AddressOf(), "uint");
 			Error(str, node);
+
+			// Set an integer value and allow the compiler to continue
+			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttInt, true), 0);
+			return;
 		}
 
 		bool isConstant = lctx->type.isConstant && rctx->type.isConstant;

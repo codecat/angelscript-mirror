@@ -180,6 +180,39 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test assert failure with bitwise operators on booleans
+	// https://www.gamedev.net/forums/topic/711744-assertion-failed-on-invalid-use-of-enum-bit-flags/5445257/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"enum Foo { \n"
+			"  A = (1 << 0), \n"
+			"  B = (1 << 1), \n"
+			"} \n"
+			"void Test(int f) {} \n"
+			"void Main() { \n"
+			"  Test(Foo::A = true | Foo::B); \n"
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (6, 1) : Info    : Compiling void Main()\n"
+			               "test (7, 22) : Error   : No conversion from 'bool' to 'int' available.\n"
+			               "test (7, 8) : Error   : Expression is not an l-value\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+
 	// Test assert failure after failing to identify type
 	// Reported by Patrick Jeeves
 	{
