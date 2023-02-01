@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2022 Andreas Jonsson
+   Copyright (c) 2003-2023 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -243,6 +243,13 @@ public:
 	// Registers available to JIT compiler functions
 	asSVMRegisters m_regs;
 };
+
+// We need at least 2 PTRs on the stack reserved for exception handling
+// We need at least 1 PTR on the stack reserved for calling system functions
+const int RESERVE_STACK = 2 * AS_PTR_SIZE;
+
+// For each script function call we push 9 PTRs on the call stack
+const int CALLSTACK_FRAME_SIZE = 9;
 
 // TODO: Move these to as_utils.h
 int     as_powi(int base, int exponent, bool& isOverflow);

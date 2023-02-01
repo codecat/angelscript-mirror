@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2022 Andreas Jonsson
+   Copyright (c) 2003-2023 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -53,13 +53,6 @@
 #endif
 
 BEGIN_AS_NAMESPACE
-
-// We need at least 2 PTRs reserved for exception handling
-// We need at least 1 PTR reserved for calling system functions
-const int RESERVE_STACK = 2*AS_PTR_SIZE;
-
-// For each script function call we push 9 PTRs on the call stack
-const int CALLSTACK_FRAME_SIZE = 9;
 
 #if defined(AS_DEBUG)
 
