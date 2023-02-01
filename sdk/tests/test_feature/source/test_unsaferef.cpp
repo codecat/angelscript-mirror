@@ -2,6 +2,7 @@
 #include "scriptmath3d.h"
 #include "../../add_on/scriptstdstring/scriptstdstring.h"
 #include "../../add_on/scripthelper/scripthelper.h"
+#include <iostream>
 
 BEGIN_AS_NAMESPACE
 void RegisterStdString_Generic(asIScriptEngine *engine);
@@ -141,6 +142,62 @@ void f2(asIScriptGeneric* /*gen*/)
 {
 }
 
+void PrintString(const std::string& str)
+{
+	std::cout << str << "\n";
+}
+
+class testA
+{
+};
+
+testA ta;
+testA* testA_Factory()
+{
+	return &ta;
+}
+
+class testB : public testA
+{
+};
+
+testB tb;
+testB* testB_Factory()
+{
+	return &tb;
+}
+
+testA* testA_opImplCast_testB(testB* Object)
+{
+	//	PrintString("testA opImplCast(testB@)");
+	return Object;
+}
+
+
+void testA_Opcast(testA* Object, void** OutAddress, int TypeId)
+{
+	if (!(TypeId & asTYPEID_OBJHANDLE))
+	{
+		//		PrintString("!(TypeId & asTYPEID_OBJHANDLE)");
+		return;
+	}
+	asIScriptEngine* engine = asGetActiveContext()->GetEngine();
+	asITypeInfo* ScriptType = engine->GetTypeInfoById(TypeId);
+
+	if (ScriptType->GetFlags() & asOBJ_VALUE)
+	{
+		//		PrintString("(ScriptType->GetFlags() & asOBJ_VALUE)");
+		return;
+	}
+	if (ScriptType->GetFlags() & asOBJ_POD)
+	{
+		//		PrintString("(ScriptType->GetFlags() & asOBJ_POD)");
+		return;
+	}
+	//	PrintString("testA_Opcast");
+	*(testA**)OutAddress = Object;
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -150,10 +207,64 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptEngine *engine;
 
+	// Test opCast(?&out)
+	// https://www.gamedev.net/forums/topic/713759-regression-in-opcastampout/5454715/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
+		engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, 1);
+		engine->SetEngineProperty(asEP_ALLOW_MULTILINE_STRINGS, 1);
+		engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 1);
+		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, 1);
+		engine->SetEngineProperty(asEP_AUTO_GARBAGE_COLLECT, 0);
+		engine->SetEngineProperty(asEP_ALTER_SYNTAX_NAMED_ARGS, 1);
+		engine->SetEngineProperty(asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE, 1);
+		engine->SetEngineProperty(asEP_REQUIRE_ENUM_SCOPE, 1);
+		engine->SetEngineProperty(asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT, 1);
+		engine->SetEngineProperty(asEP_ALLOW_IMPLICIT_HANDLE_TYPES, 1);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+
+		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert(r >= 0);
+
+		r = engine->RegisterObjectType("testA", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("testA", asBEHAVE_FACTORY, "testA @f()", asFUNCTION(testA_Factory), asCALL_CDECL); assert(r >= 0);
+		r = engine->RegisterObjectMethod("testA", "void opCast(?&out)", asFUNCTION(testA_Opcast), asCALL_CDECL_OBJFIRST); assert(r >= 0);
+		r = engine->RegisterObjectType("testB", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("testB", asBEHAVE_FACTORY, "testB @f()", asFUNCTION(testB_Factory), asCALL_CDECL); assert(r >= 0);
+		r = engine->RegisterObjectMethod("testB", "testA@ opImplCast() const", asFUNCTION(testA_opImplCast_testB), asCALL_CDECL_OBJFIRST);
+
+		std::string testfuncstr =
+			"testB tb = testB();                       \n"
+			"testB @ta = tb;                           \n"
+			"assert( ta !is null );        \n"
+			"testA @tc = ta;                       \n" //testA opImplCast(testB@):
+			"assert( tc !is null );       \n"
+			"testB @tab = cast<testB>(tc);              \n"  //testA_Opcast
+			"assert( tab !is null );       \n" // tab is not null... ??
+			;
+
+		r = ExecuteString(engine, testfuncstr.c_str());
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test crash when passing null to param expecting ?&inout with unsafe references turned on
 	// https://www.gamedev.net/forums/topic/713412-crash-when-passing-null-to-an-ampinout-parameter/
 	{
-		asIScriptEngine* engine = asCreateScriptEngine();
+		engine = asCreateScriptEngine();
 		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
