@@ -180,6 +180,41 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test that expression with non lvalue used in assign op gives error
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(0), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"const string g_ignoreErrorsOnItemsOlderThan = '20191231';\n"
+			"void main()\n"
+			"{\n"
+			"	int countIgnoredErrors = 0;\n"
+			"	print('Ignored ' + countIgnoredErrors + ' errors on items oleder than ' + g_ignoreErrorsOnItemsOlderThan = '\\n'); \n"
+			"}\n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		// In C++ this doesn't give an error, but I think that is a mistake, so I'll let AngelScript generate an error in this situation
+		//std::string a = "sd";
+		//std::string t = ("Ignored" + a = "\n");
+
+		if (bout.buffer != "test (2, 1) : Info    : Compiling void main()\n"
+			               "test (5, 8) : Error   : Expression is not an l-value\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test assert failure with bitwise operators on booleans
 	// https://www.gamedev.net/forums/topic/711744-assertion-failed-on-invalid-use-of-enum-bit-flags/5445257/
 	{
@@ -187,7 +222,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
-		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"enum Foo { \n"
 			"  A = (1 << 0), \n"

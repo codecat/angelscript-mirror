@@ -8613,6 +8613,12 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 			lctx->type.isLValue = true; // Handle may not have been an lvalue, but the dereferenced object is
 		}
 
+		if (!lctx->type.isLValue)
+		{
+			Error(TXT_NOT_LVALUE, lexpr);
+			return -1;
+		}
+
 		// Check for overloaded assignment operator
 		if( CompileOverloadedDualOperator(opNode, lctx, rctx, false, ctx) )
 		{

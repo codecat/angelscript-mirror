@@ -179,6 +179,35 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptContext *ctx;
 
+	// Test anonymous initialization list with short hand version of array type
+	// Reported by Phong Ba
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func(int[]@ arr) {} \n"
+			"void main() \n"
+			"{ \n"
+			"   func(array<int> = {1,2,3}); \n"
+			"	func(int[] = {1,2,3}); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test initializing list with value type and opAssign returning void
 	// https://www.gamedev.net/forums/topic/709865-build-a-script-containing-array-of-string-failed-with-corrupted-vm-stack/
 	SKIP_ON_MAX_PORT
