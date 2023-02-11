@@ -2913,40 +2913,20 @@ void asCContext::ExecuteNext()
 					m_regs.programPointer += 2;
 					CallScriptFunction(func);
 				}
-				else if( func->funcType == asFUNC_DELEGATE )
+				else if( func->funcType == asFUNC_SYSTEM )
 				{
-					// Push the object pointer on the stack. There is always a reserved space for this so
-					// we don't don't need to worry about overflowing the allocated memory buffer
-					asASSERT( m_regs.stackPointer - AS_PTR_SIZE >= m_stackBlocks[m_stackIndex] );
-					m_regs.stackPointer -= AS_PTR_SIZE;
-					*(asPWORD*)m_regs.stackPointer = asPWORD(func->objForDelegate);
-
-					// Call the delegated method
-					if( func->funcForDelegate->funcType == asFUNC_SYSTEM )
-					{
-						m_regs.stackPointer += CallSystemFunction(func->funcForDelegate->id, this);
-
-						// Update program position after the call so the line number
-						// is correct in case the system function queries it
-						m_regs.programPointer += 2;
-					}
-					else
-					{
-						m_regs.programPointer += 2;
-
-						// TODO: run-time optimize: The true method could be figured out when creating the delegate
-						CallInterfaceMethod(func->funcForDelegate);
-					}
-				}
-				else
-				{
-					asASSERT( func->funcType == asFUNC_SYSTEM );
-
 					m_regs.stackPointer += CallSystemFunction(func->id, this);
 
 					// Update program position after the call so the line number
 					// is correct in case the system function queries it
 					m_regs.programPointer += 2;
+				}
+				else
+				{
+					asASSERT(func->funcType == asFUNC_DELEGATE);
+
+					// Delegates cannot be bound to imported functions as the delegates do not have a function id
+					asASSERT(false);
 				}
 			}
 
