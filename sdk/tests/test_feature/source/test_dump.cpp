@@ -322,7 +322,7 @@ void DumpModule(asIScriptModule *mod)
 		"reg enum: myEnum\n"
 		" value1 = 1\n"
 		" value2 = 2\n"
-		"reg funcdef: bool array::less(const T&in, const T&in)\n"
+		"reg funcdef: bool T[]::less(const T&in, const T&in)\n"
 		"reg funcdef: void Callback(int, int)\n"
 		"string factory: string\n"
 		"reg type: ref array group: <null>\n"
@@ -361,7 +361,7 @@ void DumpModule(asIScriptModule *mod)
 		" int findByRef(uint, const T&in) const\n"
 		" bool opEquals(const T[]&in) const\n"
 		" bool isEmpty() const\n"
-		" void sort(array::less&in, uint = 0, uint = uint ( - 1 ))\n"
+		" void sort(array::less&in, uint = 0, uint = uint ( - 1 ))\n" // TODO: should format the array template in parameter correctly
 		"reg type: val string group: <null>\n"
 		" beh(2) ~string()\n"
 		" beh(0) string()\n"

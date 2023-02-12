@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2022 Andreas Jonsson
+   Copyright (c) 2003-2023 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -691,25 +691,17 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 	}
 	if( objectType && includeObjectName )
 	{
-		if( includeNamespace && objectType->nameSpace->name != "" )
-			str += objectType->nameSpace->name + "::";
-
-		if( objectType->name != "" )
-			str += objectType->name + "::";
-		else
-			str += "_unnamed_type_::";
+		asCDataType dt = asCDataType::CreateType(objectType, false);
+		str += dt.Format(nameSpace, includeNamespace);
+		str += "::";
 	}
 	else if (funcdefType && funcdefType->parentClass && includeObjectName)
 	{
-		if (includeNamespace && funcdefType->parentClass->nameSpace->name != "")
-			str += funcdefType->parentClass->nameSpace->name + "::";
-
-		if (funcdefType->parentClass->name != "")
-			str += funcdefType->parentClass->name + "::";
-		else
-			str += "_unnamed_type_::";
+		asCDataType dt = asCDataType::CreateType(funcdefType->parentClass, false);
+		str += dt.Format(nameSpace, includeNamespace);
+		str += "::";
 	}
-	else if( includeNamespace && nameSpace->name != "" && !objectType )
+	else if( includeNamespace && nameSpace->name != "" && !objectType && !(funcdefType && funcdefType->parentClass) )
 	{
 		str += nameSpace->name + "::";
 	}
@@ -1481,8 +1473,9 @@ asIScriptEngine *asCScriptFunction::GetEngine() const
 // interface
 const char *asCScriptFunction::GetDeclaration(bool includeObjectName, bool includeNamespace, bool includeParamNames) const
 {
-	asCString *tempString = &asCThreadManager::GetLocalData()->string;
-	*tempString = GetDeclarationStr(includeObjectName, includeNamespace, includeParamNames);
+	asCString str = GetDeclarationStr(includeObjectName, includeNamespace, includeParamNames);
+	asCString* tempString = &asCThreadManager::GetLocalData()->string;
+	*tempString = str;
 	return tempString->AddressOf();
 }
 

@@ -11282,6 +11282,7 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 				// Filter the available object methods to find the one that matches the func def
 				asCObjectType *type = CastToObjectType(args[0]->type.dataType.GetTypeInfo());
 				asCScriptFunction *bestMethod = 0;
+				bool nonConstMethodHidden = false;
 				for( asUINT n = 0; n < type->methods.GetLength(); n++ )
 				{
 					asCScriptFunction *func = engine->scriptFunctions[type->methods[n]];
@@ -11290,8 +11291,11 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 						continue;
 
 					// If the expression is for a const object, then only const methods should be accepted
-					if( args[0]->type.dataType.IsReadOnly() && !func->IsReadOnly() )
+					if (args[0]->type.dataType.IsReadOnly() && !func->IsReadOnly())
+					{
+						nonConstMethodHidden = true;
 						continue;
+					}
 
 					if( func->IsSignatureExceptNameAndObjectTypeEqual(CastToFuncdefType(dt.GetTypeInfo())->funcdef) )
 					{
@@ -11331,9 +11335,15 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 				}
 				else
 				{
+					Error(TXT_CANNOT_CREATE_DELEGATE, node);
+
 					asCString msg;
 					msg.Format(TXT_NO_MATCHING_SIGNATURES_TO_s, CastToFuncdefType(dt.GetTypeInfo())->funcdef->GetDeclaration());
-					Error(msg.AddressOf(), node);
+					Information(msg.AddressOf(), node);
+
+					if (nonConstMethodHidden)
+						Information(TXT_POTENTIAL_MATCHING_NON_CONST_METHOD_HIDDEN, node);
+
 					error = true;
 				}
 			}

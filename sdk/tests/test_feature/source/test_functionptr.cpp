@@ -2176,9 +2176,10 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		// TODO: Error message should be better, so it is understood that the error is because of const object
 		if( bout.buffer != "test (5, 1) : Info    : Compiling void main()\n"
-		                   "test (7, 9) : Error   : No matching signatures to 'void F()'\n" )
+		                   "test (7, 9) : Error   : Can't create delegate\n"
+						   "test (7, 9) : Info    : No matching signatures to 'void F()'\n"
+			               "test (7, 9) : Info    : Potentially matching non-const method is hidden on read-only object reference\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

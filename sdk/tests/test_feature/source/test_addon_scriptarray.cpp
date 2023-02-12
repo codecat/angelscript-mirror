@@ -222,6 +222,88 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// Test sort with callback as delegate
+	// Reported by Patrick Jeeves
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, false);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Test { \n"
+			"  Test() { val = 0; } \n"
+			"  Test(int a) { val = a; } \n"
+			"  bool Less(const Test @&in a, const Test @&in b) { return a.val < b.val; } \n"
+			"  int val; \n"
+			"} \n"
+			"void main() { \n"
+			"  array<Test@> arr = {Test(3),Test(2),Test(1)}; \n"
+			"  Test t; \n"
+			"  arr.sort(array<Test@>::less(t.Less)); \n" // use delegate to compare the elements and sort
+			"  assert( arr[0].val == 1 ); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test sort with callback as delegate (attempt to use method not matching funcdef should give appropriate error)
+	// Reported by Patrick Jeeves
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, false);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Test { \n"
+			"  Test() { val = 0; } \n"
+			"  Test(int a) { val = a; } \n"
+			"  bool Less(const Test @ a, const Test @ b) { return a.val < b.val; } \n"
+			"  int val; \n"
+			"} \n"
+			"void main() { \n"
+			"  array<Test@> arr = {Test(3),Test(2),Test(1)}; \n"
+			"  Test t; \n"
+			"  arr.sort(array<Test@>::less(t.Less)); \n" // Test::Less doesn't match the array::less funcdef
+			"  assert( arr[0].val == 1 ); \n"
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (7, 1) : Info    : Compiling void main()\n"
+						   "test (10, 12) : Error   : Can't create delegate\n"
+						   "test (10, 12) : Info    : No matching signatures to 'bool array<Test@>::less(const Test@&in, const Test@&in)'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test array with uint64
 	// https://www.gamedev.net/forums/topic/711196-cscriptarrayequals-doesnt-know-about-64-bit-types/
 	{

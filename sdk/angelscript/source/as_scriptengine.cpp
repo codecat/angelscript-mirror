@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2022 Andreas Jonsson
+   Copyright (c) 2003-2023 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -4966,9 +4966,10 @@ const char *asCScriptEngine::GetTypeDeclaration(int typeId, bool includeNamespac
 {
 	asCDataType dt = GetDataTypeFromTypeId(typeId);
 
-	asCString *tempString = &asCThreadManager::GetLocalData()->string;
-	*tempString = dt.Format(defaultNamespace, includeNamespace);
+	asCString str = dt.Format(defaultNamespace, includeNamespace);
 
+	asCString *tempString = &asCThreadManager::GetLocalData()->string;
+	*tempString = str;
 	return tempString->AddressOf();
 }
 
