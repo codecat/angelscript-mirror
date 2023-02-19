@@ -58,6 +58,53 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test attempt to bind class method to imported function
+	// Reported by Denis Naumov
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		asIScriptModule* mod = NULL;
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+
+		r = mod->AddScriptSection("import", 
+			"import int ExternFunction(int a, int b) from \"shared\";\n"
+			"class Test\n"
+			"{\n"
+			"	int f(int a, int b)\n"
+			"	{\n"
+			"		return a + b; \n"
+			"	}\n"
+			"} \n"
+			"Test t; \n"
+			"int main(int a, int b)\n"
+			"{\n"
+			"	return ExternFunction(a, b); \n"
+			"}\n"); assert(r >= 0);
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		// Manually bind the imports
+		std::string str = mod->GetImportedFunctionDeclaration(0);
+		if (str != "int ExternFunction(int, int)")
+			TEST_FAILED;
+		auto type_info = mod->GetTypeInfoByName("Test");
+		auto f = type_info->GetMethodByName("f");
+		r = mod->BindImportedFunction(0, f);
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = engine->ShutDownAndRelease(); assert(r >= 0);
+	}
+
 	// Test manually importing functions declared in namespaces
 	// Reported by Phong Ba
 	{

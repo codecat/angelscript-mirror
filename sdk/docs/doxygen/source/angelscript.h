@@ -2610,10 +2610,14 @@ public:
 	//! \param[in] func The true function that will be bound to the imported function.
 	//! \return A negative value on error.
 	//! \retval asNO_FUNCTION \a importIndex or \a func is incorrect.
+	//! \retval asINVALID_ARG \a importIndex is invalid or \a func is null.
+	//! \retval asNOT_SUPPORTED \a func is not a script function or registered function.
 	//! \retval asINVALID_INTERFACE The signature of function doesn't match the import statement.
 	//!
 	//! The imported function is only bound if the functions have the exact same signature, 
 	//! i.e the same return type, and parameters.
+	//!
+	//! Delegate objects are not supported.
 	virtual int         BindImportedFunction(asUINT importIndex, asIScriptFunction *func) = 0;
 	//! \brief Unbinds an imported function.
 	//! \param[in] importIndex The index of the imported function.
