@@ -173,7 +173,8 @@ asCString asCDataType::Format(asSNameSpace *currNs, bool includeNamespace) const
 	{
 		// If funcDef->nameSpace is null it means the funcDef was declared as member of 
 		// another type, in which case the scope should be built with the name of that type
-		str += CastToFuncdefType(typeInfo)->parentClass->name + "::";
+		asCDataType dt = asCDataType::CreateType(CastToFuncdefType(typeInfo)->parentClass, false);
+		str += dt.Format(currNs, includeNamespace) + "::";
 	}
 
 	if( tokenType != ttIdentifier )

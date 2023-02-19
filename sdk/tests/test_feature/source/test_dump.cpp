@@ -361,7 +361,7 @@ void DumpModule(asIScriptModule *mod)
 		" int findByRef(uint, const T&in) const\n"
 		" bool opEquals(const T[]&in) const\n"
 		" bool isEmpty() const\n"
-		" void sort(array::less&in, uint = 0, uint = uint ( - 1 ))\n" // TODO: should format the array template in parameter correctly
+		" void sort(T[]::less&in, uint = 0, uint = uint ( - 1 ))\n"
 		"reg type: val string group: <null>\n"
 		" beh(2) ~string()\n"
 		" beh(0) string()\n"
