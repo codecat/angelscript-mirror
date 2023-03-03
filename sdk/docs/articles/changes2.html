@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.36.1 WIP - 2023/02/19</h2>
+<h2>Version 2.36.1 WIP - 2023/03/02</h2>
 
 <ul>
 <li>Bug fixes
@@ -57,6 +57,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Operations with strings and primitives can now be easily disabled by compiling the add-on with AS_NO_IMPL_OPS_WITH_STRING_AND_PRIMITIVE=1 (Thanks Solokiller)
 <li>ScriptBuilder no longer accepts #include directives with non-terminated strings for the filename
 <li>The serializer add-on is now capable of restoring objects only referenced from handles (Thanks Varrok)
+<li>Fixed compiler warnings on deprecated sprintf in scriptarray and scriptstdstring with xcode (Thanks ramcdona)
 </ul>
 <li>Project
 <ul>
