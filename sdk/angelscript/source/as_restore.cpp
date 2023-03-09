@@ -3634,8 +3634,17 @@ void asCReader::CalculateAdjustmentByPos(asCScriptFunction *func)
 		int pos    = adjustments[n];
 		int adjust = adjustments[n+1];
 
-		for( asUINT i = pos; i < adjustByPos.GetLength(); i++ )
-			adjustByPos[i] += adjust;
+		// If multiple variables in different scope occupy the same position they must have the same size
+		asASSERT(adjustByPos[pos] == 0 || adjustByPos[pos] == adjust);
+
+		adjustByPos[pos] = adjust;
+	}
+	// Accumulate adjustments
+	int adjust = adjustByPos[0];
+	for (asUINT i = 1; i < adjustByPos.GetLength(); i++)
+	{
+		adjust += adjustByPos[i];
+		adjustByPos[i] = adjust;
 	}
 }
 
@@ -4782,8 +4791,17 @@ void asCWriter::CalculateAdjustmentByPos(asCScriptFunction *func)
 		int pos    = adjustments[n];
 		int adjust = adjustments[n+1];
 
-		for( asUINT i = pos; i < adjustStackByPos.GetLength(); i++ )
-			adjustStackByPos[i] += adjust;
+		// If more than one variable in different scopes occupy the same position on the stack they must have the same size
+		asASSERT(adjustStackByPos[pos] == 0 || adjustStackByPos[pos] == adjust);
+
+		adjustStackByPos[pos] = adjust;
+	}
+	// Accumulate adjustments 
+	int adjust = adjustStackByPos[0];
+	for (asUINT i = 1; i < adjustStackByPos.GetLength(); i++)
+	{
+		adjust += adjustStackByPos[i];
+		adjustStackByPos[i] = adjust;
 	}
 
 	// Compute the sequence number of each bytecode instruction in order to update the jump offsets

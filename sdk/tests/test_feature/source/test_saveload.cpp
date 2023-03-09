@@ -396,6 +396,57 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 
+	// Test saving / loading byte code when there are multiple variables in different scope occupying the same stack position
+	// Problem reported by Sam Tupy
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+
+		CBytecodeStream stream((string("AS_DEBUG/bc_") + (sizeof(void*) == 4 ? "32" : "64")).c_str());
+
+		const char* script =
+			"void main() { \n"
+			"  if (true) {	\n"
+			"    int a = 1; \n"
+			"    if (a == 2) { \n"
+			"      string c = 'test'; \n"
+			"    } \n"
+			"  } \n"
+			"  string b = 'this is broken'; \n"
+			"} \n";
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+		r = mod->AddScriptSection("main", script); assert(r >= 0);
+		r = mod->Build(); assert(r >= 0);
+		r = mod->SaveByteCode(&stream); assert(r >= 0);
+		mod->Discard();
+
+		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
+		if (crc32 != 0x606E2B96)
+		{
+			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
+			TEST_FAILED;
+		}
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+
+		r = mod->LoadByteCode(&stream);
+		if (r < 0)
+			TEST_FAILED;
+		mod->Discard();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = engine->ShutDownAndRelease(); assert(r >= 0);
+	}
+
 	// test 32bit and 64bit compatibility for function returning a handle
 	// https://www.gamedev.net/forums/topic/710948-crash-on-running-bytecode-from-32bit-on-64bit/
 	{

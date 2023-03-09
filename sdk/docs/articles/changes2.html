@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.36.1 WIP - 2023/03/02</h2>
+<h2>Version 2.36.1 WIP - 2023/03/08</h2>
 
 <ul>
 <li>Bug fixes
@@ -40,6 +40,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed issue in compiler with unsafe references enabled and &amp;out parameters (Thanks Dragonstorm97)
 <li>Compiler now gives proper error when using temporary object for lvalue in assignment
 <li>BindImportedFunction was not giving error when attempting to bind class method (Thanks Denis Naumov)
+<li>Fixed bug in save bytecode when there were multiple variables in different scope occupying the same stack position (Thanks Sam Tupy)
 </ul>
 <li>Library
 <ul>
