@@ -6047,7 +6047,7 @@ asDWORD *asCContext::DeserializeStackPointer(asDWORD v)
 {
 	// TODO: This function should find the correct stack block and then get the address within that stack block. It must not be expected that the same initContextStackSize was used when the stack pointer was serialized
 	int block = (v >> (32-6)) & 0x3F;
-	uint32_t offset = v & 0x03FFFFFF;
+	asDWORD offset = v & 0x03FFFFFF;
 
 	asASSERT((asUINT)block < m_stackBlocks.GetLength());
 	asASSERT(offset <= m_engine->ep.initContextStackSize*(1 << block));
@@ -6062,13 +6062,13 @@ asDWORD asCContext::SerializeStackPointer(asDWORD *v) const
 	asASSERT(v != 0);
 	asASSERT(m_stackBlocks.GetLength());
 
-	uint64_t min = ~0llu;
+	asQWORD min = ~0llu;
 	int best     = -1;
 
 	// Find the stack block that is used, and the offset into that block
 	for(asUINT i = 0; i < m_stackBlocks.GetLength(); ++i)
 	{
-		uint64_t delta = v - m_stackBlocks[i];
+		asQWORD delta = v - m_stackBlocks[i];
 
 		if(delta < min)
 		{
