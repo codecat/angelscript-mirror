@@ -109,6 +109,136 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
+	// Test compound assignment with getset and unsafe references
+	// Problem reported by Sam Tupy
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE); assert(mod != NULL);
+		mod->AddScriptSection("test",
+			"class obj { \n"
+			"  int v = 0; \n"
+			"  int get_v() property { return v; } \n"
+			"  void set_v(int n) property { v = n; } \n"
+			"  int get_number(int n) { return n; } \n"
+			"} \n"
+			"void main() { \n"
+			"  obj@ o = obj(); \n" // Declare without handle to compile.
+			"  o.v = 10; \n"
+			"  o.v += o.get_number(20); \n" // Not just +=, other assigns too.
+			"  assert( o.v == 30 ); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test virtual properties and shared classes. It must work when loading from bytecode too
+	// Problem reported by Sam Tupy
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE); assert(mod != NULL);
+		mod->AddScriptSection("test",
+			"shared class my_obj { \n"
+			"  int get_var() property { return 1; } \n"
+	        "} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptModule *mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE); assert(mod != NULL);
+		mod2->SetAccessMask(3);
+		mod2->AddScriptSection("test",
+			"external shared class my_obj; \n"
+			"void main() { \n"
+			"  my_obj o; \n"
+			"  assert(o.var == 1); \n"
+			"} \n");
+		r = mod2->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		// Save both modules to bytecode, then reload
+		CBytecodeStream stream1("test");
+		r = mod->SaveByteCode(&stream1);
+		if (r < 0)
+			TEST_FAILED;
+
+		asDWORD crc32 = ComputeCRC32(&stream1.buffer[0], asUINT(stream1.buffer.size()));
+		if (crc32 != 0x19132C77)
+		{
+			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
+			TEST_FAILED;
+		}
+		
+		CBytecodeStream stream2("test2");
+		r = mod2->SaveByteCode(&stream2);
+		if (r < 0)
+			TEST_FAILED;
+
+		crc32 = ComputeCRC32(&stream2.buffer[0], asUINT(stream2.buffer.size()));
+		if (crc32 != 0xE1F2CCC7)
+		{
+			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+
+		// Recreate the engine and reload bytecode
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE); assert(mod != NULL);
+		r = mod->LoadByteCode(&stream1);
+		if (r < 0)
+			TEST_FAILED;
+
+		mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE); assert(mod != NULL);
+		mod2->SetAccessMask(3);
+		r = mod2->LoadByteCode(&stream2);
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod2);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test validations of virtual properties upon declaration in scripts
 	{
 		engine = asCreateScriptEngine();
