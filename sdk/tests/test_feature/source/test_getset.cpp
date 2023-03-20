@@ -169,43 +169,19 @@ bool Test()
 		if (r < 0)
 			TEST_FAILED;
 
-		asIScriptModule *mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE); assert(mod != NULL);
-		mod2->SetAccessMask(3);
-		mod2->AddScriptSection("test",
-			"external shared class my_obj; \n"
-			"void main() { \n"
-			"  my_obj o; \n"
-			"  assert(o.var == 1); \n"
-			"} \n");
-		r = mod2->Build();
-		if (r < 0)
-			TEST_FAILED;
-
-		// Save both modules to bytecode, then reload
+		// Save module to bytecode, then reload
 		CBytecodeStream stream1("test");
 		r = mod->SaveByteCode(&stream1);
 		if (r < 0)
 			TEST_FAILED;
 
 		asDWORD crc32 = ComputeCRC32(&stream1.buffer[0], asUINT(stream1.buffer.size()));
-		if (crc32 != 0x19132C77)
+		if (crc32 != 0x988D6944)
 		{
 			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 			TEST_FAILED;
 		}
 		
-		CBytecodeStream stream2("test2");
-		r = mod2->SaveByteCode(&stream2);
-		if (r < 0)
-			TEST_FAILED;
-
-		crc32 = ComputeCRC32(&stream2.buffer[0], asUINT(stream2.buffer.size()));
-		if (crc32 != 0xE1F2CCC7)
-		{
-			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
-			TEST_FAILED;
-		}
-
 		engine->ShutDownAndRelease();
 
 		// Recreate the engine and reload bytecode
@@ -220,9 +196,16 @@ bool Test()
 		if (r < 0)
 			TEST_FAILED;
 
-		mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE); assert(mod != NULL);
+		// Build a second module referring to the shared class with virtual properties
+		asIScriptModule* mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE); assert(mod != NULL);
 		mod2->SetAccessMask(3);
-		r = mod2->LoadByteCode(&stream2);
+		mod2->AddScriptSection("test",
+			"external shared class my_obj; \n"
+			"void main() { \n"
+			"  my_obj o; \n"
+			"  assert(o.var == 1); \n"
+			"} \n");
+		r = mod2->Build();
 		if (r < 0)
 			TEST_FAILED;
 

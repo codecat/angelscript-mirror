@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2022 Andreas Jonsson
+   Copyright (c) 2003-2023 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -101,17 +101,17 @@ enum asEObjVarInfoOption
 
 enum asEFuncTrait
 {
-	asTRAIT_CONSTRUCTOR = 1,
-	asTRAIT_DESTRUCTOR  = 2,
-	asTRAIT_CONST       = 4,
-	asTRAIT_PRIVATE     = 8,
-	asTRAIT_PROTECTED   = 16,
-	asTRAIT_FINAL       = 32,
-	asTRAIT_OVERRIDE    = 64,
-	asTRAIT_SHARED      = 128,
-	asTRAIT_EXTERNAL    = 256,
-	asTRAIT_EXPLICIT    = 512,
-	asTRAIT_PROPERTY    = 1024
+	asTRAIT_CONSTRUCTOR = 1,    // method
+	asTRAIT_DESTRUCTOR  = 2,    // method
+	asTRAIT_CONST       = 4,    // method
+	asTRAIT_PRIVATE     = 8,    // method
+	asTRAIT_PROTECTED   = 16,   // method
+	asTRAIT_FINAL       = 32,   // method
+	asTRAIT_OVERRIDE    = 64,   // method
+	asTRAIT_SHARED      = 128,  // function
+	asTRAIT_EXTERNAL    = 256,  // function
+	asTRAIT_EXPLICIT    = 512,  // method
+	asTRAIT_PROPERTY    = 1024  // method/function
 };
 
 struct asSFunctionTraits

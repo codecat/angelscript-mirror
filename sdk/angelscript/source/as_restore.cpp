@@ -1096,18 +1096,27 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func, asCObjectType **p
 	}
 
 	func->objectType = CastToObjectType(ReadTypeInfo());
-	if( func->objectType )
+	if (func->objectType)
 	{
 		func->objectType->AddRefInternal();
+		func->nameSpace = func->objectType->nameSpace;
+	}
 
+	// Only read the function traits if it is a class method, or could potentially be a global virtual property
+	if (func->objectType || func->name.SubString(0, 4) == "get_" || func->name.SubString(0, 4) == "set_")
+	{
 		asBYTE b;
 		ReadData(&b, 1);
 		func->SetReadOnly((b & 1) ? true : false);
 		func->SetPrivate((b & 2) ? true : false);
 		func->SetProtected((b & 4) ? true : false);
-		func->nameSpace = func->objectType->nameSpace;
+		func->SetFinal((b & 8) ? true : false);
+		func->SetOverride((b & 16) ? true : false);
+		func->SetExplicit((b & 32) ? true : false);
+		func->SetProperty((b & 64) ? true : false);
 	}
-	else
+
+	if (!func->objectType)
 	{
 		if (func->funcType == asFUNC_FUNCDEF)
 		{
@@ -4135,15 +4144,21 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 
 	WriteTypeInfo(func->objectType);
 
-	if( func->objectType )
+	// Only write function traits for methods and global functions that can potentially be virtual properties
+	if (func->objectType || func->name.SubString(0, 4) == "get_" || func->name.SubString(0, 4) == "set_")
 	{
 		asBYTE b = 0;
 		b += func->IsReadOnly() ? 1 : 0;
 		b += func->IsPrivate() ? 2 : 0;
 		b += func->IsProtected() ? 4 : 0;
+		b += func->IsFinal() ? 8 : 0;
+		b += func->IsOverride() ? 16 : 0;
+		b += func->IsExplicit() ? 32 : 0;
+		b += func->IsProperty() ? 64 : 0;
 		WriteData(&b, 1);
 	}
-	else
+
+	if (!func->objectType)
 	{
 		if (func->funcType == asFUNC_FUNCDEF)
 		{
