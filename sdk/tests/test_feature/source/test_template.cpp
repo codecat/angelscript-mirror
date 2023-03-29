@@ -196,6 +196,34 @@ public:
 
 bool TestScriptType();
 
+class C
+{
+public:
+	static C* factory(asITypeInfo* objType)
+	{
+		return new C;
+	}
+	void addRef()
+	{
+		asAtomicInc(refCount_);
+	}
+	void release()
+	{
+		if (asAtomicDec(refCount_) == 0) delete this;
+	}
+
+	CScriptArray* f1() const
+	{
+		return nullptr;
+	}
+
+	int refCount_;
+};
+
+void f2(const C*)
+{
+}
+
 bool Test()
 {
 	RET_ON_MAX_PORT
@@ -204,6 +232,50 @@ bool Test()
 	int r;
 	COutStream out;
 	CBufferedOutStream bout;
+
+	// Test template returning another template
+	// Reported by Polyak Istvan
+	{
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+
+		r = engine->RegisterObjectType("C<class T1>", 0, asOBJ_REF | asOBJ_TEMPLATE);
+		r = engine->RegisterObjectBehaviour("C<T1>",asBEHAVE_FACTORY,"C<T1> @ f (int &in)",asFUNCTIONPR(C::factory, (asITypeInfo*), C*),asCALL_CDECL);
+		r = engine->RegisterObjectBehaviour("C<T1>",asBEHAVE_ADDREF,"void f ()",asMETHODPR(C, addRef, (), void),asCALL_THISCALL);
+		r = engine->RegisterObjectBehaviour("C<T1>",asBEHAVE_RELEASE,"void f ()",asMETHODPR(C, release, (), void),asCALL_THISCALL);
+		r = engine->RegisterObjectMethod("C<T1>","array<T1> @ f1 () const",asMETHODPR(C, f1, () const, CScriptArray*),asCALL_THISCALL); // TODO: array<T1> shouldn't be in templateInstanceType as it is a nonsense instance 
+		r = engine->RegisterGlobalFunction("const C<int> @ f2 ()",asFUNCTIONPR(f2, (const C*), void),asCALL_CDECL);
+
+		for (int i = 0; i < 2; i++)
+		{
+			asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+			mod->AddScriptSection("test",
+				"void f11(void)\n"
+				"{ \n"
+				"  C<int> c1; \n"
+				"  const array<int> @ t = c1.f1(); \n"
+				"}\n");
+			r = mod->Build();
+							  
+			if (r < 0)
+				TEST_FAILED;
+
+			mod->Discard();
+			engine->GarbageCollect();
+		}
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
 
 	// Test array of array when subtype doesn't have default constructor (must give appropriate error)
 	// Reported by Patrick Jeeves

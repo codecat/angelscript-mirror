@@ -3481,7 +3481,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	else
 	{
 		// If the template type is not requested directly from a module, then set the ownership
-		// of it to the same module as one of the subtypes. If none of the subtypes are owned by]
+		// of it to the same module as one of the subtypes. If none of the subtypes are owned by
 		// any module, the template instance will be without ownership and can be removed from the
 		// engine at any time (unless the application holds an external reference).
 		for( n = 0; n < subTypes.GetLength(); n++ )
