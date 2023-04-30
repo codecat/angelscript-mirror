@@ -199,7 +199,7 @@ bool TestScriptType();
 class C
 {
 public:
-	static C* factory(asITypeInfo* objType)
+	static C* factory(asITypeInfo* /*objType*/)
 	{
 		return new C;
 	}
@@ -232,6 +232,46 @@ bool Test()
 	int r;
 	COutStream out;
 	CBufferedOutStream bout;
+
+	// Template specialization with multiple subtypes
+	// Reported by Stefan Blumer
+	{
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		// register template with child funcdef
+		engine->RegisterObjectType("MyTmpl<class S, class T>", 0, asOBJ_REF | asOBJ_TEMPLATE);
+		engine->RegisterObjectBehaviour("MyTmpl<S,T>", asBEHAVE_FACTORY, "MyTmpl<S,T> @f(int&in)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("MyTmpl<S,T>", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("MyTmpl<S,T>", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
+
+		// register template specialization
+		r = engine->RegisterObjectType("MyTmpl<int,float>", 0, asOBJ_REF);
+		if (r < 0)
+			TEST_FAILED;
+		r = engine->RegisterObjectBehaviour("MyTmpl<int,float>", asBEHAVE_FACTORY, "MyTmpl<int,float> @f(int&in)", asFUNCTION(0), asCALL_GENERIC);
+		if (r < 0)
+			TEST_FAILED;
+		r = engine->RegisterObjectBehaviour("MyTmpl<int,float>", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		if (r < 0)
+			TEST_FAILED;
+		r = engine->RegisterObjectBehaviour("MyTmpl<int,float>", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asITypeInfo *type = engine->GetTypeInfoByDecl("MyTmpl<int,float>");
+		if (type->GetSubTypeId(0) != asTYPEID_INT32 || type->GetSubTypeId(1) != asTYPEID_FLOAT)
+			TEST_FAILED;
+
+		engine->Release();
+	}
 
 	// Test template returning another template
 	// Reported by Polyak Istvan

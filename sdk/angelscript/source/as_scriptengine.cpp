@@ -1940,10 +1940,12 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			type->name       = dt.GetTypeInfo()->name;
 			// The namespace will be the same as the original template type
 			type->nameSpace  = dt.GetTypeInfo()->nameSpace;
-			type->templateSubTypes.PushLast(dt.GetSubType());
-			for( asUINT s = 0; s < type->templateSubTypes.GetLength(); s++ )
-				if( type->templateSubTypes[s].GetTypeInfo() )
+			for (asUINT s = 0; s < dt.GetTypeInfo()->GetSubTypeCount(); s++)
+			{
+				type->templateSubTypes.PushLast(dt.GetSubType(s));
+				if (type->templateSubTypes[s].GetTypeInfo())
 					type->templateSubTypes[s].GetTypeInfo()->AddRefInternal();
+			}
 			type->size       = byteSize;
 #ifdef WIP_16BYTE_ALIGN
 			// TODO: Types smaller than 4 don't need to be aligned to 4 byte boundaries
