@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2022 Andreas Jonsson
+   Copyright (c) 2003-2023 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -64,8 +64,8 @@ BEGIN_AS_NAMESPACE
 // AngelScript version
 
 //! Version 2.36.0
-#define ANGELSCRIPT_VERSION        23600
-#define ANGELSCRIPT_VERSION_STRING "2.36.0"
+#define ANGELSCRIPT_VERSION        23601
+#define ANGELSCRIPT_VERSION_STRING "2.36.1"
 
 // Data types
 
@@ -1744,7 +1744,7 @@ public:
 	virtual const char    *GetTypeDeclaration(int typeId, bool includeNamespace = false) const = 0;
 	//! \brief Returns the size of a primitive type.
 	//! \param[in] typeId The type id of the type.
-	//! \return The size of the type in bytes, or zero if it is not a primitive type.
+	//! \return The size of the type in bytes, or 0 if it is not a primitive type.
 	//!
 	//! This method can be used to return the size of any built-in primitive type,
 	//! and also for script declared or application registered enums.
@@ -2354,7 +2354,7 @@ public:
 	//! \return The previous access mask.
 	//!
 	//! The module's access mask with be bitwise and-ed with the registered entity's access mask
-	//! in order to determine if the module is allowed to access the entity. If the result is zero
+	//! in order to determine if the module is allowed to access the entity. If the result is 0
 	//! then the script in the module will not be able to use the entity.
 	//!
 	//! This can be used to provide different interfaces to scripts that serve different purposes
@@ -3719,7 +3719,7 @@ public:
 	//! \brief Returns the module where the type is declared.
 	//! \return The module where the type is declared.
 	//!
-	//! The returned value can be null if the module doesn't exist anymore.
+	//! The returned value can be null if the module doesn't exist anymore, or the type is not owned by any module, i.e. registered by the application.
 	virtual asIScriptModule *GetModule() const = 0;
 	//! \}
 
@@ -3775,7 +3775,7 @@ public:
 	//! Typedefs are identified by having the flag \ref asOBJ_TYPEDEF set.
 	//!
 	//! Script classes are identified by having the \ref asOBJ_SCRIPT_OBJECT flag set. 
-	//! Interfaces are identified as a script class with a size of zero.
+	//! Interfaces are identified as a script class with a size of 0.
 	//!
 	//! \see \ref GetSize
 	virtual asDWORD          GetFlags() const = 0;
@@ -4021,6 +4021,8 @@ public:
 	// Miscellaneous
 	//! \brief Returns the id of the function
 	//! \return The id of the function
+	//!
+	//! The id is always positive and larger than 0 for actual functions, and 0 for \ref doc_callbacks_delegate "delegates".
 	virtual int              GetId() const = 0;
 	//! \brief Returns the type of the function
 	//! \return The type of the function
@@ -4031,7 +4033,8 @@ public:
 	//! \brief Returns the module where the function is declared.
 	//! \return The module where the function is declared.
 	//!
-	//! The returned value can be null if the module doesn't exist anymore.
+	//! The returned value can be null if the module doesn't exist anymore, or if the function 
+	//! is not owned by any module, e.g. registered by the application or it is a \ref doc_callbacks_delegate "delegate".
 	virtual asIScriptModule *GetModule() const = 0;
 	//! \brief Returns the name of the script section where the function was implemented.
 	//! \return A null terminated string with the script section name where the function was implemented.
