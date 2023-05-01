@@ -7,8 +7,8 @@
 
 Primitives in AngelScript have direct matches in C++.
 
-<table border=0 cellspacing=0 cellpadding=0>
-<tr><td width=100><b>AngelScript</b></td><td width=150><b>C++</b></td><td width=100><b>Size (bits)</b></tr>
+<table>
+<tr><th width=100>AngelScript</th><th width=150>C++</th><th width=100>Size (bits)</th></tr>
 <tr><td>void  </td><td>void              </td><td>0     </td></tr>
 <tr><td>int8  </td><td>signed char       </td><td>8     </td></tr>
 <tr><td>int16 </td><td>signed short      </td><td>16    </td></tr>
@@ -69,6 +69,17 @@ handles. This is done by adding a + sign to the \@ type modifier. When doing
 this an object handle can be safely passed to a C++ function that expects a
 normal pointer, but don't release it afterwards.
 
+The syntax for using object handles in AngelScript is similar to C++ references, except the handles can be null and can be reassigned.
+
+<table>
+<tr><th>AngelScript handle</th><th>C++ pointer</th><th>C++ reference</th></tr>
+<tr><td>obj \@m_obj;</td><td>obj *m_obj = nullptr;</td><td>n/a</td></tr>
+<tr><td>obj \@m_obj = aReference;</td><td>obj *m_obj = aReference;</td><td>obj &m_obj = *aReference;</td></tr>
+<tr><td>m_obj = aValue;</td><td>*m_obj = aValue;</td><td>m_obj = aValue;</td></tr>
+<tr><td>\@m_obj = aReference;</td><td>m_obj = aReference;</td><td>n/a</td></tr>
+<tr><td>m_obj.callMe();</td><td>m_obj->callMe();</td><td>m_obj.callMe()</td></tr>
+</table>
+
 \see \ref doc_obj_handle
 
 \section doc_as_vc_cpp_types_5 Script classes and interfaces
@@ -102,8 +113,8 @@ stored for later use, since the object may be destroyed once the function return
 If it is necessary to store the address of the object, then object handles
 should be used instead.
 
-<table border=0 cellspacing=0 cellpadding=0>
-<tr><td width=100 valign=top><b>Reference</b></td><td valign=top><b>Description</b></td></tr>
+<table>
+<tr><th width=100 valign=top>Reference</th><th valign=top>Description</th></tr>
 <tr><td valign=top>&in</td><td>A copy of the value is always taken and the 
 reference to the copy is passed to the function. For script functions this is not 
 useful, but it is maintained for compatibility with application registered functions.</td></tr>
