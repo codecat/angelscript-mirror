@@ -244,13 +244,14 @@ bool Test()
 
 	// Test serializing a script object with a handle holding the only reference to a script array
 	// https://www.gamedev.net/forums/topic/712813-serializing-an-object-handle-holding-the-only-reference-to-an-object/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		RegisterStdString(engine);
 		RegisterScriptArray(engine, true);
-		r = engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(printString), asCALL_CDECL);
+		r = engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(printString), asCALL_CDECL); assert(r >= 0);
 
 		asIScriptContext* ctx = engine->CreateContext();
 
@@ -324,6 +325,7 @@ bool Test()
 
 	// Test serializing a script object with a handle holding the only reference to a registered type
 	// https://www.gamedev.net/forums/topic/712813-serializing-an-object-handle-holding-the-only-reference-to-an-object/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);

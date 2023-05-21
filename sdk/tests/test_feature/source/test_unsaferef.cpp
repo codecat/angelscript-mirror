@@ -209,6 +209,7 @@ bool Test()
 
 	// Test opCast(?&out)
 	// https://www.gamedev.net/forums/topic/713759-regression-in-opcastampout/5454715/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);

@@ -63,7 +63,7 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.36.0
+//! Version 2.36.1
 #define ANGELSCRIPT_VERSION        23601
 #define ANGELSCRIPT_VERSION_STRING "2.36.1"
 
