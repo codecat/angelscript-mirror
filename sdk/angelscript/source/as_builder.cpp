@@ -2322,6 +2322,8 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 		// completes, and until it is known, the callback must assume the class
 		// is garbage collected.
 		st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT | asOBJ_GC;
+		if (engine->ep.disableScriptClassGC)
+			st->flags &= ~asOBJ_GC;
 
 		if (isShared)
 			st->flags |= asOBJ_SHARED;

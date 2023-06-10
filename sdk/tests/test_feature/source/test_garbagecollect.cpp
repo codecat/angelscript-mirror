@@ -105,7 +105,7 @@ bool Test()
 		if (r < 0)
 			TEST_FAILED;
 
-		asITypeInfo* t = mod->GetTypeInfoByName("script");
+		t = mod->GetTypeInfoByName("script");
 		if ((t->GetFlags() & asOBJ_GC))
 			TEST_FAILED;
 
