@@ -3731,190 +3731,193 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 	//                         existing module. However, the applications that want to use that should use a special
 	//                         build flag to not finalize the module.
 
-	asCArray<asCObjectType*> typesToValidate;
-	for( n = 0; n < classDeclarations.GetLength(); n++ )
+	if( !engine->ep.disableScriptClassGC )
 	{
-		// Existing shared classes won't need evaluating, nor interfaces
-		sClassDeclaration *decl = classDeclarations[n];
-		if( decl->isExistingShared ) continue;
-
-		asCObjectType *ot = CastToObjectType(decl->typeInfo);
-		if( ot->IsInterface() ) continue;
-
-		typesToValidate.PushLast(ot);
-	}
-
-	asUINT numReevaluations = 0;
-	while( typesToValidate.GetLength() )
-	{
-		if( numReevaluations > typesToValidate.GetLength() )
+		asCArray<asCObjectType*> typesToValidate;
+		for( n = 0; n < classDeclarations.GetLength(); n++ )
 		{
-			// No types could be completely evaluated in the last iteration so
-			// we consider the remaining types in the array as garbage collected
-			break;
+			// Existing shared classes won't need evaluating, nor interfaces
+			sClassDeclaration *decl = classDeclarations[n];
+			if( decl->isExistingShared ) continue;
+	
+			asCObjectType *ot = CastToObjectType(decl->typeInfo);
+			if( ot->IsInterface() ) continue;
+	
+			typesToValidate.PushLast(ot);
 		}
-
-		asCObjectType *type = typesToValidate[0];
-		typesToValidate.RemoveIndex(0);
-
-		// If the type inherits from another type that is yet to be validated, then reinsert it at the end
-		if( type->derivedFrom && typesToValidate.Exists(type->derivedFrom) )
+	
+		asUINT numReevaluations = 0;
+		while( typesToValidate.GetLength() )
 		{
-			typesToValidate.PushLast(type);
-			numReevaluations++;
-			continue;
-		}
-
-		// If the type inherits from a known garbage collected type, then this type must also be garbage collected
-		if( type->derivedFrom && (type->derivedFrom->flags & asOBJ_GC) )
-		{
-			type->flags |= asOBJ_GC;
-			continue;
-		}
-
-		// Evaluate template instances (silently) before verifying each of the classes, since it is possible that
-		// a class will be marked as non-garbage collected, which in turn will mark the template instance that uses
-		// it as non-garbage collected, which in turn means the class that contains the array also do not have to be
-		// garbage collected
-		EvaluateTemplateInstances(numTempl, true);
-
-		// Is there some path in which this structure is involved in circular references?
-		// If the type contains a member of a type that is yet to be validated, then reinsert it at the end
-		bool mustReevaluate = false;
-		bool gc = false;
-		for( asUINT p = 0; p < type->properties.GetLength(); p++ )
-		{
-			asCDataType dt = type->properties[p]->type;
-
-			if (dt.IsFuncdef())
+			if( numReevaluations > typesToValidate.GetLength() )
 			{
-				// If a class holds a function pointer as member then the class must be garbage collected as the
-				// function pointer can form circular references with the class through use of a delegate. Example:
-				//
-				//   class A { B @b; void f(); }
-				//   class B { F @f; }
-				//   funcdef void F();
-				//
-				//   A a;
-				//   @a.b = B();       // instance of A refers to instance of B
-				//   @a.b.f = F(a.f);  // instance of B refers to delegate that refers to instance of A
-				//
-				gc = true;
+				// No types could be completely evaluated in the last iteration so
+				// we consider the remaining types in the array as garbage collected
 				break;
 			}
-
-			if( !dt.IsObject() )
-				continue;
-
-			if( typesToValidate.Exists(CastToObjectType(dt.GetTypeInfo())) )
-				mustReevaluate = true;
-			else
+	
+			asCObjectType *type = typesToValidate[0];
+			typesToValidate.RemoveIndex(0);
+	
+			// If the type inherits from another type that is yet to be validated, then reinsert it at the end
+			if( type->derivedFrom && typesToValidate.Exists(type->derivedFrom) )
 			{
-				if( dt.IsTemplate() )
+				typesToValidate.PushLast(type);
+				numReevaluations++;
+				continue;
+			}
+	
+			// If the type inherits from a known garbage collected type, then this type must also be garbage collected
+			if( type->derivedFrom && (type->derivedFrom->flags & asOBJ_GC) )
+			{
+				type->flags |= asOBJ_GC;
+				continue;
+			}
+	
+			// Evaluate template instances (silently) before verifying each of the classes, since it is possible that
+			// a class will be marked as non-garbage collected, which in turn will mark the template instance that uses
+			// it as non-garbage collected, which in turn means the class that contains the array also do not have to be
+			// garbage collected
+			EvaluateTemplateInstances(numTempl, true);
+	
+			// Is there some path in which this structure is involved in circular references?
+			// If the type contains a member of a type that is yet to be validated, then reinsert it at the end
+			bool mustReevaluate = false;
+			bool gc = false;
+			for( asUINT p = 0; p < type->properties.GetLength(); p++ )
+			{
+				asCDataType dt = type->properties[p]->type;
+	
+				if (dt.IsFuncdef())
 				{
-					// Check if any of the subtypes are yet to be evaluated
-					bool skip = false;
-					for( asUINT s = 0; s < dt.GetTypeInfo()->GetSubTypeCount(); s++ )
-					{
-						asCObjectType *t = reinterpret_cast<asCObjectType*>(dt.GetTypeInfo()->GetSubType(s));
-						if( typesToValidate.Exists(t) )
-						{
-							mustReevaluate = true;
-							skip = true;
-							break;
-						}
-					}
-					if( skip )
-						continue;
+					// If a class holds a function pointer as member then the class must be garbage collected as the
+					// function pointer can form circular references with the class through use of a delegate. Example:
+					//
+					//   class A { B @b; void f(); }
+					//   class B { F @f; }
+					//   funcdef void F();
+					//
+					//   A a;
+					//   @a.b = B();       // instance of A refers to instance of B
+					//   @a.b.f = F(a.f);  // instance of B refers to delegate that refers to instance of A
+					//
+					gc = true;
+					break;
 				}
-
-				if( dt.IsObjectHandle() )
+	
+				if( !dt.IsObject() )
+					continue;
+	
+				if( typesToValidate.Exists(CastToObjectType(dt.GetTypeInfo())) )
+					mustReevaluate = true;
+				else
 				{
-					// If it is known that the handle can't be involved in a circular reference
-					// then this object doesn't need to be marked as garbage collected.
-					asCObjectType *prop = CastToObjectType(dt.GetTypeInfo());
-
-					if( prop->flags & asOBJ_SCRIPT_OBJECT )
+					if( dt.IsTemplate() )
 					{
-						// For script objects, treat non-final classes as if they can contain references
-						// as it is not known what derived classes might do. For final types, check all
-						// properties to determine if any of those can cause a circular reference with this
-						// class.
-						if( prop->flags & asOBJ_NOINHERIT )
+						// Check if any of the subtypes are yet to be evaluated
+						bool skip = false;
+						for( asUINT s = 0; s < dt.GetTypeInfo()->GetSubTypeCount(); s++ )
 						{
-							for( asUINT sp = 0; sp < prop->properties.GetLength(); sp++ )
+							asCObjectType *t = reinterpret_cast<asCObjectType*>(dt.GetTypeInfo()->GetSubType(s));
+							if( typesToValidate.Exists(t) )
 							{
-								asCDataType sdt = prop->properties[sp]->type;
-
-								if( sdt.IsObject() )
+								mustReevaluate = true;
+								skip = true;
+								break;
+							}
+						}
+						if( skip )
+							continue;
+					}
+	
+					if( dt.IsObjectHandle() )
+					{
+						// If it is known that the handle can't be involved in a circular reference
+						// then this object doesn't need to be marked as garbage collected.
+						asCObjectType *prop = CastToObjectType(dt.GetTypeInfo());
+	
+						if( prop->flags & asOBJ_SCRIPT_OBJECT )
+						{
+							// For script objects, treat non-final classes as if they can contain references
+							// as it is not known what derived classes might do. For final types, check all
+							// properties to determine if any of those can cause a circular reference with this
+							// class.
+							if( prop->flags & asOBJ_NOINHERIT )
+							{
+								for( asUINT sp = 0; sp < prop->properties.GetLength(); sp++ )
 								{
-									if( sdt.IsObjectHandle() )
+									asCDataType sdt = prop->properties[sp]->type;
+	
+									if( sdt.IsObject() )
 									{
-										// TODO: runtime optimize: If the handle is again to a final class, then we can recursively check if the circular reference can occur
-										if( sdt.GetTypeInfo()->flags & (asOBJ_SCRIPT_OBJECT | asOBJ_GC) )
+										if( sdt.IsObjectHandle() )
 										{
+											// TODO: runtime optimize: If the handle is again to a final class, then we can recursively check if the circular reference can occur
+											if( sdt.GetTypeInfo()->flags & (asOBJ_SCRIPT_OBJECT | asOBJ_GC) )
+											{
+												gc = true;
+												break;
+											}
+										}
+										else if( sdt.GetTypeInfo()->flags & asOBJ_GC )
+										{
+											// TODO: runtime optimize: Just because the member type is a potential circle doesn't mean that this one is.
+											//                         Only if the object is of a type that can reference this type, either directly or indirectly
 											gc = true;
 											break;
 										}
 									}
-									else if( sdt.GetTypeInfo()->flags & asOBJ_GC )
-									{
-										// TODO: runtime optimize: Just because the member type is a potential circle doesn't mean that this one is.
-										//                         Only if the object is of a type that can reference this type, either directly or indirectly
-										gc = true;
-										break;
-									}
 								}
+	
+								if( gc )
+									break;
 							}
-
-							if( gc )
+							else
+							{
+								// Assume it is garbage collected as it is not known at compile time what might inherit from this type
+								gc = true;
 								break;
+							}
 						}
-						else
+						else if( prop->flags & asOBJ_GC )
 						{
-							// Assume it is garbage collected as it is not known at compile time what might inherit from this type
+							// If a type is not a script object, adopt its GC flag
+							// TODO: runtime optimize: Just because an application registered class is garbage collected, doesn't mean it
+							//                         can form a circular reference with this script class. Perhaps need a flag to tell
+							//                         if the script classes that contains the type should be garbage collected or not.
 							gc = true;
 							break;
 						}
 					}
-					else if( prop->flags & asOBJ_GC )
+					else if( dt.GetTypeInfo()->flags & asOBJ_GC )
 					{
-						// If a type is not a script object, adopt its GC flag
-						// TODO: runtime optimize: Just because an application registered class is garbage collected, doesn't mean it
-						//                         can form a circular reference with this script class. Perhaps need a flag to tell
-						//                         if the script classes that contains the type should be garbage collected or not.
+						// TODO: runtime optimize: Just because the member type is a potential circle doesn't mean that this one is.
+						//                         Only if the object is of a type that can reference this type, either directly or indirectly
 						gc = true;
 						break;
 					}
 				}
-				else if( dt.GetTypeInfo()->flags & asOBJ_GC )
-				{
-					// TODO: runtime optimize: Just because the member type is a potential circle doesn't mean that this one is.
-					//                         Only if the object is of a type that can reference this type, either directly or indirectly
-					gc = true;
-					break;
-				}
 			}
+	
+			// If the class wasn't found to require garbage collection, but it
+			// contains another type that has yet to be evaluated then it must be
+			// re-evaluated.
+			if( !gc && mustReevaluate )
+			{
+				typesToValidate.PushLast(type);
+				numReevaluations++;
+				continue;
+			}
+	
+			// Update the flag in the object type
+			if( gc )
+				type->flags |= asOBJ_GC;
+			else
+				type->flags &= ~asOBJ_GC;
+	
+			// Reset the counter
+			numReevaluations = 0;
 		}
-
-		// If the class wasn't found to require garbage collection, but it
-		// contains another type that has yet to be evaluated then it must be
-		// re-evaluated.
-		if( !gc && mustReevaluate )
-		{
-			typesToValidate.PushLast(type);
-			numReevaluations++;
-			continue;
-		}
-
-		// Update the flag in the object type
-		if( gc )
-			type->flags |= asOBJ_GC;
-		else
-			type->flags &= ~asOBJ_GC;
-
-		// Reset the counter
-		numReevaluations = 0;
 	}
 }
 

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2021 Andreas Jonsson
+   Copyright (c) 2003-2023 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1164,6 +1164,17 @@
 			#define THISCALL_PASS_OBJECT_POINTER_ON_THE_STACK
 			#define AS_X86
 			#undef AS_NO_THISCALL_FUNCTOR_METHOD
+		#elif defined(__LP64__) && !defined(__aarch64__)
+			// Android Intel x86_64 (same config as Linux x86_64). Tested with Intel x86_64 Atom System Image.
+			#define AS_X64_GCC
+			#undef AS_NO_THISCALL_FUNCTOR_METHOD
+			#define HAS_128_BIT_PRIMITIVES
+			#define SPLIT_OBJS_BY_MEMBER_TYPES
+			#define AS_LARGE_OBJS_PASSED_BY_REF
+			#define AS_LARGE_OBJ_MIN_SIZE 5
+			// STDCALL is not available on 64bit Linux
+			#undef STDCALL
+			#define STDCALL
 		#elif defined(__mips__)
 			#define AS_MIPS
 			#undef STDCALL
@@ -1321,7 +1332,7 @@
 
 
 // The assert macro
-#if defined(ANDROID)
+#if defined(ANDROID) || defined(__ANDROID__)
 	#if defined(AS_DEBUG)
 		#include <android/log.h>
 		#include <stdlib.h>

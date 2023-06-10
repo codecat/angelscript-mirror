@@ -77,6 +77,41 @@ bool Test()
 	COutStream out;
 	int r;
 
+	// It is possible to disable GC for script classes at compile time
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class script{ \n"
+			"  script @s; \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asITypeInfo *t = mod->GetTypeInfoByName("script");
+		if (!(t->GetFlags() & asOBJ_GC))
+			TEST_FAILED;
+
+		engine->SetEngineProperty(asEP_DISABLE_SCRIPT_CLASS_GC, true);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class script{ \n"
+			"  script @s; \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asITypeInfo* t = mod->GetTypeInfoByName("script");
+		if ((t->GetFlags() & asOBJ_GC))
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test GC for circular ref between script class->array->delegate->script class
 	// https://www.gamedev.net/forums/topic/707725-gcreference-errors-when-adding-function-handle-delegates-to-array/5430136/
 	{

@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.36.1
-#define ANGELSCRIPT_VERSION        23601
-#define ANGELSCRIPT_VERSION_STRING "2.36.1"
+//! Version 2.36.2
+#define ANGELSCRIPT_VERSION        23602
+#define ANGELSCRIPT_VERSION_STRING "2.36.2"
 
 // Data types
 
@@ -150,6 +150,7 @@ enum asERetCodes
 
 // Engine properties
 //! Engine properties
+//! \see \ref doc_adv_custom_options
 enum asEEngineProp
 {
 	//! Allow unsafe references. Default: false.
@@ -218,6 +219,8 @@ enum asEEngineProp
 	asEP_IGNORE_DUPLICATE_SHARED_INTF       = 32,
 	//! Don't write debug output when library is compiled with AS_DEBUG. Default: false
 	asEP_NO_DEBUG_OUTPUT                    = 33,
+	//! Disable GC for classes compiled from scripts. Default: false
+	asEP_DISABLE_SCRIPT_CLASS_GC            = 34,
 
 	asEP_LAST_PROPERTY
 };

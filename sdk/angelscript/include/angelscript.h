@@ -58,8 +58,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        23601
-#define ANGELSCRIPT_VERSION_STRING "2.36.1"
+#define ANGELSCRIPT_VERSION        23602
+#define ANGELSCRIPT_VERSION_STRING "2.36.2 WIP"
 
 // Data types
 
@@ -148,6 +148,7 @@ enum asEEngineProp
 	asEP_MAX_CALL_STACK_SIZE                = 31,
 	asEP_IGNORE_DUPLICATE_SHARED_INTF       = 32,
 	asEP_NO_DEBUG_OUTPUT                    = 33,
+	asEP_DISABLE_SCRIPT_CLASS_GC            = 34,
 
 	asEP_LAST_PROPERTY
 };

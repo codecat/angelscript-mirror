@@ -238,7 +238,7 @@ There are two types of string constants supported in the AngelScript
 language, the normal quoted string, and the documentation strings,
 called heredoc strings.
 
-The normal strings are written between double quotation marks (<code>"</code>) or single quotation marks (<code>'</code>).
+The normal strings are written between double quotation marks (<code>\"</code>) or single quotation marks (<code>'</code>).
 Inside the constant strings some escape sequences can be used to write exact
 byte values that might not be possible to write in your normal editor.
 
@@ -257,7 +257,7 @@ byte values that might not be possible to write in your normal editor.
 <tr><td width=80 valign=top><code>\\'</code>&nbsp;  </td>
 <td valign=top width=50>39</td>
 <td valign=top>single quotation mark (apostrophe)</td></tr>
-<tr><td width=80 valign=top><code>\\"</code>&nbsp;  </td>
+<tr><td width=80 valign=top><code>\\\"</code>&nbsp;  </td>
 <td valign=top width=50>34</td>
 <td valign=top>double quotation mark</td></tr>
 <tr><td width=80 valign=top><code>\\n</code>&nbsp;  </td>
@@ -289,7 +289,7 @@ byte values that might not be possible to write in your normal editor.
 
 The heredoc strings are designed for inclusion of large portions of text
 without processing of escape sequences. A heredoc string is surrounded by
-triple double-quotation marks (<code>"""</code>), and can span multiple lines
+triple double-quotation marks (<code>\"\"\"</code>), and can span multiple lines
 of code. If the characters following the start of the string until the first
 linebreak only contains white space, it is automatically removed by the
 compiler. Likewise if the characters following the last line break until the

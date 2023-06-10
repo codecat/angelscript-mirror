@@ -451,6 +451,10 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		ep.noDebugOutput = value ? true : false;
 		break;
 
+	case asEP_DISABLE_SCRIPT_CLASS_GC:
+		ep.disableScriptClassGC = value ? true : false;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -562,6 +566,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 	case asEP_NO_DEBUG_OUTPUT:
 		return ep.noDebugOutput;
 
+	case asEP_DISABLE_SCRIPT_CLASS_GC:
+		return ep.disableScriptClassGC;
+
 	default:
 		return 0;
 	}
@@ -633,6 +640,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.maxCallStackSize              = 0;         // 0 = no limit
 		ep.ignoreDuplicateSharedIntf     = false;
 		ep.noDebugOutput                 = false;
+		ep.disableScriptClassGC          = false;
 	}
 
 	gc.engine = this;

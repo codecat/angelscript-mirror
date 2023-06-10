@@ -221,6 +221,14 @@ things. In this case the automatic execution of the garbage collector can be tur
 CPU can be spared.
 
 \see \ref doc_gc
+
+\ref asEP_DISABLE_SCRIPT_CLASS_GC
+
+By default the script compiler will detect script classes that can potentially form circular references and will flag them for
+garbage detection. If it is known that no circular references are formed, or if they are manually resolved in the script, it is
+possible to disable this to increase performance.
+
+\see \ref doc_gc
  
 \ref asEP_COMPILER_WARNINGS
 
