@@ -30,6 +30,35 @@ bool TestSwitch()
 	bool fail = false;
 	int r;
 
+	// Test switch with typedef and enums
+	// Reported by 1vanK from Urho3D
+	{
+		CBufferedOutStream bout;
+
+		asIScriptEngine* engine = asCreateScriptEngine();
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"enum FOO { BAR } \n"
+			"typedef int HI; \n"
+			"void func1() { \n"
+			"  FOO f; switch( f ) { case BAR: } \n"
+			"  HI h; switch( h ) { case 0: } \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test case with declared global constants
 	{
 		asIScriptEngine* engine;
