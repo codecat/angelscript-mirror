@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2023 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -82,10 +82,14 @@ public:
 	bool operator==(const asCArray<T> &) const;
 	bool operator!=(const asCArray<T> &) const;
 
-protected:
+public:
+	// These are public to allow external code (e.g. JIT compiler) to do asOFFSET to 
+	// access the members directly without having to modify the code to add friend
 	T      *array;
 	asUINT  length;                  // 32bits is enough for all uses of this array
 	asUINT  maxLength;
+
+protected:
 	char    buf[2*4*AS_PTR_SIZE];    // Avoid dynamically allocated memory for tiny arrays
 };
 
