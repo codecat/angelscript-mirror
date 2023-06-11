@@ -111,9 +111,15 @@ CStdStringFactory *GetStdStringFactorySingleton()
 {
 	if( stringFactory == 0 )
 	{
-		// The following instance will be destroyed by the global 
-		// CStdStringFactoryCleaner instance upon application shutdown
-		stringFactory = new CStdStringFactory();
+		// Make sure no other thread is creating the string factory at the same time
+		asAcquireExclusiveLock();
+		if (stringFactory == 0)
+		{
+			// The following instance will be destroyed by the global 
+			// CStdStringFactoryCleaner instance upon application shutdown
+			stringFactory = new CStdStringFactory();
+		}
+		asReleaseExclusiveLock();
 	}
 	return stringFactory;
 }
