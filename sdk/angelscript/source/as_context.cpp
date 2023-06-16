@@ -1780,19 +1780,24 @@ int asCContext::PopState()
 // internal
 int asCContext::PushCallState()
 {
-	if( m_callStack.GetLength() == m_callStack.GetCapacity() )
-	{
-		if (m_engine->ep.maxCallStackSize > 0 && m_callStack.GetLength() >= m_engine->ep.maxCallStackSize*CALLSTACK_FRAME_SIZE)
-		{
-			// The call stack is too big to grow further
-			SetInternalException(TXT_STACK_OVERFLOW);
-			return asERROR;
-		}
+	// PushCallState is called whenever we already have m_callStack n*CALLSTACK_FRAME_SIZE memory
+	// We only need to increment it if it is full (old_length >= m_callStack.maxLength)
+	// Here we assume that AllocateNoConstruct will always execute and allocate us extra memory,
+	// so we can use the faster m_callStack.SetLengthNoAllocate since it is already known the capacity 
+	// is enough.
 
-		// Allocate space for 10 call states at a time to save time
-		m_callStack.AllocateNoConstruct(m_callStack.GetLength() + 10*CALLSTACK_FRAME_SIZE, true);
-	}
-	m_callStack.SetLengthNoConstruct(m_callStack.GetLength() + CALLSTACK_FRAME_SIZE);
+	asUINT oldLength = m_callStack.GetLength();
+    if (oldLength >= m_callStack.GetCapacity())
+    {
+        if (m_engine->ep.maxCallStackSize > 0 && oldLength >= m_engine->ep.maxCallStackSize * CALLSTACK_FRAME_SIZE)
+        {
+			// The call stack is too big to grow further
+            SetInternalException(TXT_STACK_OVERFLOW);
+            return asERROR;
+        }
+        m_callStack.AllocateNoConstruct(oldLength + 10 * CALLSTACK_FRAME_SIZE, true);
+    }
+	m_callStack.SetLengthNoAllocate(oldLength + CALLSTACK_FRAME_SIZE);
 
     // Separating the loads and stores limits data cache trash, and with a smart compiler
     // could turn into SIMD style loading/storing if available.
@@ -1808,7 +1813,7 @@ int asCContext::PushCallState()
 	s[3] = (asPWORD)m_regs.stackPointer;
 	s[4] = m_stackIndex;
 
-	asPWORD *tmp = m_callStack.AddressOf() + m_callStack.GetLength() - CALLSTACK_FRAME_SIZE;
+	asPWORD *tmp = m_callStack.AddressOf() + oldLength;
 	tmp[0] = s[0];
 	tmp[1] = s[1];
 	tmp[2] = s[2];
@@ -1822,7 +1827,9 @@ int asCContext::PushCallState()
 void asCContext::PopCallState()
 {
 	// See comments in PushCallState about pointer aliasing and data cache trashing
-	asPWORD *tmp = m_callStack.AddressOf() + m_callStack.GetLength() - CALLSTACK_FRAME_SIZE;
+	asUINT newLength = m_callStack.GetLength() - CALLSTACK_FRAME_SIZE;
+
+	asPWORD *tmp = m_callStack.array + newLength;
 	asPWORD s[5];
 	s[0] = tmp[0];
 	s[1] = tmp[1];
@@ -1836,7 +1843,8 @@ void asCContext::PopCallState()
 	m_regs.stackPointer      = (asDWORD*)s[3];
 	m_stackIndex             = (int)s[4];
 
-	m_callStack.SetLength(m_callStack.GetLength() - CALLSTACK_FRAME_SIZE);
+	// Here we reduce the length, so we can use the faster SetLengtNoAllocate.
+	m_callStack.SetLengthNoAllocate(newLength); 
 }
 
 // interface
@@ -2043,17 +2051,22 @@ void asCContext::PrepareScriptFunction()
 
 	// Make sure there is space on the stack to execute the function
 	asDWORD *oldStackPointer = m_regs.stackPointer;
-	if( !ReserveStackSpace(m_currentFunction->scriptData->stackNeeded) )
-		return;
+	asUINT needSize = m_currentFunction->scriptData->stackNeeded;
 
-	// If a new stack block was allocated then we'll need to move
-	// over the function arguments to the new block.
-	if( m_regs.stackPointer != oldStackPointer )
+	// With a quick check we know right away that we don't need to call ReserveStackSpace and do other checks inside it
+	if (m_stackBlocks.GetLength() == 0 ||
+		oldStackPointer - (needSize + RESERVE_STACK) < m_stackBlocks[m_stackIndex])
 	{
-		int numDwords = m_currentFunction->GetSpaceNeededForArguments() +
-		                (m_currentFunction->objectType ? AS_PTR_SIZE : 0) +
-		                (m_currentFunction->DoesReturnOnStack() ? AS_PTR_SIZE : 0);
-		memcpy(m_regs.stackPointer, oldStackPointer, sizeof(asDWORD)*numDwords);
+		if( !ReserveStackSpace(needSize) )
+			return;
+
+		if( m_regs.stackPointer != oldStackPointer )
+		{
+			int numDwords = m_currentFunction->GetSpaceNeededForArguments() +
+			                (m_currentFunction->objectType ? AS_PTR_SIZE : 0) +
+			                (m_currentFunction->DoesReturnOnStack() ? AS_PTR_SIZE : 0);
+			memcpy(m_regs.stackPointer, oldStackPointer, sizeof(asDWORD)*numDwords);
+		}
 	}
 
 	// Update framepointer
@@ -2066,7 +2079,7 @@ void asCContext::PrepareScriptFunction()
 	{
 		asSScriptVariable *var = m_currentFunction->scriptData->variables[n];
 
-		// Dopn't clear the function arguments
+		// Don't clear the function arguments
 		if (var->stackOffset <= 0)
 			continue;
 
