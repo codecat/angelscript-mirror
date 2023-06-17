@@ -2582,7 +2582,8 @@ bool Test()
 		
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->LoadByteCode(&stream3);
-		ExecuteString(engine, "Test(3)", mod);
+		r = ExecuteString(engine, "Test(3)", mod);
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
 		
 		engine->Release();
 	}

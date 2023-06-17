@@ -359,7 +359,8 @@ bool Test()
 	// Bind all functions that the module imports
 	r = engine->GetModule(0)->BindAllImportedFunctions(); assert( r >= 0 );
 
-	ExecuteString(engine, "main()", engine->GetModule(0));
+	r = ExecuteString(engine, "main()", engine->GetModule(0));
+	if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
 	engine->Release();
 

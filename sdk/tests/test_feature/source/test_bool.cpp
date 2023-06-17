@@ -295,17 +295,23 @@ bool Test()
 	ExecuteString(engine, "Set()", mod);
 	if( *flag != true )
 		TEST_FAILED;
-	ExecuteString(engine, "Assert(gFlag == true)", mod);
+	r = ExecuteString(engine, "Assert(gFlag == true)", mod);
+	if (r != asEXECUTION_FINISHED)
+		TEST_FAILED;
 
 	ExecuteString(engine, "gFlag = false; DoNothing()", mod);
 	if( *flag != false )
 		fail = false;
-	ExecuteString(engine, "Assert(gFlag == false)", mod);
+	r = ExecuteString(engine, "Assert(gFlag == false)", mod);
+	if (r != asEXECUTION_FINISHED)
+		TEST_FAILED;
 
 	ExecuteString(engine, "gFlag = true; DoNothing()", mod);
 	if( *flag != true )
 		fail = false;
-	ExecuteString(engine, "Assert(gFlag == true)", mod);
+	r = ExecuteString(engine, "Assert(gFlag == true)", mod);
+	if (r != asEXECUTION_FINISHED)
+		TEST_FAILED;
 
 	// TEST 3
 	// It was reported that if( t.test_f() ) would always be true, even though the method returns false

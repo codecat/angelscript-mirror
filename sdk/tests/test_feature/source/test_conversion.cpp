@@ -590,22 +590,22 @@ bool Test()
 	ExecuteString(engine, "ui16 = 123;   "); if( ui16 !=  123         ) TEST_FAILED;
 	ExecuteString(engine, "ui16 = -123;  "); if( ui16 != asWORD(-123) ) TEST_FAILED;
 
-	ExecuteString(engine, "TestDouble(d); TestFloat(d); TestInt(d); TestI16(d); TestI8(d); TestUInt(d); TestUI16(d); TestUI8(d);");
-	ExecuteString(engine, "TestDouble(f); TestFloat(f); TestInt(f); TestI16(f); TestI8(f); TestUInt(f); TestUI16(f); TestUI8(f);");
-	ExecuteString(engine, "TestDouble(ui); TestFloat(ui); TestInt(ui); TestI16(ui); TestI8(ui); TestUInt(ui); TestUI16(ui); TestUI8(ui);");
-	ExecuteString(engine, "TestDouble(ui8); TestFloat(ui8); TestInt(ui8); TestI16(ui8); TestI8(ui8); TestUInt(ui8); TestUI16(ui8); TestUI8(ui8);");
-	ExecuteString(engine, "TestDouble(ui16); TestFloat(ui16); TestInt(ui16); TestI16(ui16); TestI8(ui16); TestUInt(ui16); TestUI16(ui16); TestUI8(ui16);");
-	ExecuteString(engine, "TestDouble(ui64); TestFloat(ui64); TestInt(ui64); TestI16(ui64); TestI8(ui64); TestUInt(ui64); TestUI16(ui64); TestUI8(ui64);");
-	ExecuteString(engine, "TestDouble(i); TestFloat(i); TestInt(i); TestI16(i); TestI8(i); TestUInt(i); TestUI16(i); TestUI8(i);");
-	ExecuteString(engine, "TestDouble(i8); TestFloat(i8); TestInt(i8); TestI16(i8); TestI8(i8); TestUInt(i8); TestUI16(i8); TestUI8(i8);");
-	ExecuteString(engine, "TestDouble(i16); TestFloat(i16); TestInt(i16); TestI16(i16); TestI8(i16); TestUInt(i16); TestUI16(i16); TestUI8(i16);");
-	ExecuteString(engine, "TestDouble(i64); TestFloat(i64); TestInt(i64); TestI16(i64); TestI8(i64); TestUInt(i64); TestUI16(i64); TestUI8(i64);");
+	int r = ExecuteString(engine, "TestDouble(d); TestFloat(d); TestInt(d); TestI16(d); TestI8(d); TestUInt(d); TestUI16(d); TestUI8(d);"); if (r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDouble(f); TestFloat(f); TestInt(f); TestI16(f); TestI8(f); TestUInt(f); TestUI16(f); TestUI8(f);"); if (r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDouble(ui); TestFloat(ui); TestInt(ui); TestI16(ui); TestI8(ui); TestUInt(ui); TestUI16(ui); TestUI8(ui);"); if (r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDouble(ui8); TestFloat(ui8); TestInt(ui8); TestI16(ui8); TestI8(ui8); TestUInt(ui8); TestUI16(ui8); TestUI8(ui8);"); if (r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDouble(ui16); TestFloat(ui16); TestInt(ui16); TestI16(ui16); TestI8(ui16); TestUInt(ui16); TestUI16(ui16); TestUI8(ui16);"); if (r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDouble(ui64); TestFloat(ui64); TestInt(ui64); TestI16(ui64); TestI8(ui64); TestUInt(ui64); TestUI16(ui64); TestUI8(ui64);"); if (r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDouble(i); TestFloat(i); TestInt(i); TestI16(i); TestI8(i); TestUInt(i); TestUI16(i); TestUI8(i);"); if (r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDouble(i8); TestFloat(i8); TestInt(i8); TestI16(i8); TestI8(i8); TestUInt(i8); TestUI16(i8); TestUI8(i8);"); if (r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDouble(i16); TestFloat(i16); TestInt(i16); TestI16(i16); TestI8(i16); TestUInt(i16); TestUI16(i16); TestUI8(i16);"); if (r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDouble(i64); TestFloat(i64); TestInt(i64); TestI16(i64); TestI8(i64); TestUInt(i64); TestUI16(i64); TestUI8(i64);"); if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
 	d = 0; i8 = -22; ExecuteString(engine, "d = d + i8"); if( d != -22 ) TEST_FAILED;
 
-	ExecuteString(engine, "int[] a(1); a[0] = 0; a[0] == 1");
-	ExecuteString(engine, "ui + i");
-	ExecuteString(engine, "int a = 0, ui = 0; (a+ui)&1;");
+	r = ExecuteString(engine, "int[] a(1); a[0] = 0; a[0] == 1"); if (r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "ui + i"); if (r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "int a = 0, ui = 0; (a+ui)&1;"); if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
 	// There is no bitwise conversion between uint to float anymore
 	// f = 0; ExecuteString(engine, "f = float(0x3f800000)"); if( f != 1 ) TEST_FAILED;
@@ -618,20 +618,18 @@ bool Test()
 
 	bout.buffer = "";
 
-	int r;
-
 	// TODO: PPC: We cannot allow this with PPC
 	// Allow the conversion of a type to another even for reference parameters (C++ doesn't allow this)
-	r = ExecuteString(engine, "TestDoubleByRef(d); TestFloatByRef(d); TestIntByRef(d); TestI16ByRef(d); TestI8ByRef(d); TestUIntByRef(d); TestUI16ByRef(d); TestUI8ByRef(d);"); if( r < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "TestDoubleByRef(f); TestFloatByRef(f); TestIntByRef(f); TestI16ByRef(f); TestI8ByRef(f); TestUIntByRef(f); TestUI16ByRef(f); TestUI8ByRef(f);"); if( r < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "TestDoubleByRef(ui); TestFloatByRef(ui); TestIntByRef(ui); TestI16ByRef(ui); TestI8ByRef(ui); TestUIntByRef(ui); TestUI16ByRef(ui); TestUI8ByRef(ui);"); if( r < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "TestDoubleByRef(ui8); TestFloatByRef(ui8); TestIntByRef(ui8); TestI16ByRef(ui8); TestI8ByRef(ui8); TestUIntByRef(ui8); TestUI16ByRef(ui8); TestUI8ByRef(ui8);"); if( r < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "TestDoubleByRef(ui16); TestFloatByRef(ui16); TestIntByRef(ui16); TestI16ByRef(ui16); TestI8ByRef(ui16); TestUIntByRef(ui16); TestUI16ByRef(ui16); TestUI8ByRef(ui16);"); if( r < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "TestDoubleByRef(ui64); TestFloatByRef(ui64); TestIntByRef(ui64); TestI16ByRef(ui64); TestI8ByRef(ui64); TestUIntByRef(ui64); TestUI16ByRef(ui64); TestUI8ByRef(ui64);"); if( r < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "TestDoubleByRef(i); TestFloatByRef(i); TestIntByRef(i); TestI16ByRef(i); TestI8ByRef(i); TestUIntByRef(i); TestUI16ByRef(i); TestUI8ByRef(i);"); if( r < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "TestDoubleByRef(i8); TestFloatByRef(i8); TestIntByRef(i8); TestI16ByRef(i8); TestI8ByRef(i8); TestUIntByRef(i8); TestUI16ByRef(i8); TestUI8ByRef(i8);"); if( r < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "TestDoubleByRef(i16); TestFloatByRef(i16); TestIntByRef(i16); TestI16ByRef(i16); TestI8ByRef(i16); TestUIntByRef(i16); TestUI16ByRef(i16); TestUI8ByRef(i16);"); if( r < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "TestDoubleByRef(i64); TestFloatByRef(i64); TestIntByRef(i64); TestI16ByRef(i64); TestI8ByRef(i64); TestUIntByRef(i64); TestUI16ByRef(i64); TestUI8ByRef(i64);"); if( r < 0 ) TEST_FAILED;
+	r = ExecuteString(engine, "TestDoubleByRef(d); TestFloatByRef(d); TestIntByRef(d); TestI16ByRef(d); TestI8ByRef(d); TestUIntByRef(d); TestUI16ByRef(d); TestUI8ByRef(d);"); if( r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDoubleByRef(f); TestFloatByRef(f); TestIntByRef(f); TestI16ByRef(f); TestI8ByRef(f); TestUIntByRef(f); TestUI16ByRef(f); TestUI8ByRef(f);"); if( r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDoubleByRef(ui); TestFloatByRef(ui); TestIntByRef(ui); TestI16ByRef(ui); TestI8ByRef(ui); TestUIntByRef(ui); TestUI16ByRef(ui); TestUI8ByRef(ui);"); if( r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDoubleByRef(ui8); TestFloatByRef(ui8); TestIntByRef(ui8); TestI16ByRef(ui8); TestI8ByRef(ui8); TestUIntByRef(ui8); TestUI16ByRef(ui8); TestUI8ByRef(ui8);"); if( r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDoubleByRef(ui16); TestFloatByRef(ui16); TestIntByRef(ui16); TestI16ByRef(ui16); TestI8ByRef(ui16); TestUIntByRef(ui16); TestUI16ByRef(ui16); TestUI8ByRef(ui16);"); if( r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDoubleByRef(ui64); TestFloatByRef(ui64); TestIntByRef(ui64); TestI16ByRef(ui64); TestI8ByRef(ui64); TestUIntByRef(ui64); TestUI16ByRef(ui64); TestUI8ByRef(ui64);"); if( r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDoubleByRef(i); TestFloatByRef(i); TestIntByRef(i); TestI16ByRef(i); TestI8ByRef(i); TestUIntByRef(i); TestUI16ByRef(i); TestUI8ByRef(i);"); if( r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDoubleByRef(i8); TestFloatByRef(i8); TestIntByRef(i8); TestI16ByRef(i8); TestI8ByRef(i8); TestUIntByRef(i8); TestUI16ByRef(i8); TestUI8ByRef(i8);"); if( r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDoubleByRef(i16); TestFloatByRef(i16); TestIntByRef(i16); TestI16ByRef(i16); TestI8ByRef(i16); TestUIntByRef(i16); TestUI16ByRef(i16); TestUI8ByRef(i16);"); if( r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "TestDoubleByRef(i64); TestFloatByRef(i64); TestIntByRef(i64); TestI16ByRef(i64); TestI8ByRef(i64); TestUIntByRef(i64); TestUI16ByRef(i64); TestUI8ByRef(i64);"); if( r != asEXECUTION_FINISHED) TEST_FAILED;
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -639,11 +637,11 @@ bool Test()
 	mod->Build();
 
 	// This test is to make sure that the float is in fact converted to a double
-	ExecuteString(engine, "TestScript();", mod);
+	r = ExecuteString(engine, "TestScript();", mod); if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
 	// Make sure uint and int can be converted to bits when using the ~ operator
-	ExecuteString(engine, "uint x = 0x34; x = ~x;");
-	ExecuteString(engine, "int x = 0x34; x = ~x;");
+	r = ExecuteString(engine, "uint x = 0x34; x = ~x;"); if (r != asEXECUTION_FINISHED) TEST_FAILED;
+	r = ExecuteString(engine, "int x = 0x34; x = ~x;"); if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
 	engine->Release();
 

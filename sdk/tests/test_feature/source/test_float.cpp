@@ -87,7 +87,8 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) TEST_FAILED;
 
-	ExecuteString(engine, "start()", mod);
+	r = ExecuteString(engine, "start()", mod);
+	if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
 #if !defined(__psp2__)
 	// The locale affects the way the compiler reads float values

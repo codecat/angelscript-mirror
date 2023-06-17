@@ -208,7 +208,9 @@ bool TestGlobalVar()
 		d = *(double*)engine->GetModule("b")->GetAddressOfGlobalVar(3);
 		if (!CompareDouble(d, 4)) TEST_FAILED;
 
-		ExecuteString(engine, "test()", engine->GetModule("b"));
+		r = ExecuteString(engine, "test()", engine->GetModule("b"));
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
 
 		engine->Release();
 	}

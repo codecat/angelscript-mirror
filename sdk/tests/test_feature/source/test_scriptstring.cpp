@@ -271,7 +271,8 @@ bool Test()
 			PRINTF("%s: Failed to print the correct string\n", "TestScriptString");
 		}
 
-		ExecuteString(engine, "string s = \"test\\\\test\\\\\"");
+		r = ExecuteString(engine, "string s = \"test\\\\test\\\\\"");
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
 		// Verify that it is possible to use the string in constructor parameters
 		printOutput = "";

@@ -197,7 +197,7 @@ bool Test()
 	}
 	if( ctx ) ctx->Release();
 
-	ExecuteString(engine, "ObjNoConstruct a; a = ObjNoConstruct();");
+	r = ExecuteString(engine, "ObjNoConstruct a; a = ObjNoConstruct();");
 	if( r != 0 )
 	{
 		TEST_FAILED;
