@@ -1647,8 +1647,14 @@ bool Test()
 		{
 		public:
 			JitCompiler() : invokeCount(0) {}
-			virtual int  CompileFunction(asIScriptFunction* /*function*/, asJITFunction* /*output*/) { invokeCount++; return 0; }
-			virtual void ReleaseJITFunction(asJITFunction /*func*/) { }
+			virtual int  CompileFunction(asIScriptFunction* /*function*/, asJITFunction* output) { 
+				invokeCount++; 
+				*reinterpret_cast<int**>(output) = new int[1]; 
+				return 0;
+			}
+			virtual void ReleaseJITFunction(asJITFunction func) { 
+				delete reinterpret_cast<int*>(func); 
+			}
 			int invokeCount;
 		} jit;
 
@@ -1673,7 +1679,7 @@ bool Test()
 		if (jit.invokeCount != 2)
 			TEST_FAILED;
 
-		engine->Release();
+		engine->ShutDownAndRelease();
 	}
 
 	// Test string with implicit cast to primitive and dictionary
