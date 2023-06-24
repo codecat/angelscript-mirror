@@ -1637,7 +1637,68 @@ bool Test()
 		engine->Release();
 	}
 
-	// Test the logic for JIT compilation
+	// Test the logic for JIT compilation (version 2)
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		class JitCompiler : public asIJITCompilerV2
+		{
+		public:
+			JitCompiler() : invokeCount(0), compileCount(0) {}
+			virtual void NewFunction(asIScriptFunction* /*function*/) {
+				invokeCount++;
+			}
+			virtual void CleanFunction(asIScriptFunction * /*scriptFunc*/, asJITFunction func) {
+				delete reinterpret_cast<int*>(func);
+			}
+			void Compile(asIScriptEngine* engine)
+			{
+				for (int n = 0; n <= engine->GetLastFunctionId(); n++)
+				{
+					asIScriptFunction* scriptFunc = engine->GetFunctionById(n);
+					if (scriptFunc && scriptFunc->GetFuncType() == asFUNC_SCRIPT)
+					{
+						scriptFunc->SetJITFunction(reinterpret_cast<asJITFunction>(new int[1]));
+						compileCount++;
+					}
+				}
+			}
+			int invokeCount;
+			int compileCount;
+		} jit;
+
+		engine->SetEngineProperty(asEP_JIT_INTERFACE_VERSION, 2);
+		engine->SetJITCompiler(&jit);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "void func() {}");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != " (0, 0) : Warning : Function 'void func()' appears to have been compiled without JIT entry points\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = mod->CompileFunction("test2", "void func2() {}", 0, asCOMP_ADD_TO_MODULE, 0);
+		if (r < 0)
+			TEST_FAILED;
+
+		if (jit.invokeCount != 2)
+			TEST_FAILED;
+
+		jit.Compile(engine);
+		if (jit.invokeCount != jit.compileCount)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test the logic for JIT compilation (version 1)
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);

@@ -271,8 +271,7 @@ int asCModule::AddScriptSection(const char *in_name, const char *in_code, size_t
 // internal
 void asCModule::JITCompile()
 {
-	asIJITCompiler *jit = m_engine->GetJITCompiler();
-	if( !jit )
+	if( !m_engine->jitCompiler )
 		return;
 
 	for (unsigned int i = 0; i < m_scriptFunctions.GetLength(); i++)
@@ -1799,11 +1798,8 @@ int asCModule::CompileFunction(const char* sectionName, const char* code, int li
 	if (r >= 0)
 	{
 		// Invoke the JIT compiler if it has been set
-		asIJITCompiler* jit = m_engine->GetJITCompiler();
-		if (jit)
-		{
+		if (m_engine->jitCompiler)
 			func->JITCompile();
-		}
 	}
 
 	m_engine->BuildCompleted();

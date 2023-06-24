@@ -82,8 +82,8 @@ public:
 	virtual int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message);
 
 	// JIT Compiler
-	virtual int SetJITCompiler(asIJITCompiler *compiler);
-	virtual asIJITCompiler *GetJITCompiler() const;
+	virtual int                     SetJITCompiler(asIJITCompilerAbstract *compiler);
+	virtual asIJITCompilerAbstract *GetJITCompiler() const;
 
 	// Global functions
 	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0);
@@ -148,6 +148,7 @@ public:
 	virtual asIScriptModule *GetModuleByIndex(asUINT index) const;
 
 	// Script functions
+	virtual int                GetLastFunctionId() const;
 	virtual asIScriptFunction *GetFunctionById(int funcId) const;
 
 	// Type identification
@@ -437,7 +438,7 @@ public:
 	} preMessage;
 
 	// JIt compilation
-	asIJITCompiler             *jitCompiler;
+	asIJITCompilerAbstract *jitCompiler;
 
 	// Namespaces
 	// These are shared between all entities and are
@@ -507,6 +508,7 @@ public:
 		bool   ignoreDuplicateSharedIntf;
 		bool   noDebugOutput;
 		bool   disableScriptClassGC;
+		asUINT jitInterfaceVersion;
 	} ep;
 
 	// Callbacks

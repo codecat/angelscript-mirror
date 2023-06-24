@@ -455,6 +455,12 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		ep.disableScriptClassGC = value ? true : false;
 		break;
 
+	case asEP_JIT_INTERFACE_VERSION:
+		if (value < 1 || value > 2)
+			return asINVALID_ARG;
+		ep.jitInterfaceVersion = (asUINT)value;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -569,6 +575,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 	case asEP_DISABLE_SCRIPT_CLASS_GC:
 		return ep.disableScriptClassGC;
 
+	case asEP_JIT_INTERFACE_VERSION:
+		return ep.jitInterfaceVersion;
+
 	default:
 		return 0;
 	}
@@ -641,6 +650,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.ignoreDuplicateSharedIntf     = false;
 		ep.noDebugOutput                 = false;
 		ep.disableScriptClassGC          = false;
+		ep.jitInterfaceVersion           = 1;         // 1 = JIT compiler uses asJITCompiler, 2 = JIT compiler uses asJITCompilerV2
 	}
 
 	gc.engine = this;
@@ -1298,13 +1308,13 @@ int asCScriptEngine::WriteMessage(const char *section, int row, int col, asEMsgT
 	return 0;
 }
 
-int asCScriptEngine::SetJITCompiler(asIJITCompiler *compiler)
+int asCScriptEngine::SetJITCompiler(asIJITCompilerAbstract *compiler)
 {
 	jitCompiler = compiler;
 	return asSUCCESS;
 }
 
-asIJITCompiler *asCScriptEngine::GetJITCompiler() const
+asIJITCompilerAbstract *asCScriptEngine::GetJITCompiler() const
 {
 	return jitCompiler;
 }
@@ -6243,6 +6253,12 @@ asITypeInfo *asCScriptEngine::GetTypeInfoById(int typeId) const
 	if (!dt.IsValid()) return 0;
 
 	return dt.GetTypeInfo();
+}
+
+// interface
+int asCScriptEngine::GetLastFunctionId() const
+{
+	return scriptFunctions.GetLength() - 1;
 }
 
 // interface

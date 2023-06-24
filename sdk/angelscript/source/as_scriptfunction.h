@@ -198,7 +198,9 @@ public:
 	int                  FindNextLineWithCode(int line) const;
 
 	// For JIT compilation
-	asDWORD             *GetByteCode(asUINT *length = 0);
+	asDWORD *            GetByteCode(asUINT *length = 0);
+	int                  SetJITFunction(asJITFunction jitFunc);
+	asJITFunction        GetJITFunction() const;
 
 	// User data
 	void                *SetUserData(void *userData, asPWORD type);

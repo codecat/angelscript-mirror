@@ -58,8 +58,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        23602
-#define ANGELSCRIPT_VERSION_STRING "2.36.2 WIP"
+#define ANGELSCRIPT_VERSION        23700
+#define ANGELSCRIPT_VERSION_STRING "2.37.0 WIP"
 
 // Data types
 
@@ -71,7 +71,7 @@ class asIScriptObject;
 class asITypeInfo;
 class asIScriptFunction;
 class asIBinaryStream;
-class asIJITCompiler;
+class asIJITCompilerAbstract;
 class asIThreadManager;
 class asILockableSharedBool;
 class asIStringFactory;
@@ -149,6 +149,7 @@ enum asEEngineProp
 	asEP_IGNORE_DUPLICATE_SHARED_INTF       = 32,
 	asEP_NO_DEBUG_OUTPUT                    = 33,
 	asEP_DISABLE_SCRIPT_CLASS_GC            = 34,
+	asEP_JIT_INTERFACE_VERSION              = 35,
 
 	asEP_LAST_PROPERTY
 };
@@ -411,6 +412,9 @@ typedef asIScriptContext *(*asREQUESTCONTEXTFUNC_t)(asIScriptEngine *, void *);
 typedef void (*asRETURNCONTEXTFUNC_t)(asIScriptEngine *, asIScriptContext *, void *);
 typedef void (*asCIRCULARREFFUNC_t)(asITypeInfo *, const void *, void *);
 
+struct asSVMRegisters;
+typedef void (*asJITFunction)(asSVMRegisters* registers, asPWORD jitArg);
+
 // Check if the compiler can use C++11 features
 #if !defined(_MSC_VER) || _MSC_VER >= 1700   // MSVC 2012
  #if !defined(__GNUC__) || defined(__clang__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)  // gnuc 4.7 or clang
@@ -670,8 +674,8 @@ public:
 	virtual int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message) = 0;
 
 	// JIT Compiler
-	virtual int SetJITCompiler(asIJITCompiler *compiler) = 0;
-	virtual asIJITCompiler *GetJITCompiler() const = 0;
+	virtual int SetJITCompiler(asIJITCompilerAbstract *compiler) = 0;
+	virtual asIJITCompilerAbstract *GetJITCompiler() const = 0;
 
 	// Global functions
 	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0) = 0;
@@ -735,6 +739,7 @@ public:
 	virtual asIScriptModule *GetModuleByIndex(asUINT index) const = 0;
 
 	// Script functions
+	virtual int                GetLastFunctionId() const = 0;
 	virtual asIScriptFunction *GetFunctionById(int funcId) const = 0;
 
 	// Type identification
@@ -1176,6 +1181,8 @@ public:
 
 	// For JIT compilation
 	virtual asDWORD         *GetByteCode(asUINT *length = 0) = 0;
+	virtual int              SetJITFunction(asJITFunction jitFunc) = 0;
+	virtual asJITFunction    GetJITFunction() const = 0;
 
 	// User data
 	virtual void            *SetUserData(void *userData, asPWORD type = 0) = 0;
@@ -1393,15 +1400,30 @@ struct asSVMRegisters
 	asIScriptContext *ctx;                // the active context
 };
 
-typedef void (*asJITFunction)(asSVMRegisters *registers, asPWORD jitArg);
+class asIJITCompilerAbstract 
+{ 
+public: 
+	virtual ~asIJITCompilerAbstract() {}
+};
 
-class asIJITCompiler
+// JIT Compiler interface version 1
+class asIJITCompiler : public asIJITCompilerAbstract
 {
 public:
 	virtual int  CompileFunction(asIScriptFunction *function, asJITFunction *output) = 0;
 	virtual void ReleaseJITFunction(asJITFunction func) = 0;
 public:
 	virtual ~asIJITCompiler() {}
+};
+
+// JIT Compiler interface version 2
+class asIJITCompilerV2 : public asIJITCompilerAbstract
+{
+public:
+	virtual void NewFunction(asIScriptFunction* scriptFunc) = 0;
+	virtual void CleanFunction(asIScriptFunction *scriptFunc, asJITFunction jitFunc) = 0;
+public:
+	virtual ~asIJITCompilerV2() {}
 };
 
 // Byte code instructions
