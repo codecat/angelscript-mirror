@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2021 Andreas Jonsson
+   Copyright (c) 2003-2023 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -71,6 +71,19 @@ int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, 
 	}
 
 	asDWORD base = callConv;
+	if (base == asCALL_CDECL_OBJFIRST || base == asCALL_CDECL_OBJLAST)
+	{
+		internal->callConv =
+			base == asCALL_CDECL_OBJFIRST ? ICC_CDECL_OBJFIRST : ICC_CDECL_OBJLAST;
+		if (!isMethod)
+		{
+			if (auxiliary == 0)
+				return asINVALID_ARG;
+			internal->auxiliary = auxiliary;
+		}
+		return 0;
+	}
+
 	if( !isMethod )
 	{
 		if( base == asCALL_CDECL )
@@ -151,11 +164,7 @@ int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, 
 		}
 		else
 #endif
-		if( base == asCALL_CDECL_OBJLAST )
-			internal->callConv = ICC_CDECL_OBJLAST;
-		else if( base == asCALL_CDECL_OBJFIRST )
-			internal->callConv = ICC_CDECL_OBJFIRST;
-		else if (base == asCALL_GENERIC)
+		if (base == asCALL_GENERIC)
 		{
 			internal->callConv = ICC_GENERIC_METHOD;
 			internal->auxiliary = auxiliary;

@@ -409,6 +409,18 @@ static void v2d_Constructor_copy(const olc::v2d_generic<T>& other, void* self)
 	::new(self) olc::v2d_generic<T>(other);
 }
 
+// Factory func (registered with asOBJ_CDECL_OBJLAST + auxiliary pointer)
+int* factory_func(int* aux)
+{
+	(*aux)++; // The auxiliary pointer can be to a singleton allocated by the application
+	return new int();
+}
+
+void release_func(int* obj)
+{
+	delete obj;
+}
+
 bool Test()
 {
 	bool fail = TestHelper();
@@ -419,6 +431,39 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
  	asIScriptEngine *engine;
+
+	// Test factory functions with auxiliary pointers using asOBJ_CDECL_OBJLAST and asOBJ_CDECL_OBJFIRST
+	// https://www.gamedev.net/forums/topic/711801-why-are-the-ascall_cdecl_objlastfirst-calling-conventions-only-supported-in-methods/5445516/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		int aux = 0;
+		engine->RegisterObjectType("boo", 0, asOBJ_REF | asOBJ_SCOPED);
+		// even though factory functions are really global functions, it is possible to use asCALL_CDECL_OBJLAST with an auxiliary object that will be passed to the factory function
+		engine->RegisterObjectBehaviour("boo", asBEHAVE_FACTORY, "boo @f()", asFUNCTION(factory_func), asCALL_CDECL_OBJLAST, &aux);
+		engine->RegisterObjectBehaviour("boo", asBEHAVE_RELEASE, "void f()", asFUNCTION(release_func), asCALL_CDECL_OBJLAST);
+
+		engine->RegisterObjectType("foo", 0, asOBJ_REF | asOBJ_SCOPED);
+		// even though factory functions are really global functions, it is possible to use asCALL_CDECL_OBJFIRST with an auxiliary object that will be passed to the factory function
+		engine->RegisterObjectBehaviour("foo", asBEHAVE_FACTORY, "foo @f()", asFUNCTION(factory_func), asCALL_CDECL_OBJFIRST, &aux);
+		engine->RegisterObjectBehaviour("foo", asBEHAVE_RELEASE, "void f()", asFUNCTION(release_func), asCALL_CDECL_OBJLAST);
+
+
+		r = ExecuteString(engine, "boo a; boo b; foo c;");
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		if (aux != 3)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test with incorrect opImplCast signature
 	// Reported by Patrick Jeeves
