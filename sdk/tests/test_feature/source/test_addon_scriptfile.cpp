@@ -2,6 +2,11 @@
 #include "../../../add_on/scriptfile/scriptfile.h"
 #include "../../../add_on/scriptfile/scriptfilesystem.h"
 #include "../../../add_on/datetime/datetime.h"
+#if defined(_WIN32)
+#include <direct.h> // _getcwd
+#else
+#include <unistd.h> // getcwd
+#endif
 
 namespace Test_Addon_ScriptFile
 {
@@ -45,8 +50,18 @@ bool Test()
 		r = ExecuteString(engine, "main()", mod, ctx);
 		if (r != asEXECUTION_FINISHED)
 		{
-			if (r == asEXECUTION_EXCEPTION && ctx->GetExceptionLineNumber() == 4)
-				PRINTF("Failed to find the sub directory 'scripts'. Are you running the test from the correct folder?\n");
+			if (r == asEXECUTION_EXCEPTION && ctx->GetExceptionLineNumber() == 3)
+			{
+				char buffer[1000];
+				PRINTF("Failed to find the sub directory 'scripts'. Are you running the test from the correct folder? cwd: %s\n",
+#if defined(_WIN32)
+					_getcwd(buffer, 1000)
+#else
+					getcwd(buffer, 1000)
+#endif				
+				);
+				assert(buffer[0] != 0);
+			}
 			else
 				TEST_FAILED;
 		}
