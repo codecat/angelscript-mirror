@@ -660,6 +660,10 @@ int CallSystemFunction(int id, asCContext *context)
 		
 		if( obj )
 		{
+			// For composition we need to add the offset and/or dereference the pointer
+			obj = (void*)((char*)obj + sysFunc->compositeOffset);
+			if (sysFunc->isCompositeIndirect) obj = *((void**)obj);
+
 			// Add the base offset for multiple inheritance
 #if (defined(__GNUC__) && (defined(AS_ARM64) || defined(AS_ARM) || defined(AS_MIPS))) || defined(AS_PSVITA)
 			// On GNUC + ARM the lsb of the offset is used to indicate a virtual function
@@ -686,6 +690,10 @@ int CallSystemFunction(int id, asCContext *context)
 				context->SetInternalException(TXT_NULL_POINTER_ACCESS);
 				return 0;
 			}
+
+			// For composition we need to add the offset and/or dereference the pointer
+			tempPtr = (void*)((char*)tempPtr + sysFunc->compositeOffset);
+			if (sysFunc->isCompositeIndirect) tempPtr = *((void**)tempPtr);
 
 			// Add the base offset for multiple inheritance
 #if (defined(__GNUC__) && (defined(AS_ARM64) || defined(AS_ARM) || defined(AS_MIPS))) || defined(AS_PSVITA)
@@ -727,13 +735,6 @@ int CallSystemFunction(int id, asCContext *context)
 	{
 		// Set the object type of the reference held in the register
 		context->m_regs.objectType = descr->returnType.GetTypeInfo();
-	}
-
-	// For composition we need to add the offset and/or dereference the pointer
-	if(obj)
-	{
-		obj = (void*) ((char*) obj + sysFunc->compositeOffset);
-		if(sysFunc->isCompositeIndirect) obj = *((void**)obj);
 	}
 
 	context->m_callingSystemFunction = descr;
