@@ -496,7 +496,7 @@ bool Test()
 	int r;
 
 	// TODO: The serialized context must be 32bit/64bit agnostic, both for program pointer and stack pointer
-	// TODO: Test serializing contexts with nested calls
+	// TODO: Test serializing contexts with nested calls. Although technically possible, it would be a very odd situation since a nested call means the lower execution is actually active, and it isn't possible to deserialize a context in active state since when deserializing it will finish in suspended state
 	// TODO: Test serializing references to ref types and handles to ref types
 	// TODO: Test serializing class method calls
 	// TODO: Test serializing a delegate call

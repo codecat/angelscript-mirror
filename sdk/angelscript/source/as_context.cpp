@@ -1671,10 +1671,10 @@ void asCContext::SetProgramPointer()
 // interface
 int asCContext::PushState()
 {
-	// Only allow the state to be pushed when active or deserialising
+	// Only allow the state to be pushed when active
 	// TODO: Can we support a suspended state too? So the reuse of
 	//       the context can be done outside the Execute() call?
-	if( m_status != asEXECUTION_ACTIVE || m_status == asEXECUTION_DESERIALIZATION)
+	if( m_status != asEXECUTION_ACTIVE )
 	{
 		// TODO: Write message. Wrong usage
 		return asERROR;

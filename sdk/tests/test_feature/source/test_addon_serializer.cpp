@@ -97,7 +97,7 @@ struct CppObj
 
 	std::string myString;
 	std::string getString() { return myString; }
-	void setString(std::string in) { myString = in; }
+	void setString(std::string & in) { myString = in; }
 };
 
 static void CppObjFactory(asIScriptGeneric* gen)
@@ -113,7 +113,7 @@ void RegisterCppObjType(asIScriptEngine* engine)
 
 	r = engine->RegisterObjectBehaviour("CppObj", asBEHAVE_FACTORY, "CppObj@ f()", asFUNCTION(CppObjFactory), asCALL_GENERIC);
 	r = engine->RegisterObjectMethod("CppObj", "string str()", asMETHODPR(CppObj, CppObj::getString, (void), std::string), asCALL_THISCALL);
-	r = engine->RegisterObjectMethod("CppObj", "void setStr(string& in)", asMETHODPR(CppObj, CppObj::setString, (std::string), void), asCALL_THISCALL);
+	r = engine->RegisterObjectMethod("CppObj", "void setStr(string& in)", asMETHODPR(CppObj, CppObj::setString, (std::string&), void), asCALL_THISCALL);
 	r = engine->RegisterObjectBehaviour("CppObj", asBEHAVE_ADDREF, "void f()", asMETHOD(CppObj, AddRef), asCALL_THISCALL);
 	r = engine->RegisterObjectBehaviour("CppObj", asBEHAVE_RELEASE, "void f()", asMETHOD(CppObj, Release), asCALL_THISCALL);
 }
