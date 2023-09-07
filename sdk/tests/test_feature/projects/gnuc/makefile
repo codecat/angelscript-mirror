@@ -2,6 +2,7 @@
 
 CXX ?= g++
 CXXFLAGS += -ggdb -I../../../../angelscript/include -Wno-missing-field-initializers
+CXXFLAGS_ADDON = $(CXXFLAGS) -Wall
 SRCDIR = ../../source
 OBJDIR = obj
 
@@ -209,58 +210,58 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/scriptarray.o: ../../../../add_on/scriptarray/scriptarray.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/scriptgrid.o: ../../../../add_on/scriptgrid/scriptgrid.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/scripthandle.o: ../../../../add_on/scripthandle/scripthandle.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/scripthelper.o: ../../../../add_on/scripthelper/scripthelper.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/scriptstdstring.o: ../../../../add_on/scriptstdstring/scriptstdstring.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/scriptstdstringutil.o: ../../../../add_on/scriptstdstring/scriptstdstring_utils.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/scriptdictionary.o: ../../../../add_on/scriptdictionary/scriptdictionary.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/scriptmath.o: ../../../../add_on/scriptmath/scriptmath.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/scriptmathcomplex.o: ../../../../add_on/scriptmath/scriptmathcomplex.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/scriptany.o: ../../../../add_on/scriptany/scriptany.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/scriptfile.o: ../../../../add_on/scriptfile/scriptfile.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/scriptfilesystem.o: ../../../../add_on/scriptfile/scriptfilesystem.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/scriptbuilder.o: ../../../../add_on/scriptbuilder/scriptbuilder.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/serializer.o: ../../../../add_on/serializer/serializer.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/debugger.o: ../../../../add_on/debugger/debugger.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/weakref.o: ../../../../add_on/weakref/weakref.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/contextmgr.o: ../../../../add_on/contextmgr/contextmgr.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/datetime.o: ../../../../add_on/datetime/datetime.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 clean:
 	$(DELETER) $(OBJ) $(BIN)
