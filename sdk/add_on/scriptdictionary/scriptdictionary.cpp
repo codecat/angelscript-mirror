@@ -274,11 +274,11 @@ CScriptDictionary &CScriptDictionary::operator =(const CScriptDictionary &other)
 	for( it = other.dict.begin(); it != other.dict.end(); it++ )
 	{
 		if( it->second.m_typeId & asTYPEID_OBJHANDLE )
-			Set(it->first, (void*)&it->second.m_valueObj, it->second.m_typeId);
+			Set(it->first, (void*)const_cast<void**>(&it->second.m_valueObj), it->second.m_typeId);
 		else if( it->second.m_typeId & asTYPEID_MASK_OBJECT )
 			Set(it->first, (void*)it->second.m_valueObj, it->second.m_typeId);
 		else
-			Set(it->first, (void*)&it->second.m_valueInt, it->second.m_typeId);
+			Set(it->first, (void*)const_cast<asINT64*>(&it->second.m_valueInt), it->second.m_typeId);
 	}
 
 	return *this;
