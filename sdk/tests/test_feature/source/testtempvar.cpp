@@ -39,9 +39,9 @@ bool TestTempVar()
 
     engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
     bout.buffer = "";
-    engine->RegisterObjectType("Object1", sizeof(Object1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
+    engine->RegisterObjectType("Object1", sizeof(Object1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
     engine->RegisterObjectMethod("Object1", "int GetInt()", asMETHOD(Object1,GetInt), asCALL_THISCALL);
-    engine->RegisterObjectType("Object2", sizeof(Object2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
+    engine->RegisterObjectType("Object2", sizeof(Object2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
     engine->RegisterObjectMethod("Object2", "Object1 GetObject1()", asMETHOD(Object2,GetObject1), asCALL_THISCALL);
     engine->RegisterGlobalProperty("Object2 GlobalObject", &ScriptObject);
 

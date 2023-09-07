@@ -110,7 +110,7 @@ CScriptFileSystem::CScriptFileSystem()
 	currentPath = ret ? ret : "";
 
 	// Replace \ with / for consistency
-	for (int n = 0; n < currentPath.size(); n++)
+	for (unsigned int n = 0; n < currentPath.size(); n++)
 		if (currentPath[n] == '\\')
 			currentPath[n] = '/';
 }
@@ -289,7 +289,7 @@ bool CScriptFileSystem::ChangeCurrentPath(const string &path)
 		newPath.resize(newPath.length()-1);
 
 	// Replace \ with / for consistency
-	for (int n = 0; n < newPath.size(); n++)
+	for (unsigned int n = 0; n < newPath.size(); n++)
 		if (newPath[n] == '\\')
 			newPath[n] = '/';
 
