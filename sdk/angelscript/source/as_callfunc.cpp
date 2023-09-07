@@ -765,7 +765,7 @@ int CallSystemFunction(int id, asCContext *context)
 	// Store the returned value in our stack
 	if( (descr->returnType.IsObject() || descr->returnType.IsFuncdef()) && !descr->returnType.IsReference() )
 	{
-		if( descr->returnType.IsObjectHandle() )
+		if (descr->returnType.IsObjectHandle())
 		{
 #if defined(AS_BIG_ENDIAN) && AS_PTR_SIZE == 1
 			// Since we're treating the system function as if it is returning a QWORD we are
@@ -775,20 +775,18 @@ int CallSystemFunction(int id, asCContext *context)
 
 			context->m_regs.objectRegister = (void*)(asPWORD)retQW;
 
-			if( sysFunc->returnAutoHandle && context->m_regs.objectRegister )
+			if (sysFunc->returnAutoHandle && context->m_regs.objectRegister)
 			{
-				asASSERT( !(descr->returnType.GetTypeInfo()->flags & asOBJ_NOCOUNT) );
+				asASSERT(!(descr->returnType.GetTypeInfo()->flags & asOBJ_NOCOUNT));
 				engine->CallObjectMethod(context->m_regs.objectRegister, CastToObjectType(descr->returnType.GetTypeInfo())->beh.addref);
 			}
 		}
-		else
+		else if (retPointer)
 		{
-			asASSERT( retPointer );
-
-			if( !sysFunc->hostReturnInMemory )
+			if (!sysFunc->hostReturnInMemory)
 			{
 				// Copy the returned value to the pointer sent by the script engine
-				if( sysFunc->hostReturnSize == 1 )
+				if (sysFunc->hostReturnSize == 1)
 				{
 #if defined(AS_BIG_ENDIAN) && AS_PTR_SIZE == 1
 					// Since we're treating the system function as if it is returning a QWORD we are
@@ -798,29 +796,34 @@ int CallSystemFunction(int id, asCContext *context)
 
 					*(asDWORD*)retPointer = (asDWORD)retQW;
 				}
-				else if( sysFunc->hostReturnSize == 2 )
+				else if (sysFunc->hostReturnSize == 2)
 					*(asQWORD*)retPointer = retQW;
-				else if( sysFunc->hostReturnSize == 3 )
+				else if (sysFunc->hostReturnSize == 3)
 				{
-					*(asQWORD*)retPointer         = retQW;
+					*(asQWORD*)retPointer = retQW;
 					*(((asDWORD*)retPointer) + 2) = (asDWORD)retQW2;
 				}
 				else // if( sysFunc->hostReturnSize == 4 )
 				{
-					*(asQWORD*)retPointer         = retQW;
+					*(asQWORD*)retPointer = retQW;
 					*(((asQWORD*)retPointer) + 1) = retQW2;
 				}
 			}
 
-			if( context->m_status == asEXECUTION_EXCEPTION && !cppException )
+			if (context->m_status == asEXECUTION_EXCEPTION && !cppException)
 			{
 				// If the function raised a script exception it really shouldn't have
 				// initialized the object. However, as it is a soft exception there is
 				// no way for the application to not return a value, so instead we simply
 				// destroy it here, to pretend it was never created.
-				if(CastToObjectType(descr->returnType.GetTypeInfo())->beh.destruct )
+				if (CastToObjectType(descr->returnType.GetTypeInfo())->beh.destruct)
 					engine->CallObjectMethod(retPointer, CastToObjectType(descr->returnType.GetTypeInfo())->beh.destruct);
 			}
+		}
+		else
+		{
+			// Ths should not be possible
+			asASSERT(false);
 		}
 	}
 	else

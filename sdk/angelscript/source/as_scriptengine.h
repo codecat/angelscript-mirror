@@ -429,7 +429,7 @@ public:
 	void                       *msgCallbackObj;
 	struct preMessage_t
 	{
-		preMessage_t() { isSet = false; }
+		preMessage_t() { isSet = false; r = c = 0; }
 		bool      isSet;
 		asCString message;
 		asCString scriptname;

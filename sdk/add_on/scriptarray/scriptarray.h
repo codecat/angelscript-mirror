@@ -90,10 +90,10 @@ public:
 	void Sort(asUINT startAt, asUINT count, bool asc);
 	void Sort(asIScriptFunction *less, asUINT startAt, asUINT count);
 	void Reverse();
-	int  Find(void *value) const;
-	int  Find(asUINT startAt, void *value) const;
-	int  FindByRef(void *ref) const;
-	int  FindByRef(asUINT startAt, void *ref) const;
+	int  Find(const void *value) const;
+	int  Find(asUINT startAt, const void *value) const;
+	int  FindByRef(const void *ref) const;
+	int  FindByRef(asUINT startAt, const void *ref) const;
 
 	// Return the address of internal buffer for direct manipulation of elements
 	void *GetBuffer();

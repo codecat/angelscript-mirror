@@ -109,7 +109,7 @@ inline const T *asCArray<T>::AddressOf() const
 }
 
 template <class T>
-asCArray<T>::asCArray(void)
+asCArray<T>::asCArray(void) : buf()
 {
 	array     = 0;
 	length    = 0;
@@ -117,7 +117,7 @@ asCArray<T>::asCArray(void)
 }
 
 template <class T>
-asCArray<T>::asCArray(const asCArray<T> &copy)
+asCArray<T>::asCArray(const asCArray<T> &copy) : buf()
 {
 	array     = 0;
 	length    = 0;
@@ -127,7 +127,7 @@ asCArray<T>::asCArray(const asCArray<T> &copy)
 }
 
 template <class T>
-asCArray<T>::asCArray(asUINT reserve)
+asCArray<T>::asCArray(asUINT reserve) : buf()
 {
 	array     = 0;
 	length    = 0;

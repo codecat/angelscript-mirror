@@ -63,6 +63,10 @@ int kbhit()
 
 #endif
 
+#ifdef _MSC_VER
+#define kbhit _kbhit
+#endif
+
 // Function prototypes
 void ConfigureEngine(asIScriptEngine *engine);
 int  CompileScript(asIScriptEngine *engine);
