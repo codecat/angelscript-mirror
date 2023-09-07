@@ -357,7 +357,7 @@ void CSerializedValue::Store(void *ref, int typeId)
 
 void CSerializedValue::Restore(void *ref, int typeId)
 {
-	if( !this || !m_isInit || !ref )
+	if( !m_isInit || !ref )
 		return;
 
 	// Verify that the stored type matched the new type of the value being restored
