@@ -235,7 +235,7 @@ int CScriptAny::CopyFrom(const CScriptAny *other)
 {
 	if( other == 0 ) return asINVALID_ARG;
 
-	*this = *(CScriptAny*)other;
+	*this = *other;
 
 	return 0;
 }

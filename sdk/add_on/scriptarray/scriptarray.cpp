@@ -1044,7 +1044,7 @@ bool CScriptArray::Less(const void *a, const void *b, bool asc)
 		// Simple compare of values
 		switch( subTypeId )
 		{
-			#define COMPARE(T) *((T*)a) < *((T*)b)
+			#define COMPARE(T) *((const T*)a) < *((const T*)b)
 			case asTYPEID_BOOL:   return COMPARE(bool);
 			case asTYPEID_INT8:   return COMPARE(asINT8);
 			case asTYPEID_INT16:  return COMPARE(asINT16);
@@ -1169,7 +1169,7 @@ bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx, S
 		if( subTypeId & asTYPEID_OBJHANDLE )
 		{
 			// Allow the find to work even if the array contains null handles
-			if( *(const void**)a == *(const void**)b ) return true;
+			if( *(const void*const*)a == *(const void*const*)b ) return true;
 		}
 
 		// Execute object opEquals if available
@@ -1180,13 +1180,13 @@ bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx, S
 
 			if( subTypeId & asTYPEID_OBJHANDLE )
 			{
-				r = ctx->SetObject(*((void**)a)); assert(r >= 0);
-				r = ctx->SetArgObject(0, *((void**)b)); assert(r >= 0);
+				r = ctx->SetObject(*((void**)const_cast<void*>(a))); assert(r >= 0);
+				r = ctx->SetArgObject(0, *((void**)const_cast<void*>(b))); assert(r >= 0);
 			}
 			else
 			{
-				r = ctx->SetObject((void*)a); assert(r >= 0);
-				r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
+				r = ctx->SetObject(const_cast<void*>(a)); assert(r >= 0);
+				r = ctx->SetArgObject(0, const_cast<void*>(b)); assert(r >= 0);
 			}
 
 			r = ctx->Execute();
@@ -1205,13 +1205,13 @@ bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx, S
 
 			if( subTypeId & asTYPEID_OBJHANDLE )
 			{
-				r = ctx->SetObject(*((void**)a)); assert(r >= 0);
-				r = ctx->SetArgObject(0, *((void**)b)); assert(r >= 0);
+				r = ctx->SetObject(*((void**)const_cast<void*>(a))); assert(r >= 0);
+				r = ctx->SetArgObject(0, *((void**)const_cast<void*>(b))); assert(r >= 0);
 			}
 			else
 			{
-				r = ctx->SetObject((void*)a); assert(r >= 0);
-				r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
+				r = ctx->SetObject(const_cast<void*>(a)); assert(r >= 0);
+				r = ctx->SetArgObject(0, const_cast<void*>(b)); assert(r >= 0);
 			}
 
 			r = ctx->Execute();
@@ -1238,10 +1238,10 @@ int CScriptArray::FindByRef(asUINT startAt, const void *ref) const
 	if( subTypeId & asTYPEID_OBJHANDLE )
 	{
 		// Dereference the pointer
-		ref = *(const void**)ref;
+		ref = *(const void*const*)ref;
 		for( asUINT i = startAt; i < size; i++ )
 		{
-			if( *(const void**)At(i) == ref )
+			if( *(const void*const*)At(i) == ref )
 				return i;
 		}
 	}

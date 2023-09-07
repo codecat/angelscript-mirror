@@ -88,12 +88,12 @@ static string StringJoin(const CScriptArray &array, const string &delim)
 		int n;
 		for( n = 0; n < (int)array.GetSize() - 1; n++ )
 		{
-			str += *(string*)array.At(n);
+			str += *(const string*)array.At(n);
 			str += delim;
 		}
 
 		// Add the last part
-		str += *(string*)array.At(n);
+		str += *(const string*)array.At(n);
 	}
 
 	return str;
