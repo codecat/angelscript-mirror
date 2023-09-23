@@ -5379,6 +5379,9 @@ void asCContext::CleanArgsOnStack()
 		offset += func->parameterTypes[n].GetSizeOnStackDWords();
 	}
 
+	// Restore the stack pointer
+	m_regs.stackPointer += offset;
+
 	m_needToCleanupArgs = false;
 }
 
