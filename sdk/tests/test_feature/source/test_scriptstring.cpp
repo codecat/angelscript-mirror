@@ -95,6 +95,32 @@ bool Test()
 	asIScriptModule *mod = 0;
 	int r;
 
+	// Test non-terminated heredoc string
+	// https://www.gamedev.net/forums/topic/714946-crash-parsing-non-terminated-heredoc-string/5459282/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"string str = \"\"\"\n"
+			"This is a heredoc string that has not been terminated\n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 14) : Error   : Non-terminated string literal\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test heredoc engine properties
 	// idea from discussion with Scott Bean
 	{
