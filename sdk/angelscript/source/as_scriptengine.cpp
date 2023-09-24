@@ -4163,6 +4163,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, asSSystemFunctionInterface *i,
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 	}
+#ifndef AS_NO_CLASS_METHODS
 	else if( i->callConv == ICC_THISCALL || i->callConv == ICC_VIRTUAL_THISCALL )
 	{
 		// For virtual thiscalls we must call the method as a true class method
@@ -4186,6 +4187,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, asSSystemFunctionInterface *i,
 		void (asCSimpleDummy::*f)() = p.mthd;
 		(((asCSimpleDummy*)obj)->*f)();
 	}
+#endif
 	else /*if( i->callConv == ICC_CDECL_OBJLAST || i->callConv == ICC_CDECL_OBJFIRST )*/
 	{
 		void (*f)(void *) = (void (*)(void *))(i->func);
@@ -4240,6 +4242,7 @@ bool asCScriptEngine::CallObjectMethodRetBool(void *obj, int func) const
 		f(&gen);
 		return *(bool*)gen.GetReturnPointer();
 	}
+#ifndef AS_NO_CLASS_METHODS
 	else if( i->callConv == ICC_THISCALL || i->callConv == ICC_VIRTUAL_THISCALL )
 	{
 		// For virtual thiscalls we must call the method as a true class method so that the compiler will lookup the function address in the vftable
@@ -4262,6 +4265,7 @@ bool asCScriptEngine::CallObjectMethodRetBool(void *obj, int func) const
 		bool (asCSimpleDummy::*f)() = (bool (asCSimpleDummy::*)())(p.mthd);
 		return (((asCSimpleDummy*)obj)->*f)();
 	}
+#endif
 	else /*if( i->callConv == ICC_CDECL_OBJLAST || i->callConv == ICC_CDECL_OBJFIRST )*/
 	{
 		bool (*f)(void *) = (bool (*)(void *))(i->func);
@@ -4317,6 +4321,7 @@ int asCScriptEngine::CallObjectMethodRetInt(void *obj, int func) const
 		f(&gen);
 		return *(int*)gen.GetReturnPointer();
 	}
+#ifndef AS_NO_CLASS_METHODS
 	else if( i->callConv == ICC_THISCALL || i->callConv == ICC_VIRTUAL_THISCALL )
 	{
 		// For virtual thiscalls we must call the method as a true class method so that the compiler will lookup the function address in the vftable
@@ -4339,6 +4344,7 @@ int asCScriptEngine::CallObjectMethodRetInt(void *obj, int func) const
 		int (asCSimpleDummy::*f)() = (int (asCSimpleDummy::*)())(p.mthd);
 		return (((asCSimpleDummy*)obj)->*f)();
 	}
+#endif
 	else /*if( i->callConv == ICC_CDECL_OBJLAST || i->callConv == ICC_CDECL_OBJFIRST )*/
 	{
 		int (*f)(void *) = (int (*)(void *))(i->func);
@@ -4394,6 +4400,7 @@ void *asCScriptEngine::CallObjectMethodRetPtr(void *obj, int func) const
 		f(&gen);
 		return *(void**)gen.GetReturnPointer();
 	}
+#ifndef AS_NO_CLASS_METHODS
 	else if( i->callConv == ICC_THISCALL || i->callConv == ICC_VIRTUAL_THISCALL )
 	{
 		// For virtual thiscalls we must call the method as a true class method so that the compiler will lookup the function address in the vftable
@@ -4416,6 +4423,7 @@ void *asCScriptEngine::CallObjectMethodRetPtr(void *obj, int func) const
 		void *(asCSimpleDummy::*f)() = (void *(asCSimpleDummy::*)())(p.mthd);
 		return (((asCSimpleDummy*)obj)->*f)();
 	}
+#endif
 	else /*if( i->callConv == ICC_CDECL_OBJLAST || i->callConv == ICC_CDECL_OBJFIRST )*/
 	{
 		void *(*f)(void *) = (void *(*)(void *))(i->func);
@@ -4603,6 +4611,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, void *param, asSSystemFunction
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 	}
+#ifndef AS_NO_CLASS_METHODS
 	else if( i->callConv == ICC_VIRTUAL_THISCALL || i->callConv == ICC_THISCALL )
 	{
 		// For virtual thiscalls we must call the method as a true class method
@@ -4626,6 +4635,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, void *param, asSSystemFunction
 		void (asCSimpleDummy::*f)(void*) = (void (asCSimpleDummy::*)(void*))(p.mthd);
 		(((asCSimpleDummy*)obj)->*f)(param);
 	}
+#endif
 	else /*if( i->callConv == ICC_CDECL_OBJFIRST */
 	{
 		void (*f)(void *, void *) = (void (*)(void *, void *))(i->func);
