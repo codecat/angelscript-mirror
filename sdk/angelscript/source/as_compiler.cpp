@@ -2165,6 +2165,7 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asCExprContex
 			inPositionalArguments = true;
 
 		asCExprContext expr(engine);
+		expr.exprNode = asgNode;
 		int r = CompileAssignment(asgNode, &expr);
 		if( r < 0 ) anyErrors = true;
 

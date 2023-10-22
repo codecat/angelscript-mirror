@@ -180,6 +180,42 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test issue warning in ternary condition as func arg
+	// https://www.gamedev.net/forums/topic/715023-asserion-failure-compiling-a-weird-ternery-statement/5459701/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(0), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"namespace Math { \n"
+			"  int Clamp(int, int, int) { return 0; } \n"
+			"  float Clamp(float, float, float) { return 0; } \n"
+			"} \n"
+			"void main() { \n"
+			"  int m_NewGhostOffset = 0; \n"
+			"  uint lastLoadedGhostRaceTime = 0; \n"
+			"  m_NewGhostOffset = Math::Clamp(m_NewGhostOffset, 0, lastLoadedGhostRaceTime == 0 ? 9999999 : lastLoadedGhostRaceTime * 2.); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (5, 1) : Info    : Compiling void main()\n"
+						   "test (8, 55) : Warning : Float value truncated in implicit conversion to integer\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test invalid expression
 	// https://www.gamedev.net/forums/topic/715025-assertion-failure-when-missing-parens-while-assigning-a-handle-in-a-loop-condition/5459702/
 	{
