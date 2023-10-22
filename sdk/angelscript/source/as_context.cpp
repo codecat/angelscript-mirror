@@ -6304,7 +6304,7 @@ int asCContext::GetArgsOnStackCount(asUINT stackLevel)
 		// Determine the args already pushed on the stack
 		while (stackPos > 0)
 		{
-			if (param >= 0 && ++param < int(calledFunc->GetParamCount()))
+			if (++param < int(calledFunc->GetParamCount()))
 			{
 				int typeId;
 				asDWORD flags;
