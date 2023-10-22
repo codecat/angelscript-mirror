@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.37.0 WIP - 2023/09/24</h2>
+<h2>Version 2.37.0 WIP - 2023/10/22</h2>
 
 <ul>
 <li>Bug fixes
@@ -24,6 +24,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed compiling the library with AS_NO_CLASS_METHODS (Thanks gris)
 <li>Fixed exception handling not restoring stack pointer in some cases, leading to buffer overflow and crashes after repetition (Thanks Miss)
 <li>Fixed problem with parsing non-terminated heredoc strings (Thanks Jason Goepel)
+<li>Fixed assert failure on invalid expression with assignment (Thanks xertrov)
 </ul>
 <li>Library
 <ul>

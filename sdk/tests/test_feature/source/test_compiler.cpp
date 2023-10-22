@@ -180,6 +180,40 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test invalid expression
+	// https://www.gamedev.net/forums/topic/715025-assertion-failure-when-missing-parens-while-assigning-a-handle-in-a-loop-condition/5459702/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(0), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main()\n"
+			"{\n"
+			"	string[]@ arr; \n"
+			"	while (false && (@arr = cast<array<string>>(null) !is null)) {\n"
+			"		break; \n"
+			"	} \n"
+			"}\n");
+		r = mod->Build(); // unrecoverable error, compiler shouldn't attempt to continue the compilation of the expression
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 1) : Info    : Compiling void main()\n"
+			               "test (4, 26) : Error   : Can't implicitly convert from 'const bool' to 'string[]@'.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test that expression with non lvalue used in assign op gives error
 	{
 		engine = asCreateScriptEngine();
