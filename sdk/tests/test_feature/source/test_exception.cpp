@@ -78,12 +78,76 @@ public:
 	static Dummy *Factory() { asGetActiveContext()->SetException("...", true); return new Dummy(); }
 };
 
+class ClassValue
+{
+public:
+	ClassValue() {}
+	~ClassValue() {}
+
+	void exception()
+	{
+		asGetActiveContext()->SetException("Crash.");
+	}
+};
+
+void Constructor(void* mem)
+{
+	new(mem) ClassValue();
+}
+
+void Destructor(void* mem)
+{
+	((ClassValue*)mem)->~ClassValue();
+}
+
 bool Test()
 {
 	bool fail = false;
 	int r;
 	COutStream out;
 	CBufferedOutStream bout;
+
+	// Test crash due to exception, with object variable declared just after the end of a block. 
+	// The asIScriptContext::IsVarInScope didn't work properly, leading to the crash in the DetermineLiveObjects
+	// https://www.gamedev.net/forums/topic/715075-context-crash-during-exception-handling-in-determineliveobjects/
+	{
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->RegisterObjectType("ClassValue", sizeof(ClassValue),
+			asOBJ_VALUE | asOBJ_APP_CLASS_CD);
+		engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, true);
+
+		engine->RegisterObjectBehaviour("ClassValue", asBEHAVE_CONSTRUCT,
+			"void f()", asFUNCTION(Constructor), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectBehaviour("ClassValue", asBEHAVE_DESTRUCT,
+			"void f()", asFUNCTION(Destructor), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectMethod("ClassValue", "void exception()",
+			asMETHOD(ClassValue, exception), asCALL_THISCALL);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			R"(
+            void main() {
+                if (true)
+                {
+                    int dummy = 1;
+                }
+                ClassValue a;
+                a.exception();
+            }
+            )");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptContext* ctx = engine->CreateContext();
+		ctx->Prepare(mod->GetFunctionByName("main"));
+		r = ctx->Execute();
+		if (r != asEXECUTION_EXCEPTION)
+			TEST_FAILED;
+		ctx->Release();
+		engine->ShutDownAndRelease();
+	}
 
 	// Test crash due to exception
 	// https://www.gamedev.net/forums/topic/714882-crash-in-trycatch-blocks/5458952/

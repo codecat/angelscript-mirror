@@ -5128,10 +5128,27 @@ bool asCContext::IsVarInScope(asUINT varIndex, asUINT stackLevel)
 	// If the program position is after the variable declaration it is necessary
 	// determine if the program position is still inside the statement block where
 	// the variable was declared.
+	bool foundVarDecl = false;
+
+	// Temporary variables aren't explicitly declared, they are just reserved slots available throughout the function call.
+	// So we'll consider that the variable declaration is found at the very beginning
+	if (func->scriptData->variables[varIndex]->name.GetLength() == 0)
+		foundVarDecl = true;
+
 	for( int n = 0; n < (int)func->scriptData->objVariableInfo.GetLength(); n++ )
 	{
+		// Find the varDecl
 		if( func->scriptData->objVariableInfo[n].programPos >= declaredAt )
 		{
+			// skip instructions at the same program position, but before the varDecl. 
+			// Note, varDecl will only be in the objVariableInfo for object types
+			if (func->scriptData->objVariableInfo[n].programPos == declaredAt && 
+				!foundVarDecl && 
+				func->scriptData->objVariableInfo[n].option != asOBJ_VARDECL)
+				continue;
+
+			foundVarDecl = true;
+
 			// If the current block ends between the declaredAt and current
 			// program position, then we know the variable is no longer visible
 			int level = 0;
