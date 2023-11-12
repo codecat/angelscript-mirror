@@ -1,13 +1,15 @@
 #include "utils.h"
 
-static const char * const TESTNAME = "TestFuncOverload";
+namespace TestFuncOverload
+{
+static const char* const TESTNAME = "TestFuncOverload";
 
 class Obj
 {
 public:
-	void *p;
-	void *Value() {return p;}
-	void Set(const std::string&, void *) {}
+	void* p;
+	void* Value() { return p; }
+	void Set(const std::string&, void*) {}
 };
 
 static Obj o;
@@ -22,68 +24,101 @@ void FuncInt(int)
 
 bool Test2();
 
-bool TestFuncOverload()
+bool Test()
 {
-	RET_ON_MAX_PORT
-
-
 	bool fail = Test2();
 	COutStream out;
-
-	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	RegisterScriptString(engine);
-
-	engine->RegisterObjectType("Data", sizeof(void*), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
-
-	engine->RegisterObjectType("Obj", sizeof(Obj), asOBJ_REF | asOBJ_NOHANDLE);
-	engine->RegisterObjectMethod("Obj", "Data &Value()", asMETHOD(Obj, Value), asCALL_THISCALL);
-	engine->RegisterObjectMethod("Obj", "void Set(string &in, Data &in)", asMETHOD(Obj, Set), asCALL_THISCALL);
-	engine->RegisterObjectMethod("Obj", "void Set(string &in, string &in)", asMETHOD(Obj, Set), asCALL_THISCALL);
-	engine->RegisterGlobalProperty("Obj TX", &o);
-
-	engine->RegisterGlobalFunction("void func()", asFUNCTION(FuncVoid), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void func(int)", asFUNCTION(FuncInt), asCALL_CDECL);
-
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	const char *script1 =
-		"void Test()                               \n"
-		"{                                         \n"
-		"  TX.Set(\"user\", TX.Value());           \n"
-		"}                                         \n";
-	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
-	int r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
-
-	r = ExecuteString(engine, "func(func(3));", mod);
-	if (r != asEXECUTION_FINISHED) TEST_FAILED;
-
 	CBufferedOutStream bout;
-	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	const char *script2 =
-		"void ScriptFunc(void m)                   \n"
-		"{                                         \n"
-		"}                                         \n";
-	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
-	r = mod->Build();
-	if( r >= 0 )
-		TEST_FAILED;
-	if( bout.buffer != "TestFuncOverload (1, 1) : Info    : Compiling void ScriptFunc(void)\n"
-                       "TestFuncOverload (1, 1) : Error   : Parameter type can't be 'void', because the type cannot be instantiated.\n" )
+
+	// Test function overload when there are two options, one taking obj@ and another taking const obj@
+	// Reported by Patrick Jeeves
 	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule* mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char* script1 =
+			"class Foo { int k; }; \n"
+			"int Func0(Foo@) { return 1; } \n"
+			"int Func0(const Foo@) { return 2; } \n"
+			"void main() { Foo f; \nassert( Func0(f) == 1 ); \nassert( Func0(cast<const Foo>(f)) == 2 ); } \n";
+		mod->AddScriptSection(TESTNAME, script1);
+		int r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
 	}
 
-	// Permit void parameter list
-	r = engine->RegisterGlobalFunction("void func2(void)", asFUNCTION(FuncVoid), asCALL_CDECL); assert( r >= 0 );
+	// Test basic function overload
+	{
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptString(engine);
 
-	// Don't permit void parameters
-	r = engine->RegisterGlobalFunction("void func3(void n)", asFUNCTION(FuncVoid), asCALL_CDECL); assert( r < 0 );
+		engine->RegisterObjectType("Data", sizeof(void*), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 
-	engine->Release();
+		engine->RegisterObjectType("Obj", sizeof(Obj), asOBJ_REF | asOBJ_NOHANDLE);
+		engine->RegisterObjectMethod("Obj", "Data &Value()", asMETHOD(Obj, Value), asCALL_THISCALL);
+		engine->RegisterObjectMethod("Obj", "void Set(string &in, Data &in)", asMETHOD(Obj, Set), asCALL_THISCALL);
+		engine->RegisterObjectMethod("Obj", "void Set(string &in, string &in)", asMETHOD(Obj, Set), asCALL_THISCALL);
+		engine->RegisterGlobalProperty("Obj TX", &o);
+
+		engine->RegisterGlobalFunction("void func()", asFUNCTION(FuncVoid), asCALL_CDECL);
+		engine->RegisterGlobalFunction("void func(int)", asFUNCTION(FuncInt), asCALL_CDECL);
+
+		asIScriptModule* mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char* script1 =
+			"void Test()                               \n"
+			"{                                         \n"
+			"  TX.Set(\"user\", TX.Value());           \n"
+			"}                                         \n";
+		mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+		int r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "func(func(3));", mod);
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
+
+		CBufferedOutStream bout;
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char* script2 =
+			"void ScriptFunc(void m)                   \n"
+			"{                                         \n"
+			"}                                         \n";
+		mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "TestFuncOverload (1, 1) : Info    : Compiling void ScriptFunc(void)\n"
+			"TestFuncOverload (1, 1) : Error   : Parameter type can't be 'void', because the type cannot be instantiated.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Permit void parameter list
+		r = engine->RegisterGlobalFunction("void func2(void)", asFUNCTION(FuncVoid), asCALL_CDECL); assert(r >= 0);
+
+		// Don't permit void parameters
+		r = engine->RegisterGlobalFunction("void func3(void n)", asFUNCTION(FuncVoid), asCALL_CDECL); assert(r < 0);
+
+		engine->Release();
+	}
 
 	return fail;
 }
@@ -97,11 +132,11 @@ bool Test2()
 	COutStream out;
 	int r;
 
-	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-	const char *script1 =
+	const char* script1 =
 		"class A{}  \n"
 		"class B{}  \n"
 		"int choice; \n"
@@ -114,16 +149,16 @@ bool Test2()
 		"  assert( choice == 2 ); \n"
 		"}\n";
 
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	asIScriptModule* mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	r = mod->AddScriptSection("test", script1, strlen(script1));
 	r = mod->Build();
-	if( r < 0 )
+	if (r < 0)
 		TEST_FAILED;
 	r = ExecuteString(engine, "test()", mod);
-	if( r != asEXECUTION_FINISHED )
+	if (r != asEXECUTION_FINISHED)
 		TEST_FAILED;
 
-	const char *script2 =
+	const char* script2 =
 		"class A{}  \n"
 		"class B{}  \n"
 		"int choice; \n"
@@ -139,13 +174,13 @@ bool Test2()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	r = mod->AddScriptSection("test", script2, strlen(script2));
 	r = mod->Build();
-	if( r < 0 )
+	if (r < 0)
 		TEST_FAILED;
 	r = ExecuteString(engine, "test()", mod);
-	if( r != asEXECUTION_FINISHED )
+	if (r != asEXECUTION_FINISHED)
 		TEST_FAILED;
 
-	const char *script3 =
+	const char* script3 =
 		"int choice = 0; \n"
 		"void func(int, float, double) { choice = 1; } \n"
 		"void func(float, int, double) { choice = 2; } \n"
@@ -162,13 +197,13 @@ bool Test2()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	r = mod->AddScriptSection("test", script3);
 	r = mod->Build();
-	if( r < 0 )
+	if (r < 0)
 		TEST_FAILED;
 	r = ExecuteString(engine, "main()", mod);
-	if( r != asEXECUTION_FINISHED )
+	if (r != asEXECUTION_FINISHED)
 		TEST_FAILED;
 
-	const char *script4 =
+	const char* script4 =
 		"class A { \n"
 		"  void func(int) { choice = 1; } \n"
 		"  void func(int) const { choice = 2; } \n"
@@ -184,13 +219,13 @@ bool Test2()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	r = mod->AddScriptSection("test", script4);
 	r = mod->Build();
-	if( r < 0 )
+	if (r < 0)
 		TEST_FAILED;
 	r = ExecuteString(engine, "main()", mod);
-	if( r != asEXECUTION_FINISHED )
+	if (r != asEXECUTION_FINISHED)
 		TEST_FAILED;
 
-	const char *script5 =
+	const char* script5 =
 		"void func(int8, double a = 1.0) { choice = 1; } \n"
 		"void func(float) { choice = 2; } \n"
 		"int choice; \n"
@@ -201,13 +236,15 @@ bool Test2()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	r = mod->AddScriptSection("test", script5);
 	r = mod->Build();
-	if( r < 0 )
+	if (r < 0)
 		TEST_FAILED;
 	r = ExecuteString(engine, "main()", mod);
-	if( r != asEXECUTION_FINISHED )
+	if (r != asEXECUTION_FINISHED)
 		TEST_FAILED;
 
 	engine->Release();
 
 	return fail;
 }
+
+} // end namespace

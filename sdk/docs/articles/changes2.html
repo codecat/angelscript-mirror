@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.37.0 WIP - 2023/10/31</h2>
+<h2>Version 2.37.0 WIP - 2023/11/12</h2>
 
 <ul>
 <li>Bug fixes
@@ -28,6 +28,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed assert failure on warning in function argument with ternary operator (Thanks xertrov)
 <li>Fixed crash in asIScriptContext::GetArgsOnStackCount when using unsafe references (Thanks glcolor)
 <li>Fixed bug in IsVarInScope that wouldn't identify an object variable declared just after a } as being in scope (Thanks Jason Goepel)
+<li>Fixed problem with funtion overload between Obj@ and const Obj@ (Thanks Patrick Jeeves)
 </ul>
 <li>Library
 <ul>

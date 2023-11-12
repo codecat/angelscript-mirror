@@ -7489,8 +7489,13 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 		{
 			// A handle to non-const can be converted to a
 			// handle to const, but not the other way
-			if( to.IsHandleToConst() )
+			if (to.IsHandleToConst() && !ctx->type.dataType.IsHandleToConst())
+			{
 				ctx->type.dataType.MakeHandleToConst(true);
+
+				// Add cost for this to distinguish between obj@ and const obj@ in func overloads
+				cost += asCC_CONST_CONV;
+			}
 
 			// A const handle can be converted to a non-const
 			// handle and vice versa as the handle is just a value
@@ -7625,8 +7630,16 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 				}
 
 				// A reference to a non-const can be converted to a reference to a const
-				if( to.IsReadOnly() )
-					ctx->type.dataType.MakeReadOnly(true);
+				if (to.IsReadOnly() )
+				{
+					if (!ctx->type.dataType.IsReadOnly())
+					{
+						ctx->type.dataType.MakeReadOnly(true);
+
+						// Add cost for this conversion to distinguish between const and non-const arg in func overload
+						cost += asCC_CONST_CONV;
+					}
+				}
 				else if( ctx->type.dataType.IsReadOnly() && allowObjectConstruct )
 				{
 					// A reference to a const can be converted to a reference to a
@@ -7705,10 +7718,13 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 					ctx->type.dataType.MakeReference(IsVariableOnHeap(ctx->type.stackOffset));
 				}
 
-				if (to.IsReadOnly())
+				if (to.IsReadOnly() && !ctx->type.dataType.IsReadOnly() )
 				{
 					// This doesn't cost anything
 					ctx->type.dataType.MakeReadOnly(true);
+
+					// Increase cost for this to distinguish between obj& and const obj& in func overloads
+					cost += asCC_CONST_CONV;
 				}
 
 				if (!to.IsReadOnly() && ctx->type.dataType.IsReadOnly())

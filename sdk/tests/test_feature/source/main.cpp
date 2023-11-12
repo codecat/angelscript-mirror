@@ -51,7 +51,6 @@ bool TestVirtualInheritance();
 bool TestStack();
 bool TestExecuteString();
 bool TestCondition();
-bool TestFuncOverload();
 bool TestNeverVisited();
 bool TestNested();
 bool TestConstructor();
@@ -155,9 +154,11 @@ namespace TestThiscallAsGlobal  { bool Test(); }
 namespace TestPow               { bool Test(); }
 namespace TestThisCallMethod    { bool Test(); }
 namespace TestThisCallMethod_ConfigErrors { bool Test(); }
-namespace TestPropIntegerDivision { bool Test(); }
-namespace TestComposition       { bool Test(); }
-namespace Test_Native_DefaultFunc { bool Test(); }
+namespace TestPropIntegerDivision         { bool Test(); }
+namespace TestComposition                 { bool Test(); }
+namespace Test_Native_DefaultFunc         { bool Test(); }
+namespace TestFuncOverload                { bool Test(); }
+
 
 namespace Test_Addon_ScriptArray   { bool Test(); }
 namespace Test_Addon_ScriptHandle  { bool Test(); }
@@ -308,7 +309,7 @@ int allTests()
 	if( TestExceptionMemory::Test()             ) goto failed; else PRINTF("-- TestExceptionMemory passed\n");
 	if( TestObject::Test()                      ) goto failed; else PRINTF("-- TestObject passed\n");
 	if( TestFactory::Test()                     ) goto failed; else PRINTF("-- TestFactory passed\n");
-	if( TestFuncOverload()                      ) goto failed; else PRINTF("-- TestFuncOverload passed\n");
+	if( TestFuncOverload::Test()                ) goto failed; else PRINTF("-- TestFuncOverload passed\n");
 	if( TestObjZeroSize::Test()                 ) goto failed; else PRINTF("-- TestObjZeroSize passed\n");
 	if( TestSingleton::Test()                   ) goto failed; else PRINTF("-- TestSingleton passed\n");
 	if( TestCondition()                         ) goto failed; else PRINTF("-- TestCondition passed\n");
