@@ -219,6 +219,9 @@
 // AS_ARM64
 // Use assembler code for the ARM64/AArch64 CPU family
 
+// AS_RISCV64
+// Use assembler code for the RISC-V 64bit CPU family
+
 // AS_SOFTFP
 // Use to tell compiler that ARM soft-float ABI
 // should be used instead of ARM hard-float ABI
@@ -1026,6 +1029,16 @@
 			// STDCALL is not available on 64bit Linux
 			#undef STDCALL
 			#define STDCALL
+		#elif defined(__riscv)
+			// RISC-V CPU families
+			#if defined(__LP64__)
+				// 64-bit
+				#define AS_RISCV64
+				#define AS_MAX_PORTABILITY
+			#else
+				// 32-bit
+				#define AS_MAX_PORTABILITY
+			#endif
 		#else
 			#define AS_MAX_PORTABILITY
 		#endif

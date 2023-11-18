@@ -222,6 +222,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_ARM64
 		"AS_ARM64 "
 #endif
+#ifdef AS_RISCV64
+		"AS_RISCV64 "
+#endif
 	;
 
 	return string;
