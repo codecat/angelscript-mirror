@@ -29,6 +29,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash in asIScriptContext::GetArgsOnStackCount when using unsafe references (Thanks glcolor)
 <li>Fixed bug in IsVarInScope that wouldn't identify an object variable declared just after a } as being in scope (Thanks Jason Goepel)
 <li>Fixed problem with funtion overload between Obj@ and const Obj@ (Thanks Patrick Jeeves)
+<li>Fixed bug in compiler that allowed passing string literal to function as non-const references with unsafe references turned on (Thanks Raphtaliyah)
 </ul>
 <li>Library
 <ul>

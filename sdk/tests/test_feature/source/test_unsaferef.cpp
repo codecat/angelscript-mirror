@@ -207,6 +207,50 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptEngine *engine;
 
+	// Test unsafe ref, and make sure it cannot modify a string literal
+	// https://www.gamedev.net/forums/topic/714766-string-literals-can-be-modified-with-unsafe-references/5458413/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"string origValue = 'String';         \n"
+			"void main()                          \n"
+			"{									  \n"
+			"	assert(origValue == 'String');	  \n"
+			"	UnsafeRefsAreFun('String');		  \n" // do not allow passing a literal const string to a function expecting &inout (even with unsafe reference)
+			"	assert(origValue == 'String');	  \n"
+			"	Test('String');					  \n"
+			"}									  \n"
+			"									  \n"
+			"void UnsafeRefsAreFun(string & str)  \n"
+			"{									  \n"
+			"	str = 'DifferentString';		  \n"
+			"}									  \n"
+			"									  \n"
+			"void Test(const string &str)		  \n" // this is still allowed
+			"{									  \n"
+			"	assert(origValue == str);         \n"
+			"}                                    \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (2, 1) : Info    : Compiling void main()\n"
+						   "test (5, 19) : Error   : Not a valid reference\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test opCast(?&out)
 	// https://www.gamedev.net/forums/topic/713759-regression-in-opcastampout/5454715/
 	SKIP_ON_MAX_PORT

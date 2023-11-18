@@ -512,14 +512,14 @@ bool Test()
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		const char *script8 =
-			"void test()                    \n"
-			"{                              \n"
-			"   Func('test');               \n"
-			"}                              \n"
-			"string Func(string & str)      \n"
-			"{                              \n"
-			"  return str;                  \n"
-			"}                              \n";
+			"void test()                      \n"
+			"{                                \n"
+			"   Func('test');                 \n"
+			"}                                \n"
+			"string Func(const string & str)  \n"
+			"{                                \n"
+			"  return str;                    \n"
+			"}                                \n";
 		mod->AddScriptSection("test", script8, strlen(script8), 0);
 		mod->Build();
 		r = ExecuteString(engine, "test()", mod);
@@ -531,10 +531,41 @@ bool Test()
 	//---------------------------------------
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		RegisterScriptString(engine);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char* script8 =
+			"void test()                      \n"
+			"{                                \n"
+			"   Func('test');                 \n"
+			"}                                \n"
+			"string Func(string & str)        \n" // not allowed
+			"{                                \n"
+			"  return str;                    \n"
+			"}                                \n";
+		mod->AddScriptSection("test", script8, strlen(script8), 0);
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "test (1, 1) : Info    : Compiling void test()\n"
+						   "test (3, 9) : Error   : Not a valid reference\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
+	//---------------------------------------
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptString(engine);
 
-		engine->RegisterGlobalFunction("void TestFunc(int, string&)", asFUNCTION(TestFunc), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void TestFunc(int, const string&)", asFUNCTION(TestFunc), asCALL_GENERIC);
 
 		// CHKREF was placed incorrectly
 		r = ExecuteString(engine, "TestFunc(0, 'test');");

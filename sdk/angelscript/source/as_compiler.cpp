@@ -1793,16 +1793,19 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 			}
 
 			// Literal constants cannot be passed to inout ref arguments
-			if( !ctx->type.isVariable &&
-				ctx->type.isConstant &&
-				!ctx->type.dataType.IsEqualExceptRefAndConst(engine->stringType) )
+			if( (!ctx->type.isVariable && ctx->type.isConstant) )
 			{
-				// Unless unsafe references are turned on and the reference is const
-				if( param.IsReadOnly() && engine->ep.allowUnsafeReferences )
+				// Unless the reference is const and it is a string and the string 
+				// type support handles or unsafe references are turned on
+				if (param.IsReadOnly() && (ctx->type.dataType.SupportHandles() || engine->ep.allowUnsafeReferences) )
 				{
 					// Since the parameter is a const & make a copy.
-					ConvertToTempVariable(ctx);
-					ctx->type.dataType.MakeReadOnly(true);
+					// This is not necessary for strings, since the literal string const is already a reference
+					if (ctx->type.dataType.IsPrimitive())
+					{
+						ConvertToTempVariable(ctx);
+						ctx->type.dataType.MakeReadOnly(true);
+					}
 				}
 				else
 				{
