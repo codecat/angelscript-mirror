@@ -1039,6 +1039,10 @@
 				// 32-bit
 				#define AS_MAX_PORTABILITY
 			#endif
+			
+			// STDCALL is not available on RISC-V Linux
+			#undef STDCALL
+			#define STDCALL
 		#else
 			#define AS_MAX_PORTABILITY
 		#endif

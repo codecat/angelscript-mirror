@@ -1263,7 +1263,7 @@ bool Test()
 			"} \n"
 			"void main() \n"
 			"{ \n"
-			"  Test test = Test(); \n"
+			"  Test test(); \n"
 			"} \n";
 
 		mod->AddScriptSection("script", script);

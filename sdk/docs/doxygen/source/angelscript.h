@@ -189,7 +189,7 @@ enum asEEngineProp
 	asEP_DISALLOW_GLOBAL_VARS               = 17,
 	//! When true, the compiler will always provide a default constructor for script classes. Default: false
 	asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT      = 18,
-	//! Set how warnings should be treated: 0 - dismiss, 1 - emit, 2 - treat as error
+	//! Set how warnings should be treated: 0 - dismiss, 1 - emit, 2 - treat as error. Default: \todo
 	asEP_COMPILER_WARNINGS                  = 19,
 	//! Disallow value assignment for reference types to avoid ambiguity. Default: false
 	asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE = 20,

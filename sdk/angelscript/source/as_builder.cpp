@@ -746,8 +746,24 @@ void asCBuilder::ParseScripts()
 				node = next;
 			}
 
-			// Make sure the default factory & constructor exists for classes
-			asCObjectType *ot = CastToObjectType(decl->typeInfo);
+			// If the script class doesn't declare any constructors and 
+			// doesn't override the opAssign for copying the object then a 
+			// default opAssign implementation is provided automatically 
+			asCObjectType* ot = CastToObjectType(decl->typeInfo);
+			if ( ot->beh.construct != engine->scriptTypeBehaviours.beh.construct ||
+				 ot->beh.constructors.GetLength() > 1 )
+			{
+				// Script class has a declared constructor, so remove the default opAssign
+				// unless the engine is configured to always provide a default opAssign
+				if (ot->beh.copy == engine->scriptTypeBehaviours.beh.copy &&
+					!engine->ep.alwaysImplDefaultCopy )
+				{
+					engine->scriptFunctions[ot->beh.copy]->ReleaseInternal();
+					ot->beh.copy = 0;
+				}
+			}
+
+			// Compile the default constructor if the script has no defined constructors
 			if( ot->beh.construct == engine->scriptTypeBehaviours.beh.construct )
 			{
 				if( ot->beh.constructors.GetLength() == 1 || engine->ep.alwaysImplDefaultConstruct )
@@ -768,12 +784,6 @@ void asCBuilder::ParseScripts()
 						engine->scriptFunctions[ot->beh.factory]->ReleaseInternal();
 						ot->beh.factory = 0;
 						ot->beh.factories.RemoveIndex(0);
-					}
-					// Only remove the opAssign method if the script hasn't provided one
-					if( ot->beh.copy == engine->scriptTypeBehaviours.beh.copy )
-					{
-						engine->scriptFunctions[ot->beh.copy]->ReleaseInternal();
-						ot->beh.copy = 0;
 					}
 				}
 			}

@@ -102,7 +102,7 @@ best matching method is used. An assignment operator can for example be implemen
 </pre>
 
 All script classes have a default assignment operator that does a bitwise copy of the content of the class,
-so if that is all you want to do, then there is no need to implement this method. 
+so if that is all you want to do, then there is no need to implement this method. \todo This statement is wrong. The auto generated opAssign doesn't do a bitwise copy. Also, it is not always generated, only when the script class isn't declaring any constructors
 
 
 

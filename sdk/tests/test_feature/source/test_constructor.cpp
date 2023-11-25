@@ -3,6 +3,9 @@
 
 using namespace std;
 
+namespace TestConstructor
+{
+
 static const char * const TESTNAME = "TestConstructor";
 
 static const char *script1 =
@@ -68,79 +71,165 @@ void ConstrObj_gen2(asIScriptGeneric *gen)
 }
 
 
-bool TestConstructor()
+bool Test()
 {
 	bool fail = false;
-
-	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
-	RegisterScriptString_Generic(engine);
-
+	CBufferedOutStream bout;
+	asIScriptEngine* engine;
+	asIScriptModule* mod;
 	int r;
-	r = engine->RegisterObjectType("obj", sizeof(CTestConstructor), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C); assert( r >= 0 );
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	{
-		r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstrObj_gen1), asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f(int,int)", asFUNCTION(ConstrObj_gen2), asCALL_GENERIC); assert( r >= 0 );
-	}
-	else
-	{
-		r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstrObj, (CTestConstructor *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f(int,int)", asFUNCTIONPR(ConstrObj, (int, int, CTestConstructor *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	}
-
-	r = engine->RegisterObjectProperty("obj", "int a", asOFFSET(CTestConstructor, a)); assert( r >= 0 );
-	r = engine->RegisterObjectProperty("obj", "int b", asOFFSET(CTestConstructor, b)); assert( r >= 0 );
-
-	int a, b;
-	r = engine->RegisterGlobalProperty("int a", &a); assert( r >= 0 );
-	r = engine->RegisterGlobalProperty("int b", &b); assert( r >= 0 );
-
-	CBufferedOutStream out;	
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
-	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &out, asCALL_THISCALL);
-	mod->Build();
-
-	if( out.buffer != "" )
-		TEST_FAILED;
-
-	mod->AddScriptSection(TESTNAME, script2, strlen(script2));
-	mod->Build();
-
-	if( out.buffer != "" )
-		TEST_FAILED;
-
-	ExecuteString(engine, "TestConstructor()", mod);
-
-	if( a != 8 || b != 11 )
-		TEST_FAILED;
-
 /*
-	mod->AddScriptSection(0, TESTNAME, script3, strlen(script3));
-	mod->Build(0);
-
-	if( out.buffer != "TestConstructor (1, 12) : Info    : Compiling obj* g_obj4\n"
-	                  "TestConstructor (1, 12) : Error   : Only objects have constructors\n" )
-		TEST_FAILED;
-*/
-	out.buffer = "";
-	mod->AddScriptSection(TESTNAME, script4, strlen(script4));
-	mod->Build();
-
-	if( out.buffer != "" ) 
+	// Test auto generated copy constructor
+	// Reported by Patrick Jeeves
 	{
-		TEST_FAILED;
-		PRINTF("%s", out.buffer.c_str());
+		engine = asCreateScriptEngine();
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, 
+			"class foo\n"
+			"{\n"
+			"	foo@ thisWorks() { foo f = this; return f; }\n"
+			"	foo@ thisDoesnt() { return foo(this); }\n"
+			"}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
 	}
 
-	ExecuteString(engine, "TestConstructor2()", mod);
+	// Test initialization of member of type that has copy constructur but not assignment operator (possible in C++, but not in AngelScript)
+	// TODO: To support this, I would have to implement the syntax like C++ where the initialization of members are given outside the constructor body
+	// Reported by Patrick Jeeves
+	{
+		engine = asCreateScriptEngine();
 
-	if( a != 11 || b != 13 )
-		TEST_FAILED;		
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
-	engine->Release();
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME,
+			"class Obj1\n" // Copy constructible, but not assignable
+			"{\n"
+			"	Obj1(const Obj1 &in) { }\n"
+			"}\n"
+			"class Obj2\n" // Constructible, Copy constructible, but not assignable
+			"{\n"
+			"   Obj2() {} \n"
+			"	Obj2(const Obj2 &in) { }\n"
+			"}\n"
+			"class Obj3\n" // Constructible, not Copy constructible, Assignable
+			"{\n"
+			"}\n"
+			"class Obj4 \n"
+			"{ \n"
+			"  Obj4(const Obj4 &in i) \n"
+			"  { \n"
+			"    o1 = i.o1; \n"  // Not allowed, so it is not possible to create constructor for this type
+			"    o2 = i.o2; \n"
+			"    o3 = i.o3; \n"
+			"  } \n"
+			"  Obj1 o1; \n" // Not allowed, there is no default constructur
+			"  Obj2 o2; \n"
+			"  Obj3 o3; \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
 
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+*/
+	// Test object with registered constructors
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		RegisterScriptString_Generic(engine);
+
+		r = engine->RegisterObjectType("obj", sizeof(CTestConstructor), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C); assert(r >= 0);
+		if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY"))
+		{
+			r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstrObj_gen1), asCALL_GENERIC); assert(r >= 0);
+			r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f(int,int)", asFUNCTION(ConstrObj_gen2), asCALL_GENERIC); assert(r >= 0);
+		}
+		else
+		{
+			r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstrObj, (CTestConstructor*), void), asCALL_CDECL_OBJLAST); assert(r >= 0);
+			r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f(int,int)", asFUNCTIONPR(ConstrObj, (int, int, CTestConstructor*), void), asCALL_CDECL_OBJLAST); assert(r >= 0);
+		}
+
+		r = engine->RegisterObjectProperty("obj", "int a", asOFFSET(CTestConstructor, a)); assert(r >= 0);
+		r = engine->RegisterObjectProperty("obj", "int b", asOFFSET(CTestConstructor, b)); assert(r >= 0);
+
+		int a, b;
+		r = engine->RegisterGlobalProperty("int a", &a); assert(r >= 0);
+		r = engine->RegisterGlobalProperty("int b", &b); assert(r >= 0);
+
+		bout.buffer = "";
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		mod->Build();
+
+		if (bout.buffer != "")
+			TEST_FAILED;
+
+		mod->AddScriptSection(TESTNAME, script2, strlen(script2));
+		mod->Build();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		ExecuteString(engine, "TestConstructor()", mod);
+
+		if (a != 8 || b != 11)
+			TEST_FAILED;
+
+		/*
+			mod->AddScriptSection(0, TESTNAME, script3, strlen(script3));
+			mod->Build(0);
+
+			if( out.buffer != "TestConstructor (1, 12) : Info    : Compiling obj* g_obj4\n"
+							  "TestConstructor (1, 12) : Error   : Only objects have constructors\n" )
+				TEST_FAILED;
+		*/
+		bout.buffer = "";
+		mod->AddScriptSection(TESTNAME, script4, strlen(script4));
+		mod->Build();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		ExecuteString(engine, "TestConstructor2()", mod);
+
+		if (a != 11 || b != 13)
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Test that constructor allocates memory for member objects and can properly initialize it
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		
@@ -187,4 +276,6 @@ bool TestConstructor()
 
 	// Success
 	return fail;
+}
+
 }

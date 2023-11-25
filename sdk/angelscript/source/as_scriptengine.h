@@ -509,6 +509,7 @@ public:
 		bool   noDebugOutput;
 		bool   disableScriptClassGC;
 		asUINT jitInterfaceVersion;
+		bool   alwaysImplDefaultCopy;
 	} ep;
 
 	// Callbacks

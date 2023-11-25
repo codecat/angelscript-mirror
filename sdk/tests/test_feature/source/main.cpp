@@ -53,7 +53,6 @@ bool TestExecuteString();
 bool TestCondition();
 bool TestNeverVisited();
 bool TestNested();
-bool TestConstructor();
 bool TestOptimize();
 bool TestNotInitialized();
 bool TestVector3();
@@ -158,7 +157,7 @@ namespace TestPropIntegerDivision         { bool Test(); }
 namespace TestComposition                 { bool Test(); }
 namespace Test_Native_DefaultFunc         { bool Test(); }
 namespace TestFuncOverload                { bool Test(); }
-
+namespace TestConstructor                 { bool Test(); }
 
 namespace Test_Addon_ScriptArray   { bool Test(); }
 namespace Test_Addon_ScriptHandle  { bool Test(); }
@@ -331,7 +330,7 @@ int allTests()
 	if( TestSuspend::Test()                     ) goto failed; else PRINTF("-- TestSuspend passed\n");
 	if( TestVector3_2::Test()                   ) goto failed; else PRINTF("-- TestVector3_2 passed\n");
 	if( TestNested()                            ) goto failed; else PRINTF("-- TestNested passed\n");
-	if( TestConstructor()                       ) goto failed; else PRINTF("-- TestConstructor passed\n");
+	if( TestConstructor::Test()                 ) goto failed; else PRINTF("-- TestConstructor passed\n");
 	if( TestExecuteScript()                     ) goto failed; else PRINTF("-- TestExecuteScript passed\n");
 	if( TestCustomMem::Test()                   ) goto failed; else PRINTF("-- TestCustomMem passed\n");
 	if( TestPostProcess::Test()                 ) goto failed; else PRINTF("-- TestPostProcess passed\n");

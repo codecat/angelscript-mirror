@@ -1967,7 +1967,9 @@ bool Test()
 		engine->Release();
 	}
 
-	// Default constructor and opAssign shouldn't be provided if a non-default constructor is implemented
+	// Default constructor shouldn't be provided if a non-default constructor is implemented
+	// Default copy (opAssign) is still provided even if there is a constructor implemented
+	// Default constructor and default copy is provided if no constructor is implemented, but no default copy constructor
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -1977,13 +1979,20 @@ bool Test()
 			"{ \n"
 			" CBar(int a) {}\n"
 			"}; \n"
+			"class CBar2 \n"
+			"{ \n"
+			"}; \n"
 			"void func() \n"
 			"{ \n"
 			"  CBar a; \n" // not ok
 			"  CBar b(1); \n" // ok
 			"  CBar c = CBar(1); \n" // not ok
-			"  b = b; \n" // not ok
+			"  b = b; \n" // ok
 			"  CBar d(CBar()); \n" // not ok
+			"  CBar2 a2; \n" // ok
+			"  CBar2 c2 = CBar2(); \n" // ok
+			"  a2 = a2; \n" // ok
+			"  CBar2 d2(CBar2()); \n" // not ok
 			"}; \n";
 
 		mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
@@ -1994,19 +2003,78 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "script (5, 1) : Info    : Compiling void func()\n"
-						   "script (7, 8) : Error   : No default constructor for object of type 'CBar'.\n"
-						   "script (9, 8) : Error   : No default constructor for object of type 'CBar'.\n"
-						   "script (9, 8) : Error   : No appropriate opAssign method found in 'CBar' for value assignment\n"
-						   "script (10, 5) : Error   : No appropriate opAssign method found in 'CBar' for value assignment\n"
-						   "script (11, 10) : Error   : No matching signatures to 'CBar()'\n"
-						   "script (11, 10) : Info    : Candidates are:\n"
-						   "script (11, 10) : Info    : CBar@ CBar(int a)\n" )
+		if( bout.buffer != "script (8, 1) : Info    : Compiling void func()\n"
+						   "script (10, 8) : Error   : No default constructor for object of type 'CBar'.\n"
+						   "script (12, 8) : Error   : No default constructor for object of type 'CBar'.\n"
+						   "script (14, 10) : Error   : No matching signatures to 'CBar()'\n"
+						   "script (14, 10) : Info    : Candidates are:\n"
+						   "script (14, 10) : Info    : CBar@ CBar(int a)\n"
+						   "script (18, 11) : Error   : No matching signatures to 'CBar2(CBar2@&)'\n"
+						   "script (18, 11) : Info    : Candidates are:\n"
+						   "script (18, 11) : Info    : CBar2@ CBar2()\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
  
+		engine->Release();
+	}
+
+	// Default constructor shouldn't be provided if a non-default constructor is implemented
+	// Default copy (opAssign) is still provided even if there is a constructor implemented
+	// inverted behaviour with engine properties
+	// Default constructor and default copy is provided if no constructor is implemented, but no default copy constructor
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->SetEngineProperty(asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT, true);
+		engine->SetEngineProperty(asEP_ALWAYS_IMPL_DEFAULT_COPY, false);
+
+		const char* script =
+			"class CBar \n"
+			"{ \n"
+			" CBar(int a) {}\n"
+			"}; \n"
+			"class CBar2 \n"
+			"{ \n"
+			"}; \n"
+			"void func() \n"
+			"{ \n"
+			"  CBar a; \n" // ok
+			"  CBar b(1); \n" // ok
+			"  CBar c = CBar(1); \n" // not ok
+			"  b = b; \n" // not ok
+			"  CBar d(CBar()); \n" // not ok
+			"  CBar2 a2; \n" // ok
+			"  CBar2 c2 = CBar2(); \n" // ok
+			"  a2 = a2; \n" // ok
+			"  CBar2 d2(CBar2()); \n" // not ok
+			"}; \n";
+
+		mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+
+		bout.buffer = "";
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != 
+			"script (8, 1) : Info    : Compiling void func()\n"
+			"script (12, 8) : Error   : No appropriate opAssign method found in 'CBar' for value assignment\n"
+			"script (13, 5) : Error   : No appropriate opAssign method found in 'CBar' for value assignment\n"
+			"script (14, 9) : Error   : No matching signatures to 'CBar(CBar@&)'\n"
+			"script (14, 9) : Info    : Candidates are:\n"
+			"script (14, 9) : Info    : CBar@ CBar()\n"
+			"script (14, 9) : Info    : CBar@ CBar(int a)\n"
+			"script (18, 11) : Error   : No matching signatures to 'CBar2(CBar2@&)'\n"
+			"script (18, 11) : Info    : Candidates are:\n"
+			"script (18, 11) : Info    : CBar2@ CBar2()\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		engine->Release();
 	}
 

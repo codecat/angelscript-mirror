@@ -150,6 +150,7 @@ enum asEEngineProp
 	asEP_NO_DEBUG_OUTPUT                    = 33,
 	asEP_DISABLE_SCRIPT_CLASS_GC            = 34,
 	asEP_JIT_INTERFACE_VERSION              = 35,
+	asEP_ALWAYS_IMPL_DEFAULT_COPY           = 36,
 
 	asEP_LAST_PROPERTY
 };
