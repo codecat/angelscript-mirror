@@ -1762,6 +1762,10 @@ The macros are defined as:
 #define WRAP_MFN(ClassType, name)
 #define WRAP_MFN_PR(ClassType, name, Parameters, ReturnType)
 
+// Wrap a class method that will emulate a global function
+#define WRAP_MFN_GLOBAL(ClassType, name)
+#define WRAP_MFN_GLOBAL_PR(ClassType, name, Parameters, ReturnType)
+
 // Wrap a global function that will emulate a class method and receives the 'this' pointer as the first argument
 #define WRAP_OBJ_FIRST(name)
 #define WRAP_OBJ_FIRST_PR(name, Parameters, ReturnType)
