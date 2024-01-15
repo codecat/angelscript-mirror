@@ -289,7 +289,7 @@ bool Test()
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
-		// This fails to compile with multiple matching constructors
+		// This does not fail to compile with multiple matching constructors, it choses the BigInt(int)
 		mod->AddScriptSection("test",
 			"void Start2() \n"
 			"{ \n"
@@ -297,13 +297,11 @@ bool Test()
 			"	assert(u1.signOrShortValue_ == -2147483648); \n"
 			"} \n");
 		r = mod->Build();
-		if (r >= 0)
+		if (r < 0)
 			TEST_FAILED;
 
 		if (bout.buffer != "test (1, 1) : Info    : Compiling void Start2()\n"
-						   "test (3, 11) : Error   : Multiple matching signatures to 'BigInt(const int64)'\n"
-						   "test (3, 11) : Info    : BigInt::BigInt(int = 0)\n"
-						   "test (3, 11) : Info    : BigInt::BigInt(uint)\n")
+						   "test (3, 12) : Warning : Value is too large for data type\n")
 		{
 			PRINTF("%s\n", bout.buffer.c_str());
 			TEST_FAILED;
@@ -326,7 +324,7 @@ bool Test()
 			"int test(uint ) { return 2; } \n");
 		mod->Build();
 
-		/*
+		/*  The behaviour in C++ is different, i.e. 
 			blah(2147483647);
 			blah(2147483648);  // fails to compile with multiple matching functions
 			blah(12147483647); // fails to compile with multiple matching functions
@@ -336,21 +334,26 @@ bool Test()
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
-		r = ExecuteString(engine, "assert( test(2147483648) == 2 );", mod);
-		if (r >= 0)
+		r = ExecuteString(engine, "assert( test(2147483648) == 1 );", mod);
+		if (r < 0)
 			TEST_FAILED;
 
 		r = ExecuteString(engine, "assert( test(12147483647) == 1 );", mod);
-		if (r >= 0)
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "assert( test(uint64(2147483648)) == 2 );", mod);
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "assert( test(uint64(12147483647)) == 2 );", mod);
+		if (r < 0)
 			TEST_FAILED;
 
 		if (bout.buffer !=
-			"ExecuteString (1, 9) : Error   : Multiple matching signatures to 'test(const int64)'\n"
-			"ExecuteString (1, 9) : Info    : int test(int)\n"
-			"ExecuteString (1, 9) : Info    : int test(uint)\n"
-			"ExecuteString (1, 9) : Error   : Multiple matching signatures to 'test(const int64)'\n"
-			"ExecuteString (1, 9) : Info    : int test(int)\n"
-			"ExecuteString (1, 9) : Info    : int test(uint)\n")
+			"ExecuteString (1, 14) : Warning : Value is too large for data type\n"
+			"ExecuteString (1, 14) : Warning : Value is too large for data type\n"
+			"ExecuteString (1, 14) : Warning : Value is too large for data type\n")
 		{
 			PRINTF("%s\n", bout.buffer.c_str());
 			TEST_FAILED;

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2023 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -204,14 +204,17 @@ enum EConvCost
 	asCC_ENUM_DIFF_SIZE_CONV      = 3,
 	asCC_PRIMITIVE_SIZE_UP_CONV   = 4,
 	asCC_PRIMITIVE_SIZE_DOWN_CONV = 5,
-	asCC_SIGNED_TO_UNSIGNED_CONV  = 5,
-	asCC_UNSIGNED_TO_SIGNED_CONV  = 6,
-	asCC_INT_TO_FLOAT_CONV        = 7,
-	asCC_FLOAT_TO_INT_CONV        = 8,
-	asCC_REF_CONV                 = 9,
-	asCC_OBJ_TO_PRIMITIVE_CONV    = 10,
-	asCC_TO_OBJECT_CONV           = 11,
-	asCC_VARIABLE_CONV            = 12
+	asCC_SIGNED_TO_UNSIGNED_CONV  = 6,
+	asCC_UNSIGNED_TO_SIGNED_CONV  = 7,
+	asCC_INT_TO_FLOAT_CONV        = 8,
+	asCC_FLOAT_TO_INT_CONV        = 9,
+	asCC_REF_CONV                 = 10,
+	//   REF_CONV + CONST_CONV    = 11,
+	asCC_OBJ_TO_PRIMITIVE_CONV    = 12,
+	//   OBJ_TO_PRIM + CONST_CONV = 13,
+	asCC_TO_OBJECT_CONV           = 14,
+	//   TO_OBJ_CONV + CONST_CONV = 15,
+	asCC_VARIABLE_CONV            = 16
 };
 
 class asCCompiler

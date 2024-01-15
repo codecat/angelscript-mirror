@@ -30,6 +30,40 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test function overload where one option is ?&in
+	// https://www.gamedev.net/forums/topic/715439-recent-change-fixing-funtion-overload-between-obj-and-const-obj-broke-a-lot-of-bindings/5460950/
+	{
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		RegisterStdString(engine);
+
+		engine->RegisterGlobalFunction("void PushID(const ?&in)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void PushID(const string &in)", asFUNCTION(0), asCALL_GENERIC);
+
+		asIScriptModule* mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char* script1 =
+			"class wstring { string opImplConv() const { return ''; } } \n"
+			"void main() { \n"
+			"  wstring s; \n"
+			"  PushID(s); \n"
+			"} \n";
+		mod->AddScriptSection(TESTNAME, script1);
+		int r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test function overload when there are two options, one taking obj@ and another taking const obj@
 	// Reported by Patrick Jeeves
 	{
@@ -93,8 +127,8 @@ bool Test()
 		r = ExecuteString(engine, "func(func(3));", mod);
 		if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
-		CBufferedOutStream bout;
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		const char* script2 =
 			"void ScriptFunc(void m)                   \n"
