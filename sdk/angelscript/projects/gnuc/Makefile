@@ -111,6 +111,7 @@ SRCNAMES = \
   as_callfunc_mips.cpp \
   as_callfunc_ppc.cpp \
   as_callfunc_ppc_64.cpp \
+  as_callfunc_riscv64.cpp \
   as_callfunc_sh4.cpp \
   as_callfunc_x86.cpp \
   as_callfunc_x64_gcc.cpp \
@@ -147,6 +148,7 @@ ifeq ($(TARGETPLATFORM), iphone)
 else
 	OBJ += $(OBJDIR)/as_callfunc_arm_gcc.o
 	OBJ += $(OBJDIR)/as_callfunc_arm64_gcc.o
+	OBJ += $(OBJDIR)/as_callfunc_riscv64_gcc.o
 endif
 
 
