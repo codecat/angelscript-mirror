@@ -795,14 +795,32 @@
 		#elif (defined(__aarch64__))
 			// The IPhone 5S+ uses an ARM64 processor
 
-			// AngelScript currently doesn't support native calling
-			// for 64bit ARM processors so it's necessary to turn on
-			// portability mode
-			#define AS_MAX_PORTABILITY
+			#define AS_ARM64
 
-			// STDCALL is not available on ARM
 			#undef STDCALL
 			#define STDCALL
+
+			#undef GNU_STYLE_VIRTUAL_METHOD
+			#undef AS_NO_THISCALL_FUNCTOR_METHOD
+
+			#define HAS_128_BIT_PRIMITIVES
+
+			#define CDECL_RETURN_SIMPLE_IN_MEMORY
+			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+			#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+
+			#undef THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+			#undef CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+			#undef STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+
+			#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 5
+			#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE    5
+			#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE  5
+
+			#undef COMPLEX_MASK
+			#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR | asOBJ_APP_ARRAY)
+			#undef COMPLEX_RETURN_MASK
+			#define COMPLEX_RETURN_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR | asOBJ_APP_ARRAY)
 
 		#elif (defined(i386) || defined(__i386) || defined(__i386__)) && !defined(__LP64__)
 			// Support native calling conventions on Mac OS X + Intel 32bit CPU
