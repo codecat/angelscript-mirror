@@ -3418,6 +3418,8 @@ protected:
 
 //! \ingroup api_secondary_interfaces
 //! \brief The interface for the generic calling convention
+//! 
+//! \see \ref doc_generic
 class asIScriptGeneric
 {
 public:
@@ -3553,8 +3555,8 @@ public:
 	//! \return A negative value on error.
 	//! \retval asINVALID_TYPE The return type is not a reference or handle.
 	//!
-	//! Sets the address return value. If an object handle the application must first 
-	//! increment the reference counter, unless it won't keep a reference itself.
+	//! Sets the address return value. If it is an object handle and the application will 
+	//! keep a reference for later use, then the reference counter must be incremented.
 	virtual int     SetReturnAddress(void *addr) = 0;
 	//! \brief Sets the object return value.
 	//! \param[in] obj A pointer to the object return value.

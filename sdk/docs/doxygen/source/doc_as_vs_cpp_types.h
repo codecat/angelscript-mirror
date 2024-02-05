@@ -121,7 +121,7 @@ useful, but it is maintained for compatibility with application registered funct
 <tr><td valign=top>const &in</td><td>If the life time of the value can be 
 guaranteed to be valid during the execution of the function, the reference to the 
 true object is passed to the function, otherwise a copy is made.</td></tr>
-<tr><td valign=top>&out</td><td>A reference to an unitialized value is passed 
+<tr><td valign=top>&out</td><td>A reference to an uninitialized value is passed 
 to the function. When the function returns the value is copied to the true reference. 
 The argument expression is evaluated only after the function call. This is the best 
 way to have functions return multiple values.</td></tr>

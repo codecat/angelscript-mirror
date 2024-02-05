@@ -49,6 +49,8 @@ with a call to \ref asIScriptGeneric::GetObject "GetObject".
 The asIScriptGeneric interfaces treats the ref count the same way as in native calling conventions, i.e. the application
 function is responsible to releasing any handle received as a handle (or \ref doc_obj_handle_4 "register the function with @+").
 
+\todo Improve description of how to handle &out arguments. If they don't have to be set if the returned value is null, etc.
+
 \section doc_generic_2 Returning values
 
 To return a value from the function one of the SetReturn methods can be called to pass the value to the 
@@ -65,5 +67,7 @@ types, which makes this ideal for template implementations, such as that in the 
 
 If the function is registered to return a @+, then the script engine will \ref doc_obj_handle_4 "automatically increment the ref count", just as is
 done for native calling conventions.
+
+\todo Improve description of how to return objects, if they can be omitted if returning null is desired etc.
 
 */
