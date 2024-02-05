@@ -287,6 +287,128 @@ bool Test()
 	int r;
 	bool fail = Test2();
 
+	// Test GetDeclaredAt for functions
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		CBufferedOutStream bout;
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int a; \n"
+			"void func() { \n"
+			"  a = a + 1; \n"
+			"} \n"
+			"class C { \n"
+			"  void method() { \n"
+			"    a = a - 1; \n"
+			"  } \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		const char* scriptSection;
+		int row;
+		int col;
+		r = mod->GetFunctionByName("func")->GetDeclaredAt(&scriptSection, &row, &col);
+		if (r < 0)
+			TEST_FAILED;
+		if ( std::string(scriptSection) != "test" || row != 2 || col != 1 )
+		{
+			PRINTF("Got %s, %d, %d\n", scriptSection, row, col);
+			TEST_FAILED;
+		}
+
+		r = mod->GetTypeInfoByName("C")->GetMethodByName("method")->GetDeclaredAt(&scriptSection, &row, &col);
+		if (r >= 0) // virtual methods do not have a place to store the declared at as they are just stubs
+			TEST_FAILED;
+		if (scriptSection != 0 || row != 0 || col != 0)
+		{
+			PRINTF("Got %s, %d, %d\n", scriptSection, row, col);
+			TEST_FAILED;
+		}
+
+		r = mod->GetTypeInfoByName("C")->GetMethodByName("method",false)->GetDeclaredAt(&scriptSection, &row, &col);
+		if (r < 0)
+			TEST_FAILED;
+		if (std::string(scriptSection) != "test" || row != 6 || col != 3)
+		{
+			PRINTF("Got %s, %d, %d\n", scriptSection, row, col);
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test GetLineNumber right after Prepare
+	// Reported by Sam Tupy
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		CBufferedOutStream bout;
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int a; \n"
+			"void func() { \n"
+			"  a = a + 1; \n"
+			"} \n"
+			"class C { \n"
+			"  void method() { \n"
+			"    a = a - 1; \n"
+			"  } \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->Prepare(mod->GetFunctionByName("func"));
+		int ln = ctx->GetLineNumber();
+		ctx->Release();
+
+		if (ln != 3) // this is the first line of actual code in the function
+		{
+			PRINTF("Got %d\n", ln);
+			TEST_FAILED;
+		}
+
+		ctx = engine->CreateContext();
+		ctx->Prepare(mod->GetTypeInfoByName("C")->GetMethodByName("method"));
+		ln = ctx->GetLineNumber();
+		ctx->Release();
+
+		if (ln != 0)  // this is the virtual method, it has no code
+		{
+			PRINTF("Got %d\n", ln);
+			TEST_FAILED;
+		}
+
+		ctx = engine->CreateContext();
+		ctx->Prepare(mod->GetTypeInfoByName("C")->GetMethodByName("method", false));
+		ln = ctx->GetLineNumber();
+		ctx->Release();
+
+		if (ln != 7)  // now it is the actual method, so the line number should be the first line with code
+		{
+			PRINTF("Got %d\n", ln);
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test IsVarInScope for variables declared in for-loop
 	// Reported by gmp3 labs
 	{

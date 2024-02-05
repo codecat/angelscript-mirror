@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2023 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -866,6 +866,22 @@ int asCScriptFunction::FindNextLineWithCode(int line) const
 	}
 
 	return -1;
+}
+
+// interface
+int asCScriptFunction::GetDeclaredAt(const char** scriptSection, int* row, int* col) const
+{
+	if (!scriptData)
+	{
+		if (scriptSection) *scriptSection = 0;
+		if (row) *row = 0;
+		if (col) *col = 0;
+		return asNOT_SUPPORTED;
+	}
+	if (scriptSection) *scriptSection = engine->scriptSectionNames[scriptData->scriptSectionIdx]->AddressOf();
+	if (row) *row = scriptData->declaredAt & 0xFFFFF;
+	if (col) *col = scriptData->declaredAt >> 20;
+	return 0;
 }
 
 // internal
