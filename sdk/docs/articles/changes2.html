@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.37.0 WIP - 2024/02/04</h2>
+<h2>Version 2.37.0 WIP - 2024/02/10</h2>
 
 <ul>
 <li>Bug fixes
@@ -30,6 +30,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug in IsVarInScope that wouldn't identify an object variable declared just after a } as being in scope (Thanks Jason Goepel)
 <li>Fixed problem with funtion overload between Obj@ and const Obj@ (Thanks Patrick Jeeves)
 <li>Fixed bug in compiler that allowed passing string literal to function as non-const references with unsafe references turned on (Thanks Raphtaliyah)
+<li>Fixed bug in native calling convention for arm64 with ?&amp; arguments (Thanks Alexander Orefkov)
 </ul>
 <li>Library
 <ul>
