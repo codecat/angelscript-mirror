@@ -307,40 +307,40 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			// First the reference
 			bool fitsInRegisters = numGPRegArgs + 1 <= GP_ARG_REGISTERS;
 			asQWORD* argsArray = fitsInRegisters ? gpRegArgs : stackArgs;
-			asQWORD& numArgs = fitsInRegisters ? numGPRegArgs : numStackArgs;
+			asQWORD* numArgs = fitsInRegisters ? &numGPRegArgs : &numStackArgs;
 #if defined(AS_IPHONE) || defined(AS_MAC)
 			if (!fitsInRegisters)
 			{
 				asUINT parmBytes = AS_PTR_SIZE * 4;
-				PadAppleStack(argsArray, numArgs, stackDispositionBytes, parmBytes);
-				memcpy(((asBYTE*)&argsArray[numArgs]) + stackDispositionBytes, (void*)(args + argsPos), parmBytes);
+				PadAppleStack(argsArray, *numArgs, stackDispositionBytes, parmBytes);
+				memcpy(((asBYTE*)&argsArray[*numArgs]) + stackDispositionBytes, (void*)(args + argsPos), parmBytes);
 				stackDispositionBytes += parmBytes;
 			}
 			else
 #endif
 			{
-				memcpy(&argsArray[numArgs], (void*)(args + argsPos), AS_PTR_SIZE * 4);
-				numArgs += 1;
+				memcpy(&argsArray[*numArgs], (void*)(args + argsPos), AS_PTR_SIZE * 4);
+				(*numArgs) += 1;
 			}
 			argsPos += AS_PTR_SIZE;
 
 			// Then the type id
 			fitsInRegisters = numGPRegArgs + 1 <= GP_ARG_REGISTERS;
-			asQWORD* argsArray = fitsInRegisters ? gpRegArgs : stackArgs;
-			asQWORD& numArgs = fitsInRegisters ? numGPRegArgs : numStackArgs;
+			argsArray = fitsInRegisters ? gpRegArgs : stackArgs;
+			numArgs = fitsInRegisters ? &numGPRegArgs : &numStackArgs;
 #if defined(AS_IPHONE) || defined(AS_MAC)
 			if (!fitsInRegisters)
 			{
 				asUINT parmBytes = 4;
-				PadAppleStack(argsArray, numArgs, stackDispositionBytes, parmBytes);
-				memcpy(((asBYTE*)&argsArray[numArgs]) + stackDispositionBytes, (void*)(args + argsPos), parmBytes);
+				PadAppleStack(argsArray, *numArgs, stackDispositionBytes, parmBytes);
+				memcpy(((asBYTE*)&argsArray[*numArgs]) + stackDispositionBytes, (void*)(args + argsPos), parmBytes);
 				stackDispositionBytes += parmBytes;
 			}
 			else
 #endif
 			{
-				memcpy(&argsArray[numArgs], (void*)(args + argsPos), 4);
-				numArgs += 1;
+				memcpy(&argsArray[*numArgs], (void*)(args + argsPos), 4);
+				(*numArgs) += 1;
 			}
 			argsPos += 1;
 		}
