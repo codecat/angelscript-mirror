@@ -1052,7 +1052,7 @@
 			#if defined(__LP64__)
 				// 64-bit
 				#define AS_RISCV64
-				//#define AS_MAX_PORTABILITY
+				#define AS_MAX_PORTABILITY
 			#else
 				// 32-bit
 				#define AS_MAX_PORTABILITY
