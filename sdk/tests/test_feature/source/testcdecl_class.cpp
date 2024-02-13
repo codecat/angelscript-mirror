@@ -101,6 +101,8 @@ static asvec3_t vec3_123()
 
 static asvec3_t v3;
 
+bool TestReturnStructAllFloats();
+
 bool TestCDecl_Class()
 {
 	RET_ON_MAX_PORT
@@ -316,5 +318,69 @@ bool TestCDecl_Class()
 		engine->Release();
 	}
 
+	fail = TestReturnStructAllFloats() || fail;
+
 	return fail;
 }
+
+//-----------------------------------------------
+
+struct asPoint
+{
+	float x, y;
+};
+
+struct asRect
+{
+	asPoint tl, br;
+};
+
+asPoint TestPoint()
+{
+	asPoint p = { 1,2 };
+	return p;
+}
+
+asRect TestRect()
+{
+	asRect r = { {3,4},{5,6} };
+	return r;
+}
+
+bool TestReturnStructAllFloats()
+{
+	RET_ON_MAX_PORT
+
+		bool fail = false;
+	int r;
+
+	asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	r = engine->RegisterObjectType("point", sizeof(asPoint), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLFLOATS); assert(r >= 0);
+	r = engine->RegisterObjectType("rect", sizeof(asRect), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLFLOATS); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("point Point()", asFUNCTION(TestPoint), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("rect Rect()", asFUNCTION(TestRect), asCALL_CDECL); assert(r >= 0);
+	asPoint p = { 0,0 };
+	asRect rc = { {0,0},{0,0} };
+	r = engine->RegisterGlobalProperty("point p", &p); assert(r >= 0);
+	r = engine->RegisterGlobalProperty("rect r", &rc); assert(r >= 0);
+	r = ExecuteString(engine, "p=Point();");
+	if (r != asEXECUTION_FINISHED)
+		TEST_FAILED;
+	if (p.x != 1 || p.y != 2)
+		TEST_FAILED;
+	r = ExecuteString(engine, "r=Rect();");
+	if (r != asEXECUTION_FINISHED)
+		TEST_FAILED;
+	if (rc.tl.x != 3 || rc.tl.y != 4 || rc.br.x != 5 || rc.br.y != 6)
+	{
+		TEST_FAILED;
+		PRINTF("Got {%f, %f, %f, %f}\n", rc.tl.x, rc.tl.y, rc.br.x, rc.br.y);
+	}
+
+	// at that point, 'p' should contain 1,2 while 'rc' should contain 3,4,5,6
+
+	engine->Release();
+
+	return fail;
+}
+
