@@ -50,7 +50,10 @@
 
 BEGIN_AS_NAMESPACE
 
-extern "C" asQWORD CallRiscVFunc(asFUNCTION_t func);
+// retfloat == 0: the called function doesn't return a float value
+// retfloat == 1: the called function returns a float value
+// retfloat == 2: the called function returns a double value
+extern "C" asQWORD CallRiscVFunc(asFUNCTION_t func, int retfloat);
 
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2, void *secondObject)
 {
@@ -66,7 +69,12 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	// TODO: retrieve correct function pointer to call (e.g. from virtual function table, auxiliary pointer, etc)
 	// TODO: read return value from float register if needed
 
-	retQW = CallRiscVFunc(func);
+	int retfloat = 0;
+	if( sysFunc->hostReturnFloat )
+	{
+		retfloat = 1;
+	}
+	retQW = CallRiscVFunc(func, retfloat);
 
 	return retQW;
 }

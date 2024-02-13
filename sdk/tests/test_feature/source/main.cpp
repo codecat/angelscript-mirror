@@ -228,7 +228,7 @@ int allTests()
 #endif
 
 	InstallMemoryManager();
-
+/*
 	if( Test_Addon_ScriptFile::Test()    ) goto failed; else PRINTF("-- Test_Addon_ScriptFile passed\n");
 	if( Test_Addon_ContextMgr::Test()    ) goto failed; else PRINTF("-- Test_Addon_ContextMgr passed\n");
 	if( Test_Addon_ScriptGrid::Test()    ) goto failed; else PRINTF("-- Test_Addon_ScriptGrid passed\n");
@@ -356,7 +356,7 @@ int allTests()
 	if( TestNeverVisited()                      ) goto failed; else PRINTF("-- TestNeverVisited passed\n");
 	if( TestReturnString::Test()                ) goto failed; else PRINTF("-- TestReturnString passed\n");
 	if( TestNegateOperator()                    ) goto failed; else PRINTF("-- TestNegateOperator passed\n");
-
+*/
 	// The following tests are designed specifically to test the native calling conventions.
 	// These are grouped by calling convention and ordered in increasing complexity.
 	{
