@@ -175,21 +175,25 @@ namespace Test_Addon_StdString     { bool Test(); }
 
 #include "utils.h"
 
-void DetectMemoryLeaks()
-{
+// This class should be declared as a global singleton so the leak detection is initiated as soon as possible
 #if defined(_MSC_VER)
-	_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF|_CRTDBG_ALLOC_MEM_DF);
-	_CrtSetReportMode(_CRT_ASSERT,_CRTDBG_MODE_FILE);
-	_CrtSetReportFile(_CRT_ASSERT,_CRTDBG_FILE_STDERR);
+class MemoryLeakDetector
+{
+public:
+	MemoryLeakDetector()
+	{
+		_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF);
+		_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
+		_CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
 
-	// Use _CrtSetBreakAlloc(n) to find a specific memory leak
-	// Remember to "Enable Windows Debug Heap Allocator" in the debug options on MSVC2015. Without it
-	// enabled the memory allocation numbers shifts randomly from one execution to another making it
-	// impossible to predict the correct number for a specific allocation.
-	//_CrtSetBreakAlloc(924);
-
+		// Use _CrtSetBreakAlloc(n) to find a specific memory leak
+		// Remember to "Enable Windows Debug Heap Allocator" in the debug options on MSVC2015. Without it
+		// enabled the memory allocation numbers shifts randomly from one execution to another making it
+		// impossible to predict the correct number for a specific allocation.
+		//_CrtSetBreakAlloc(124);
+	}
+} g_leakDetector;
 #endif
-}
 
 // This class is just to verify that releasing the engine as part of the cleanup
 // of global variables doesn't cause crashes due to out-of-order cleanup with
@@ -210,8 +214,6 @@ public:
 
 int allTests()
 {
-	DetectMemoryLeaks();
-
 	PRINTF("AngelScript version: %s\n", asGetLibraryVersion());
 	PRINTF("AngelScript options: %s\n", asGetLibraryOptions());
 
