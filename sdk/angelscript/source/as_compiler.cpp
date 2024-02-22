@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2023 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -131,6 +131,108 @@ void asCCompiler::Reset(asCBuilder *in_builder, asCScriptCode *in_script, asCScr
 	byteCode.ClearAll();
 }
 
+int asCCompiler::CompileDefaultCopyConstructor(asCBuilder* in_builder, asCScriptCode* in_script, asCScriptNode* in_node, asCScriptFunction* in_outFunc, sClassDeclaration* in_classDecl)
+{
+	Reset(in_builder, in_script, in_outFunc);
+
+	SetupParametersAndReturnVariable(in_outFunc->parameterNames, in_node);
+
+	m_classDecl = in_classDecl;
+
+	// Insert a JitEntry at the start of the function for JIT compilers
+	byteCode.InstrPTR(asBC_JitEntry, 0);
+
+	// Add a variable scope that might be needed to declare dummy variables
+	// in case the member initialization refers to undefined symbols.
+	AddVariableScope();
+
+	// Initialize the class members that are not inherited from a base class first. This will allow the base 
+	// class' copy constructor to access these members without worry they will be uninitialized. This can
+	// happen if the base class' copy constructor calls a method that is overridden by the derived class.
+	CompileMemberInitializationCopy(&byteCode);
+
+	// If the class is derived from another, then the base class' copy constructor must be called
+	if (outFunc->objectType->derivedFrom)
+	{
+		if (outFunc->objectType->derivedFrom->beh.copyconstruct)
+		{
+			asCExprContext ctx(engine);
+			CompileVariableAccess("other", "", &ctx, 0);
+			ctx.bc.Instr(asBC_RDSPtr);
+			CompileVariableAccess("this", "", &ctx, 0);
+			ctx.bc.Instr(asBC_RDSPtr);
+			ctx.bc.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.copyconstruct, 2*AS_PTR_SIZE);
+			ctx.bc.OptimizeLocally(tempVariableOffsets);
+			byteCode.AddCode(&ctx.bc);
+			byteCode.InstrPTR(asBC_JitEntry, 0);
+		}
+		else
+		{
+			if (outFunc->objectType->derivedFrom->beh.construct == 0 || outFunc->objectType->derivedFrom->beh.copy == 0)
+				Error(TXT_BASE_DOESNT_HAVE_CPY_CONSTR_OR_DEF_CONSTR, in_node);
+			else
+			{
+				asCExprContext ctx(engine);
+				CompileVariableAccess("this", "", &ctx, 0);
+				ctx.bc.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
+
+				CompileVariableAccess("other", "", &ctx, 0);
+				ctx.bc.Instr(asBC_RDSPtr);
+				CompileVariableAccess("this", "", &ctx, 0);
+				ctx.bc.Instr(asBC_RDSPtr);
+				ctx.bc.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.copy, 2 * AS_PTR_SIZE);
+
+				ctx.bc.OptimizeLocally(tempVariableOffsets);
+				byteCode.AddCode(&ctx.bc);
+				byteCode.InstrPTR(asBC_JitEntry, 0);
+			}
+		}
+	}
+
+	// This is the label that return statements jump to
+	// in order to exit the function
+	byteCode.Label(0);
+
+	// Call destructors for function parameters (there is only one, the object handle to the other object)
+	for (int n = (int)variables->variables.GetLength() - 1; n >= 0; n--)
+	{
+		sVariable* v = variables->variables[n];
+		if (v->stackOffset <= 0)
+		{
+			// Call variable destructors here, for variables not yet destroyed
+			if (v->name != "return")
+				CallDestructor(v->type, v->stackOffset, v->onHeap, &byteCode);
+		}
+
+		// Do not deallocate parameters
+	}
+
+	byteCode.OptimizeLocally(tempVariableOffsets);
+
+	// If there are compile errors, there is no reason to build the final code
+	if (hasCompileErrors)
+		return -1;
+
+	// Remove the variable scope
+	RemoveVariableScope();
+
+	// Pop the object pointer from the stack
+	byteCode.Ret(AS_PTR_SIZE);
+
+	// Count total variable size
+	int varSize = GetVariableOffset((int)variableAllocations.GetLength()) - 1;
+	outFunc->scriptData->variableSpace = varSize;
+
+	FinalizeFunction();
+
+#ifdef AS_DEBUG
+	// DEBUG: output byte code
+	byteCode.DebugOutput(("__" + outFunc->objectType->name + "_" + outFunc->name + "__copyconstr.txt").AddressOf(), in_outFunc);
+#endif
+
+	return 0;
+}
+
 int asCCompiler::CompileDefaultConstructor(asCBuilder *in_builder, asCScriptCode *in_script, asCScriptNode *in_node, asCScriptFunction *in_outFunc, sClassDeclaration *in_classDecl)
 {
 	Reset(in_builder, in_script, in_outFunc);
@@ -154,7 +256,7 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *in_builder, asCScriptCode
 	{
 		// Make sure the base class really has a default constructor
 		if( outFunc->objectType->derivedFrom->beh.construct == 0 )
-			Error(TEXT_BASE_DOESNT_HAVE_DEF_CONSTR, in_node);
+			Error(TXT_BASE_DOESNT_HAVE_DEF_CONSTR, in_node);
 
 		// Call the base class' default constructor
 		byteCode.InstrSHORT(asBC_PSF, 0);
@@ -442,6 +544,79 @@ int asCCompiler::SetupParametersAndReturnVariable(asCArray<asCString> &parameter
 	return stackPos;
 }
 
+void asCCompiler::CompileMemberInitializationCopy(asCByteCode* bc)
+{
+	asASSERT(m_classDecl);
+
+	// Initialize each member in the order they were declared. Skip members inherited 
+	// from a base class, as they will be taken care of by the base class' constructor
+	for (asUINT n = 0; n < outFunc->objectType->properties.GetLength(); n++)
+	{
+		asCObjectProperty* prop = outFunc->objectType->properties[n];
+
+		// Check if the property is inherited
+		asCScriptNode* declNode = 0;
+		for (asUINT m = 0; m < m_classDecl->propInits.GetLength(); m++)
+		{
+			if (m_classDecl->propInits[m].name == prop->name)
+			{
+				declNode = m_classDecl->propInits[m].declNode;
+				break;
+			}
+		}
+
+		// If declNode is null then the property was inherited
+		if (declNode)
+		{
+			// Add a line instruction with the position of the declaration
+			LineInstr(bc, declNode->tokenPos);
+
+			// Compile the initialization as a copy
+			asCExprContext ctx(engine);
+			CompileVariableAccess("other", "", &ctx, 0);
+			ctx.bc.Instr(asBC_RDSPtr);
+
+			// Code is similar to CompileExprPostOp for the ttDot operator
+			// TODO: cleanup: Make a reusable method for both CompileExprPostOp with ttDot and here
+			ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)prop->byteOffset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
+			if (prop->type.IsReference())
+				ctx.bc.Instr(asBC_RDSPtr);
+
+			// Reference to primitive must be stored in the temp register
+			if (prop->type.IsPrimitive())
+				ctx.bc.Instr(asBC_PopRPtr);
+
+			// Set the new type and make sure it is not treated as a variable anymore
+			ctx.type.dataType = prop->type;
+			ctx.type.dataType.MakeReference(true);
+			ctx.type.isVariable = false;
+			ctx.type.isTemporary = false;
+
+			if ((ctx.type.dataType.IsObject() || ctx.type.dataType.IsFuncdef()) && !ctx.type.dataType.IsObjectHandle())
+			{
+				// Objects that are members are not references
+				ctx.type.dataType.MakeReference(false);
+
+				// The object is safe (life time guaranteed) if the parent object is also safe
+			}
+			else if (ctx.type.dataType.IsObjectHandle())
+			{
+				// A object accessed through a handle cannot be considered safe,
+				// as it can be cleared at any time
+				ctx.type.isRefSafe = false;
+			}
+
+			asCExprContext tmp(engine);
+			asCDataType dt = prop->type;
+			CompileInitAsCopy(dt, prop->byteOffset, &tmp, &ctx, declNode, false, asVGM_MEMBER);
+			MergeExprBytecode(&ctx, &tmp);
+
+			ctx.bc.OptimizeLocally(tempVariableOffsets);
+			bc->AddCode(&ctx.bc);
+		}
+	}
+}
+
 void asCCompiler::CompileMemberInitialization(asCByteCode *bc, bool onlyDefaults)
 {
 	asASSERT( m_classDecl );
@@ -533,7 +708,7 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *bc, bool onlyDefaults
 			// Compile the initialization
 			asQWORD constantValue;
 			asCByteCode bcInit(engine);
-			CompileInitialization(initNode, &bcInit, prop->type, declNode, prop->byteOffset, &constantValue, 2);
+			CompileInitialization(initNode, &bcInit, prop->type, declNode, prop->byteOffset, &constantValue, asVGM_MEMBER);
 			bcInit.OptimizeLocally(tempVariableOffsets);
 			bc->AddCode(&bcInit);
 
@@ -625,7 +800,7 @@ int asCCompiler::CompileFunction(asCBuilder *in_builder, asCScriptCode *in_scrip
 						CompileMemberInitialization(&byteCode, false);
 					}
 					else
-						Error(TEXT_BASE_DOESNT_HAVE_DEF_CONSTR, blockBegin);
+						Error(TXT_BASE_DOESNT_HAVE_DEF_CONSTR, blockBegin);
 				}
 				else
 				{
@@ -712,7 +887,7 @@ int asCCompiler::CompileFunction(asCBuilder *in_builder, asCScriptCode *in_scrip
 	return 0;
 }
 
-int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCExprContext *ctx, asCExprContext *arg, asCScriptNode *node, bool isGlobalVar, bool derefDest)
+int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCExprContext *ctx, asCExprContext *arg, asCScriptNode *node, EVarGlobOrMem isVarGlobOrMem, bool derefDest)
 {
 	if( !type.IsObject() )
 		return 0;
@@ -739,7 +914,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 
 		if( func > 0 )
 		{
-			if( !isGlobalVar )
+			if( isVarGlobOrMem == asVGM_VARIABLE )
 			{
 				// Call factory and store the handle in the given variable
 				PerformFunctionCall(func, ctx, false, &args, CastToObjectType(type.GetTypeInfo()), true, offset);
@@ -751,10 +926,21 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 			{
 				// Call factory
 				PerformFunctionCall(func, ctx, false, &args, CastToObjectType(type.GetTypeInfo()));
-
-				// Store the returned handle in the global variable
 				ctx->bc.Instr(asBC_RDSPtr);
-				ctx->bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
+
+				if (isVarGlobOrMem == asVGM_GLOBAL)
+				{
+					// Store the returned handle in the global variable
+					ctx->bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
+				}
+				else
+				{
+					// Store the returned handle in the class member
+					ctx->bc.InstrSHORT(asBC_PSF, 0);
+					ctx->bc.Instr(asBC_RDSPtr);
+					ctx->bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
+				}
+
 				ctx->bc.InstrPTR(asBC_REFCPY, type.GetTypeInfo());
 				ctx->bc.Instr(asBC_PopPtr);
 				ReleaseTemporaryVariable(ctx->type.stackOffset, &ctx->bc);
@@ -770,21 +956,26 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 		if( func > 0 )
 		{
 			// Push the address where the object will be stored on the stack, before the argument
-			// TODO: When the context is serializable this probably has to be changed, since this
-			//       pointer can remain on the stack while the context is suspended. There is no
-			//       risk the pointer becomes invalid though, there is just no easy way to serialize it.
 			asCByteCode tmp(engine);
-			if( isGlobalVar )
+			if( isVarGlobOrMem == asVGM_GLOBAL )
 				ctx->bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
-			else if( isObjectOnHeap )
-				ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+			else if( isVarGlobOrMem == asVGM_VARIABLE )
+			{
+				if (isObjectOnHeap)
+					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+			}
+			else
+			{
+				ctx->bc.InstrSHORT(asBC_PSF, 0);
+				ctx->bc.Instr(asBC_RDSPtr);
+				ctx->bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
+			}
 			MergeExprBytecode(ctx, arg);
 
 			// When the object is allocated on the stack the object pointer
 			// must be pushed on the stack after the arguments
-			if( !isObjectOnHeap )
+			if( !isObjectOnHeap && isVarGlobOrMem == asVGM_VARIABLE )
 			{
-				asASSERT( !isGlobalVar );
 				ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
 				if( derefDest )
 				{
@@ -812,7 +1003,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 	return -1;
 }
 
-int asCCompiler::CallDefaultConstructor(const asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asCScriptNode *node, int isVarGlobOrMem, bool derefDest)
+int asCCompiler::CallDefaultConstructor(const asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asCScriptNode *node, EVarGlobOrMem isVarGlobOrMem, bool derefDest)
 {
 	if( !type.IsObject() || type.IsObjectHandle() )
 		return 0;
@@ -858,7 +1049,7 @@ int asCCompiler::CallDefaultConstructor(const asCDataType &type, int offset, boo
 				MoveArgsToStack(func, &ctx.bc, args, false);
 			}
 
-			if( isVarGlobOrMem == 0 )
+			if( isVarGlobOrMem == asVGM_VARIABLE )
 			{
 				// Call factory and store the handle in the given variable
 				PerformFunctionCall(func, &ctx, false, &args, CastToObjectType(type.GetTypeInfo()), true, offset);
@@ -881,7 +1072,7 @@ int asCCompiler::CallDefaultConstructor(const asCDataType &type, int offset, boo
 					ctx.bc.Instr(asBC_RDSPtr);
 				}
 
-				if( isVarGlobOrMem == 1 )
+				if( isVarGlobOrMem == asVGM_GLOBAL )
 				{
 					// Store the returned handle in the global variable
 					ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
@@ -971,7 +1162,7 @@ int asCCompiler::CallDefaultConstructor(const asCDataType &type, int offset, boo
 
 			if( !isObjectOnHeap )
 			{
-				if( isVarGlobOrMem == 0 )
+				if( isVarGlobOrMem == asVGM_VARIABLE )
 				{
 					// There is nothing to do if there is no function,
 					// as the memory is already allocated on the stack
@@ -991,7 +1182,7 @@ int asCCompiler::CallDefaultConstructor(const asCDataType &type, int offset, boo
 					// Mark the object as initialized
 					bc->ObjInfo(offset, asOBJ_INIT);
 				}
-				else if( isVarGlobOrMem == 2 )
+				else if( isVarGlobOrMem == asVGM_MEMBER )
 				{
 					// Only POD types can be allocated inline in script classes
 					asASSERT( type.GetTypeInfo()->flags & asOBJ_POD );
@@ -1015,9 +1206,9 @@ int asCCompiler::CallDefaultConstructor(const asCDataType &type, int offset, boo
 			}
 			else
 			{
-				if( isVarGlobOrMem == 0 )
+				if( isVarGlobOrMem == asVGM_VARIABLE )
 					bc->InstrSHORT(asBC_PSF, (short)offset);
-				else if( isVarGlobOrMem == 1 )
+				else if( isVarGlobOrMem == asVGM_GLOBAL )
 					bc->InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
 				else
 				{
@@ -1252,7 +1443,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *in_builder, asCScriptCode *in
 	// Compile the expression
 	asCExprContext ctx(engine);
 	asQWORD constantValue = 0;
-	if( CompileInitialization(in_node, &ctx.bc, in_gvar->datatype, in_gvar->declaredAtNode, in_gvar->index, &constantValue, 1, preCompiled ? &compiledCtx : 0) )
+	if( CompileInitialization(in_node, &ctx.bc, in_gvar->datatype, in_gvar->declaredAtNode, in_gvar->index, &constantValue, asVGM_GLOBAL, preCompiled ? &compiledCtx : 0) )
 	{
 		// Should the variable be marked as pure constant?
 		if( in_gvar->datatype.IsPrimitive() && in_gvar->datatype.IsReadOnly() )
@@ -1373,8 +1564,10 @@ void asCCompiler::DetermineSingleFunc(asCExprContext *ctx, asCScriptNode *node)
 	ctx->methodName = "";
 }
 
-void asCCompiler::CompileInitAsCopy(asCDataType &dt, int offset, asCExprContext *ctx, asCExprContext *arg, asCScriptNode *node, bool derefDestination)
+void asCCompiler::CompileInitAsCopy(asCDataType &dt, int offset, asCExprContext *ctx, asCExprContext *arg, asCScriptNode *node, bool derefDestination, EVarGlobOrMem isVarGlobOrMem)
 {
+	asASSERT(isVarGlobOrMem == asVGM_VARIABLE || isVarGlobOrMem == asVGM_MEMBER);
+
 	bool isObjectOnHeap = derefDestination ? false : IsVariableOnHeap(offset);
 
 	// Use copy constructor if available.
@@ -1382,7 +1575,7 @@ void asCCompiler::CompileInitAsCopy(asCDataType &dt, int offset, asCExprContext 
 	if(!dt.IsObjectHandle() && ot && (ot->beh.copyconstruct || ot->beh.copyfactory))
 	{
 		PrepareForAssignment(&dt, arg, node, true);
-		int r = CallCopyConstructor(dt, offset, isObjectOnHeap, ctx, arg, node, 0, derefDestination);
+		int r = CallCopyConstructor(dt, offset, isObjectOnHeap, ctx, arg, node, isVarGlobOrMem, derefDestination);
 		if( r < 0 && tempVariables.Exists(offset) )
 			Error(TXT_FAILED_TO_CREATE_TEMP_OBJ, node);
 	}
@@ -1393,7 +1586,7 @@ void asCCompiler::CompileInitAsCopy(asCDataType &dt, int offset, asCExprContext 
 
 		// Allocate and construct the temporary object before whatever is already in the bytecode
 		asCByteCode tmpBC(engine);
-		int r = CallDefaultConstructor(dt, offset, isObjectOnHeap, &tmpBC, node, 0, derefDestination);
+		int r = CallDefaultConstructor(dt, offset, isObjectOnHeap, &tmpBC, node, isVarGlobOrMem, derefDestination);
 		if( r < 0 )
 		{
 			if( tempVariables.Exists(offset) )
@@ -1418,9 +1611,22 @@ void asCCompiler::CompileInitAsCopy(asCDataType &dt, int offset, asCExprContext 
 		if( dt.IsObjectHandle() )
 			type.isExplicitHandle = true;
 
-		ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-		if( derefDestination )
+		if (isVarGlobOrMem == asVGM_VARIABLE)
+		{
+			ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+			if (derefDestination)
+				ctx->bc.Instr(asBC_RDSPtr);
+		}
+		else if (isVarGlobOrMem == asVGM_MEMBER)
+		{
+			ctx->bc.InstrSHORT(asBC_PSF, 0);
 			ctx->bc.Instr(asBC_RDSPtr);
+			ctx->bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
+			if( !(dt.IsObjectHandle() || dt.IsObject()) )
+				ctx->bc.Instr(asBC_PopRPtr);
+		}
+		else
+			asASSERT(false);
 
 		r = PerformAssignment(&type, &arg->type, &ctx->bc, node);
 		if( r < 0 )
@@ -2832,13 +3038,13 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		if( node == 0 || node->nodeType == snIdentifier )
 		{
 			// Initialize with default constructor
-			CompileInitialization(0, bc, type, varNode, offset, 0, 0);
+			CompileInitialization(0, bc, type, varNode, offset, 0, asVGM_VARIABLE);
 		}
 		else
 		{
 			// Compile the initialization expression
 			asQWORD constantValue = 0;
-			if( CompileInitialization(node, bc, type, varNode, offset, &constantValue, 0, preCompiled ? &compiledCtx : 0) )
+			if( CompileInitialization(node, bc, type, varNode, offset, &constantValue, asVGM_VARIABLE, preCompiled ? &compiledCtx : 0) )
 			{
 				// Check if the variable should be marked as pure constant
 				if( type.IsPrimitive() && type.IsReadOnly() )
@@ -2856,7 +3062,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 }
 
 // Returns true if the initialization expression is a constant expression
-bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, const asCDataType &type, asCScriptNode *errNode, int offset, asQWORD *constantValue, int isVarGlobOrMem, asCExprContext *preCompiled)
+bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, const asCDataType &type, asCScriptNode *errNode, int offset, asQWORD *constantValue, EVarGlobOrMem isVarGlobOrMem, asCExprContext *preCompiled)
 {
 	bool isConstantExpression = false;
 	if( node && node->nodeType == snArgList )
@@ -3181,11 +3387,11 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 			asCExprContext ctx(engine);
 
 			// Call the default constructor here
-			if( isVarGlobOrMem == 0 )
+			if( isVarGlobOrMem == asVGM_VARIABLE )
 				CallDefaultConstructor(type, offset, IsVariableOnHeap(offset), &ctx.bc, errNode);
-			else if( isVarGlobOrMem == 1 )
+			else if( isVarGlobOrMem == asVGM_GLOBAL )
 				CallDefaultConstructor(type, offset, true, &ctx.bc, errNode, isVarGlobOrMem);
-			else if( isVarGlobOrMem == 2 )
+			else if( isVarGlobOrMem == asVGM_MEMBER )
 				CallDefaultConstructor(type, offset, type.IsReference(), &ctx.bc, errNode, isVarGlobOrMem);
 
 			if( r >= 0 )
@@ -3372,11 +3578,11 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 		asASSERT( node == 0 );
 
 		// Call the default constructor here, as no explicit initialization is done
-		if( isVarGlobOrMem == 0 )
+		if( isVarGlobOrMem == asVGM_VARIABLE )
 			CallDefaultConstructor(type, offset, IsVariableOnHeap(offset), bc, errNode);
-		else if( isVarGlobOrMem == 1 )
+		else if( isVarGlobOrMem == asVGM_GLOBAL )
 			CallDefaultConstructor(type, offset, true, bc, errNode, isVarGlobOrMem);
-		else if( isVarGlobOrMem == 2 )
+		else if( isVarGlobOrMem == asVGM_MEMBER )
 		{
 			if( !(type.IsObject() || type.IsFuncdef()) || type.IsReference() || (type.GetTypeInfo()->flags & asOBJ_REF) )
 				CallDefaultConstructor(type, offset, true, bc, errNode, isVarGlobOrMem);
@@ -9096,7 +9302,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asCExprContext *ctx)
 
 					temp.SetVariable(temp.dataType, offset, true);
 
-					// TODO: copy: Use copy constructor if available. See PrepareTemporaryVariable()
+					// TODO: copy: Use copy constructor if available. See PrepareTemporaryVariable() or CompileInitAsCopy()
 
 					CallDefaultConstructor(temp.dataType, offset, IsVariableOnHeap(offset), &ctx->bc, expr);
 
@@ -9319,7 +9525,7 @@ int asCCompiler::CompileAnonymousInitList(asCScriptNode *node, asCExprContext *c
 
 	// Allocate and initialize the temporary object
 	int offset = AllocateVariable(dt, true);
-	CompileInitialization(node, &ctx->bc, dt, node, offset, 0, 0);
+	CompileInitialization(node, &ctx->bc, dt, node, offset, 0, asVGM_VARIABLE);
 
 	// Push the reference to the object on the stack
 	ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
@@ -13052,9 +13258,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ct
 
 					// Reference to primitive must be stored in the temp register
 					if( prop->type.IsPrimitive() )
-					{
 						ctx->bc.Instr(asBC_PopRPtr);
-					}
 
 					// Keep information about temporary variables as deferred expression
 					if( ctx->type.isTemporary )

@@ -948,6 +948,7 @@ bool Test()
 			mod->AddScriptSection("script", 
 				"class C \n"
 				"{ \n"
+				"  C() {}\n" // explicitly define default constructor to avoid auto generated copy constructor
 				"  B b; \n"
 				"  B@ get_a() property { return b; } \n"
 				"  void set_a(B@ value) property { } \n"

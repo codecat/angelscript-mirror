@@ -52,7 +52,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 </ul>
 <li>Script language
 <ul>
-<li>A default copy opAssign method is always provided for script classes
+<li>A default copy opAssign method is always provided for script classes if none has been explicitly defined
+<li>A default copy constructor is always provided for script classes unless any constructor is explicitly defined (Thanks Patrick Jeeves)
 <li>An implicit conversion to primitive of same type by different size takes precedent over change in sign in function matching
 </ul>
 <li>Add-ons &amp; Samples

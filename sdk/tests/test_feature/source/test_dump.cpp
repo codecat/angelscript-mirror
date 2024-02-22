@@ -287,6 +287,7 @@ void DumpModule(asIScriptModule *mod)
 		"func: void Test()\n"
 		"type: class A : I\n"
 		" A@ A()\n"
+		" A@ A(const A&inout)\n"
 		" void i(float)\n"
 		" void a(int)\n"
 		" float f\n"

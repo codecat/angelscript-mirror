@@ -60,7 +60,7 @@ void Get(asIScriptGeneric *gen)
 	gen->SetReturnDWord(false);
 }
 
-static CScriptString *g_test = new CScriptString("test");
+static CScriptString *g_test = 0;
 void GetConstStringRef(asIScriptGeneric *gen)
 {
 	gen->SetReturnAddress(g_test);
@@ -267,6 +267,7 @@ bool Test()
 
 
 		// Test string copy constructor
+		g_test = new CScriptString("test");
 		r = ExecuteString(engine, "string tst(getconststringref()); print(tst);");
 		if (r != asEXECUTION_FINISHED) TEST_FAILED;
 		if (printOutput != "test") TEST_FAILED;

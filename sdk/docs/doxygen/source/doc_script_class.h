@@ -58,7 +58,7 @@ implemented for different forms of initializations.
     }
 
     // Implement the copy constructor
-    MyClass(const MyClass &in other)
+    MyClass(const MyClass &inout other)
     {
       // Copy the value of the other instance
     }
@@ -97,6 +97,8 @@ emitted.
 How the members shall be initialized can also be defined directly in the declaration of the 
 members. When this is done the initialization expression will automatically be compiled in the 
 constructor without the need to write the initialization again. 
+
+\todo Describe auto generated constructors
 
 \see \ref doc_script_class_memberinit, \ref doc_script_class_conv
 

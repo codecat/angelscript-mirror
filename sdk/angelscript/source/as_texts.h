@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2023 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -50,7 +50,8 @@
 
 #define TXT_BOTH_MUST_BE_SAME                     "Can't find unambiguous implicit conversion to make both expressions have the same type"
 #define TXT_BOTH_CONDITIONS_MUST_CALL_CONSTRUCTOR "Both conditions must call constructor"
-#define TEXT_BASE_DOESNT_HAVE_DEF_CONSTR          "Base class doesn't have default constructor. Make explicit call to base constructor"
+#define TXT_BASE_DOESNT_HAVE_DEF_CONSTR           "Base class doesn't have default constructor. Make explicit call to base constructor"
+#define TXT_BASE_DOESNT_HAVE_CPY_CONSTR_OR_DEF_CONSTR  "Base class doesn't have copy constructor or default constructor and assign operator. Make explicit call to base constructor"
 
 #define TXT_CANDIDATES_ARE                         "Candidates are:"
 #define TXT_CANNOT_CALL_CONSTRUCTOR_IN_LOOPS       "Can't call a constructor in loops"
@@ -73,6 +74,7 @@
 #define TXT_CHANGE_SIGN                            "Implicit conversion changed sign of value"
 #define TXT_CLASS_CANT_BE_FINAL_AND_ABSTRACT       "A class cannot be both abstract and final"
 #define TXT_COMPILING_s                            "Compiling %s"
+#define TXT_COMPILING_AUTO_s                       "Compiling auto generated %s"
 #define TXT_COMPOUND_ASGN_ON_VALUE_TYPE            "Compound assignments with property accessors on value types are not supported"
 #define TXT_COMPOUND_ASGN_WITH_IDX_PROP            "Compound assignments with indexed property accessors are not supported"
 #define TXT_COMPOUND_ASGN_REQUIRE_GET_SET          "Compound assignments with property accessors require both get and set accessors"

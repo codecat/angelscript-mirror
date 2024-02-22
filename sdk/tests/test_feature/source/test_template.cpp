@@ -1284,7 +1284,9 @@ bool Test()
 		r = mod->Build();
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "mod (1, 7) : Info    : Compiling T::T()\n"
+		if( bout.buffer != "mod (1, 7) : Info    : Compiling auto generated T::T()\n"
+						   "mod (1, 23) : Error   : No default constructor for object of type 'MyTmpl'.\n"
+						   "mod (1, 7) : Info    : Compiling auto generated T::T(const T&inout)\n"
 						   "mod (1, 23) : Error   : No default constructor for object of type 'MyTmpl'.\n"
 						   "mod (2, 26) : Info    : Compiling S::S()\n"
 						   "mod (2, 34) : Error   : No appropriate opAssign method found in 'MyTmpl' for value assignment\n"

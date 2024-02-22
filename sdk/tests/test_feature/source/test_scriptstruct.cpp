@@ -90,6 +90,7 @@ bool Test_main()
     // Compile the script code
 	const char* scriptStr=
 			"class Bar {"
+			"       Bar() {}"  // explicitly define default constructor to avoid auto generated copy constructor
 			"       private Foo foo;"
 			"       void method(){"
 			"               print(666);"
@@ -102,13 +103,16 @@ bool Test_main()
     if( r < 0 )
 		TEST_FAILED;
 
-	// Create the script object with the Foo member
-	createBar();
+	if (r >= 0)
+	{
+		// Create the script object with the Foo member
+		createBar();
 
-	// Now release the created script object so that it is destroyed, which will
-	// trigger Foo to attempt to access the object from within the destructor
-	// of asCScriptObject
-	gBar->Release();
+		// Now release the created script object so that it is destroyed, which will
+		// trigger Foo to attempt to access the object from within the destructor
+		// of asCScriptObject
+		gBar->Release();
+	}
 
 	if( bout.buffer != " (0, 0) : Error   : The script object of type 'Bar' is being resurrected illegally during destruction\n" )
 	{
@@ -772,7 +776,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "test (8, 7) : Info    : Compiling B::B()\n"
+		if( bout.buffer != "test (8, 7) : Info    : Compiling auto generated B::B()\n"
                            "test (10, 26) : Error   : No matching symbol 'en_B'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
@@ -960,8 +964,10 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "test (7, 7) : Info    : Compiling Bar::Bar()\n"
+		if( bout.buffer != "test (7, 7) : Info    : Compiling auto generated Bar::Bar()\n"
 						   "test (7, 7) : Error   : Base class doesn't have default constructor. Make explicit call to base constructor\n"
+						   "test (7, 7) : Info    : Compiling auto generated Bar::Bar(const Bar&inout)\n"
+						   "test (7, 7) : Error   : Base class doesn't have copy constructor or default constructor and assign operator. Make explicit call to base constructor\n"
 						   "test (15, 3) : Info    : Compiling Bar2::Bar2()\n"
 						   "test (15, 10) : Error   : Base class doesn't have default constructor. Make explicit call to base constructor\n" )
 		{
@@ -1227,7 +1233,7 @@ bool Test()
 		r = mod->Build();
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "test2 (1, 7) : Info    : Compiling T::T()\n"
+		if( bout.buffer != "test2 (1, 7) : Info    : Compiling auto generated T::T()\n"
 		                   "test (2, 11) : Error   : No matching symbol 'func'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
@@ -1967,9 +1973,9 @@ bool Test()
 		engine->Release();
 	}
 
-	// Default constructor shouldn't be provided if a non-default constructor is implemented
+	// Default constructor and copy constructor shouldn't be provided if a non-default constructor is implemented
 	// Default copy (opAssign) is still provided even if there is a constructor implemented
-	// Default constructor and default copy is provided if no constructor is implemented, but no default copy constructor
+	// Default constructor, copy constructor, and default copy is provided if no constructor is implemented
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -1992,7 +1998,7 @@ bool Test()
 			"  CBar2 a2; \n" // ok
 			"  CBar2 c2 = CBar2(); \n" // ok
 			"  a2 = a2; \n" // ok
-			"  CBar2 d2(CBar2()); \n" // not ok
+			"  CBar2 d2(CBar2()); \n" // ok
 			"}; \n";
 
 		mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
@@ -2008,10 +2014,7 @@ bool Test()
 						   "script (12, 8) : Error   : No default constructor for object of type 'CBar'.\n"
 						   "script (14, 10) : Error   : No matching signatures to 'CBar()'\n"
 						   "script (14, 10) : Info    : Candidates are:\n"
-						   "script (14, 10) : Info    : CBar@ CBar(int a)\n"
-						   "script (18, 11) : Error   : No matching signatures to 'CBar2(CBar2@&)'\n"
-						   "script (18, 11) : Info    : Candidates are:\n"
-						   "script (18, 11) : Info    : CBar2@ CBar2()\n")
+						   "script (14, 10) : Info    : CBar@ CBar(int a)\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -2020,10 +2023,7 @@ bool Test()
 		engine->Release();
 	}
 
-	// Default constructor shouldn't be provided if a non-default constructor is implemented
-	// Default copy (opAssign) is still provided even if there is a constructor implemented
 	// inverted behaviour with engine properties
-	// Default constructor and default copy is provided if no constructor is implemented, but no default copy constructor
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -2042,13 +2042,13 @@ bool Test()
 			"{ \n"
 			"  CBar a; \n" // ok
 			"  CBar b(1); \n" // ok
-			"  CBar c = CBar(1); \n" // not ok
+			"  CBar c = CBar(1); \n" // ok
 			"  b = b; \n" // not ok
-			"  CBar d(CBar()); \n" // not ok
+			"  CBar d(CBar()); \n" // ok
 			"  CBar2 a2; \n" // ok
 			"  CBar2 c2 = CBar2(); \n" // ok
 			"  a2 = a2; \n" // ok
-			"  CBar2 d2(CBar2()); \n" // not ok
+			"  CBar2 d2(CBar2()); \n" // ok
 			"}; \n";
 
 		mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
@@ -2061,15 +2061,7 @@ bool Test()
 
 		if (bout.buffer != 
 			"script (8, 1) : Info    : Compiling void func()\n"
-			"script (12, 8) : Error   : No appropriate opAssign method found in 'CBar' for value assignment\n"
-			"script (13, 5) : Error   : No appropriate opAssign method found in 'CBar' for value assignment\n"
-			"script (14, 9) : Error   : No matching signatures to 'CBar(CBar@&)'\n"
-			"script (14, 9) : Info    : Candidates are:\n"
-			"script (14, 9) : Info    : CBar@ CBar()\n"
-			"script (14, 9) : Info    : CBar@ CBar(int a)\n"
-			"script (18, 11) : Error   : No matching signatures to 'CBar2(CBar2@&)'\n"
-			"script (18, 11) : Info    : Candidates are:\n"
-			"script (18, 11) : Info    : CBar2@ CBar2()\n")
+			"script (13, 5) : Error   : No appropriate opAssign method found in 'CBar' for value assignment\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

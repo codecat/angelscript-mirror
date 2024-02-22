@@ -113,6 +113,12 @@ If this flag is set to true, the compiler will always provide a default construc
 by the script. Normally this option is not recommended, because if a script class provides a non-default constructor but not the 
 default constructor it is most likely because it is desired that the class should always be initialized with the non-default constructor.
 
+\todo A default copy constructor is also provided
+
+\ref asEP_ALWAYS_IMPL_DEFAULT_COPY
+
+\todo Describe this
+
 \ref asEP_ALTER_SYNTAX_NAMED_ARGS
 
 If this flag is set to 1 or 2 the compiler will accept the '=' instead of ':' for \ref function "naming arguments in function calls". 

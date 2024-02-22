@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2023 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -763,28 +763,26 @@ void asCBuilder::ParseScripts()
 				}
 			}
 
-			// Compile the default constructor if the script has no defined constructors
-			if( ot->beh.construct == engine->scriptTypeBehaviours.beh.construct )
+			// Add the default constructors if needed
+			if (((ot->beh.construct == engine->scriptTypeBehaviours.beh.construct && ot->beh.constructors.GetLength() == 1)) || 
+				engine->ep.alwaysImplDefaultConstruct)
 			{
-				if( ot->beh.constructors.GetLength() == 1 || engine->ep.alwaysImplDefaultConstruct )
+				AddDefaultConstructor(ot, decl->script);
+				AddDefaultCopyConstructor(ot, decl->script);
+			}
+
+			// If the default constructor has not been generated now, then release the dummy 
+			if (ot->beh.construct == engine->scriptTypeBehaviours.beh.construct)
+			{
+				engine->scriptFunctions[ot->beh.construct]->ReleaseInternal();
+				ot->beh.construct = 0;
+				ot->beh.constructors.RemoveIndex(0);
+				
+				if (ot->beh.factory)
 				{
-					AddDefaultConstructor(ot, decl->script);
-				}
-				else
-				{
-					// As the class has another constructor we shouldn't provide the default constructor
-					if( ot->beh.construct )
-					{
-						engine->scriptFunctions[ot->beh.construct]->ReleaseInternal();
-						ot->beh.construct = 0;
-						ot->beh.constructors.RemoveIndex(0);
-					}
-					if( ot->beh.factory )
-					{
-						engine->scriptFunctions[ot->beh.factory]->ReleaseInternal();
-						ot->beh.factory = 0;
-						ot->beh.factories.RemoveIndex(0);
-					}
+					engine->scriptFunctions[ot->beh.factory]->ReleaseInternal();
+					ot->beh.factory = 0;
+					ot->beh.factories.RemoveIndex(0);
 				}
 			}
 		}
@@ -956,12 +954,23 @@ void asCBuilder::CompileFunctions()
 				current->script->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
 			asCString str = func->GetDeclarationStr();
-			str.Format(TXT_COMPILING_s, str.AddressOf());
+			str.Format(TXT_COMPILING_AUTO_s, str.AddressOf());
 			WriteInfo(current->script->name, str, r, c, true);
 
-			// This is the default constructor that is generated
-			// automatically if not implemented by the user.
-			compiler.CompileDefaultConstructor(this, current->script, node, func, classDecl);
+			if (func->parameterTypes.GetLength() == 0)
+			{
+				// This is the default constructor that is generated
+				// automatically if not implemented by the user.
+				compiler.CompileDefaultConstructor(this, current->script, node, func, classDecl);
+			}
+			else
+			{
+				asASSERT(func->parameterTypes.GetLength() == 1 && func->parameterTypes[0].GetTypeInfo() == current->objType);
+
+				// This is the default copy constructor that is generated
+				// automatically if not implemented by the user.
+				compiler.CompileDefaultCopyConstructor(this, current->script, node, func, classDecl);
+			}
 
 			engine->preMessage.isSet = false;
 		}
@@ -4255,8 +4264,81 @@ bool asCBuilder::DoesMethodExist(asCObjectType *objType, int methodId, asUINT *m
 	return false;
 }
 
+void asCBuilder::AddDefaultCopyConstructor(asCObjectType* objType, asCScriptCode* file)
+{
+	// Check if a copy constructor does not already exist, in which case this should be skipped
+	for (asUINT n = 0; n < objType->beh.constructors.GetLength(); n++)
+	{
+		asCScriptFunction* func = engine->scriptFunctions[objType->beh.constructors[n]];
+		if (func && func->parameterTypes.GetLength() == 1 && func->parameterTypes[0].GetTypeInfo() == objType)
+			return;
+	}
+
+	int funcId = engine->GetNextScriptFunctionId();
+
+	asCDataType returnType = asCDataType::CreatePrimitive(ttVoid, false);
+	asCArray<asCDataType> parameterTypes;
+	asCArray<asETypeModifiers> inOutFlags;
+	asCArray<asCString*> defaultArgs;
+	asCArray<asCString> parameterNames;
+
+	parameterTypes.PushLast(asCDataType::CreateType(objType, true));
+	parameterTypes[0].MakeReference(true);
+	parameterNames.PushLast("other");
+	inOutFlags.PushLast(asTM_INOUTREF);
+	defaultArgs.PushLast(0);
+
+	// Add the script function
+	// TODO: declaredAt should be set to where the class has been declared
+	module->AddScriptFunction(file->idx, 0, funcId, objType->name, returnType, parameterTypes, parameterNames, inOutFlags, defaultArgs, false, objType, false, asSFunctionTraits(), objType->nameSpace);
+
+	// Add it as constructor
+	objType->beh.constructors.PushLast(funcId);
+	asASSERT(objType->beh.copyconstruct == 0);
+	objType->beh.copyconstruct = funcId;
+	engine->scriptFunctions[funcId]->AddRefInternal();
+
+	// The bytecode for the default constructor will be generated
+	// only after the potential inheritance has been established
+	sFunctionDescription* func = asNEW(sFunctionDescription);
+	if (func == 0)
+	{
+		// Out of memory
+		return;
+	}
+
+	functions.PushLast(func);
+
+	func->script = file;
+	func->node = 0;
+	func->name = objType->name;
+	func->objType = objType;
+	func->funcId = funcId;
+	func->isExistingShared = false;
+
+	// Add a factory as well
+	funcId = engine->GetNextScriptFunctionId();
+	objType->beh.factories.PushLast(funcId);
+	objType->beh.copyfactory = funcId;
+	returnType = asCDataType::CreateObjectHandle(objType, false);
+	// TODO: should be the same as the constructor
+	module->AddScriptFunction(file->idx, 0, funcId, objType->name, returnType, parameterTypes, parameterNames, inOutFlags, defaultArgs, false);
+	functions.PushLast(0);
+	asCCompiler compiler(engine);
+	compiler.CompileFactory(this, file, engine->scriptFunctions[funcId]);
+	engine->scriptFunctions[funcId]->AddRefInternal();
+
+	// If the object is shared, then the factory must also be marked as shared
+	if (objType->flags & asOBJ_SHARED)
+		engine->scriptFunctions[funcId]->SetShared(true);
+}
+
 void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *file)
 {
+	// Check if a default constructor does not already exist, in which case this should be skipped
+	if (objType->beh.construct != engine->scriptTypeBehaviours.beh.construct)
+		return;
+
 	int funcId = engine->GetNextScriptFunctionId();
 
 	asCDataType returnType = asCDataType::CreatePrimitive(ttVoid, false);

@@ -78,7 +78,7 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 	int r;
-/*
+
 	// Test auto generated copy constructor
 	// Reported by Patrick Jeeves
 	{
@@ -87,12 +87,22 @@ bool Test()
 		bout.buffer = "";
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
+		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod->AddScriptSection(TESTNAME, 
-			"class foo\n"
+		mod->AddScriptSection(TESTNAME,
+			"class bar\n"
+			"{ \n"
+			"  int inherited = 104; \n"
+			"} \n"
+			"class foo : bar\n"
 			"{\n"
 			"	foo@ thisWorks() { foo f = this; return f; }\n"
-			"	foo@ thisDoesnt() { return foo(this); }\n"
+			"   foo@ soDoesThis() { foo f(); f = this; return f; }\n"
+			"	foo@ asDoesThis() { return foo(this); }\n"
+			"   int value = 42; \n"
 			"}\n");
 		r = mod->Build();
 		if (r < 0)
@@ -104,11 +114,28 @@ bool Test()
 			TEST_FAILED;
 		}
 
+		r = ExecuteString(engine, "foo f; f.value = 13; f.inherited = 31; foo @g = f.thisWorks(); assert( g.value == 13 ); assert( g.inherited == 31 );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		r = ExecuteString(engine, "foo f; f.value = 13; f.inherited = 31; foo @g = f.soDoesThis(); assert( g.value == 13 ); assert( g.inherited == 31 );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		r = ExecuteString(engine, "foo f; f.value = 13; f.inherited = 31; foo @g = f.asDoesThis(); assert( g.value == 13 ); assert( g.inherited == 31 );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		engine->ShutDownAndRelease();
 	}
-
+/*
 	// Test initialization of member of type that has copy constructur but not assignment operator (possible in C++, but not in AngelScript)
 	// TODO: To support this, I would have to implement the syntax like C++ where the initialization of members are given outside the constructor body
+	// TODO: Alternatively, make the constructors use CompileInitAsCopy on the first assignment of a member (I like this better)
 	// Reported by Patrick Jeeves
 	{
 		engine = asCreateScriptEngine();
@@ -203,14 +230,14 @@ bool Test()
 		if (a != 8 || b != 11)
 			TEST_FAILED;
 
-		/*
-			mod->AddScriptSection(0, TESTNAME, script3, strlen(script3));
-			mod->Build(0);
+		
+		//	mod->AddScriptSection(0, TESTNAME, script3, strlen(script3));
+		//	mod->Build(0);
 
-			if( out.buffer != "TestConstructor (1, 12) : Info    : Compiling obj* g_obj4\n"
-							  "TestConstructor (1, 12) : Error   : Only objects have constructors\n" )
-				TEST_FAILED;
-		*/
+		//	if( out.buffer != "TestConstructor (1, 12) : Info    : Compiling obj* g_obj4\n"
+		//					  "TestConstructor (1, 12) : Error   : Only objects have constructors\n" )
+		//		TEST_FAILED;
+		
 		bout.buffer = "";
 		mod->AddScriptSection(TESTNAME, script4, strlen(script4));
 		mod->Build();
