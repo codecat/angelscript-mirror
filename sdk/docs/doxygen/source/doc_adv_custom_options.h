@@ -115,9 +115,13 @@ default constructor it is most likely because it is desired that the class shoul
 
 \todo A default copy constructor is also provided
 
+\ref asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCTOR
+
+\todo Describe this, backwards compatiblity with pre-2.37.0
+
 \ref asEP_ALWAYS_IMPL_DEFAULT_COPY
 
-\todo Describe this
+\todo Describe this, backwards compatiblity with pre-2.37.0
 
 \ref asEP_ALTER_SYNTAX_NAMED_ARGS
 

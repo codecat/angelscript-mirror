@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.37.0 WIP - 2024/02/19</h2>
+<h2>Version 2.37.0 WIP - 2024/02/24</h2>
 
 <ul>
 <li>Bug fixes
@@ -42,6 +42,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Improved runtime performance with gnuc or clang compilers by using computed goto extension (Thanks Patrick Jeeves)
 <li>as_config.h now has configuration to detect Linux with RISC-V 64bit CPU (Thanks Vixea 0)
 <li>asEP_ALWAYS_IMPL_DEFAULT_COPY can be set to false to tell compiler only to implement default copy if no constructor is defined for script class
+<li>asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT can be set to false to tell compiler not to implement default copy constructor when the default destructor is auto generated
 </ul>
 <li>Library interface
 <ul>

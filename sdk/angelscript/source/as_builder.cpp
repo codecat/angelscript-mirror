@@ -768,7 +768,12 @@ void asCBuilder::ParseScripts()
 				engine->ep.alwaysImplDefaultConstruct)
 			{
 				AddDefaultConstructor(ot, decl->script);
-				AddDefaultCopyConstructor(ot, decl->script);
+
+				// The copy constructor is only added if the default constructor is also added,
+				// unless the application has requested to turn off the addition of copy constructor to
+				// keep backwards compatibility with versions earlier than 2.37.0
+				if( engine->ep.alwaysImplDefaultCopyConstruct )
+					AddDefaultCopyConstructor(ot, decl->script);
 			}
 
 			// If the default constructor has not been generated now, then release the dummy 

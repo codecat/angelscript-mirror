@@ -468,6 +468,10 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		ep.alwaysImplDefaultCopy = value ? true : false;
 		break;
 
+	case asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT:
+		ep.alwaysImplDefaultCopyConstruct = value ? true : false;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -588,6 +592,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 	case asEP_ALWAYS_IMPL_DEFAULT_COPY:
 		return ep.alwaysImplDefaultCopy;
 
+	case asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT:
+		return ep.alwaysImplDefaultCopyConstruct;
+
 	default:
 		return 0;
 	}
@@ -662,6 +669,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.disableScriptClassGC          = false;
 		ep.jitInterfaceVersion           = 1;         // 1 = JIT compiler uses asJITCompiler, 2 = JIT compiler uses asJITCompilerV2
 		ep.alwaysImplDefaultCopy         = true;
+		ep.alwaysImplDefaultCopyConstruct = true;
 	}
 
 	gc.engine = this;
