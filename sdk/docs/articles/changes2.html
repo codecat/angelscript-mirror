@@ -32,6 +32,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug in compiler that allowed passing string literal to function as non-const references with unsafe references turned on (Thanks Raphtaliyah)
 <li>Fixed bug in native calling convention for arm64 with ?&amp; arguments (Thanks Alexander Orefkov)
 <li>Fixed crash if passing negative value to GetTypeInfoById
+<li>asCDataType::GetSizeInMemoryBytes was not returning the correct size of handles (Thanks Rob McDonald)
 </ul>
 <li>Library
 <ul>

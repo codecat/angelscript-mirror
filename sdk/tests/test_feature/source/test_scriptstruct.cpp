@@ -2016,8 +2016,11 @@ bool Test()
 	} */
 
 	// Default constructor shouldn't be provided if a non-default constructor is implemented
+	//  - ref: https://en.cppreference.com/w/cpp/language/default_constructor
 	// Default copy (opAssign) is still provided even if there is no opAssign implemented
+	//  - ref: https://en.cppreference.com/w/cpp/language/copy_assignment
 	// Default copy constructor is provided if no copy constructor is implemented
+	//	-ref: https://en.cppreference.com/w/cpp/language/copy_constructor
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
