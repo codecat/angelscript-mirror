@@ -936,7 +936,7 @@ doesn't match the stored handle the returned pointer will be null.
 To retrieve an object of an unknown type use the GetType() or GetTypeId() to
 determine the type stored in the handle, then use the Cast() method.
 
-
+\todo Show example of returning a dynamically registered function from application
 
 
 

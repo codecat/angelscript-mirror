@@ -83,6 +83,23 @@ CScriptArray* getEntities(unsigned int a)
 	return arr;
 }
 
+bool called = false;
+void dynamicFunction()
+{
+	called = true;
+}
+
+CScriptHandle getDynamicFunction()
+{
+	asIScriptContext* ctx = asGetActiveContext();
+	asIScriptEngine *engine = ctx->GetEngine();
+	int funcId = engine->RegisterGlobalFunction("void dynamicFunction()", asFUNCTION(dynamicFunction), asCALL_CDECL);
+	asIScriptFunction* func = engine->GetFunctionById(funcId);
+	CScriptHandle ref;
+	ref.Set(func, engine->GetTypeInfoById(func->GetTypeId()));
+	return ref;
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -91,6 +108,43 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
+
+	// Test returning a newly registered function 
+	// https://www.gamedev.net/forums/topic/715598-calling-a-dll-function/
+	{
+		engine = asCreateScriptEngine();
+		RegisterScriptHandle(engine);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterGlobalFunction("ref @getDynamicFunction()", asFUNCTION(getDynamicFunction), asCALL_CDECL);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void func(); \n"
+			"void main() { \n"
+			"  func @f = cast<func>(getDynamicFunction()); \n"
+			"  f(); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (!called)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test that AssignScriptObject correctly fails for CScriptHandle
 	{

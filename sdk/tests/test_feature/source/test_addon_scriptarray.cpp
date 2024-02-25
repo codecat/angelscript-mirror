@@ -212,6 +212,99 @@ static void print(asIScriptGeneric *gen)
 	ctx->PopState();
 }
 
+static bool testVal = false;
+static bool called = false;
+
+static float  t1 = 0;
+static float  t2 = 0;
+static double t3 = 0;
+static float  t4 = 0;
+
+template < class T >
+void FillASArray(std::vector < T >& in, CScriptArray* out)
+{
+	out->Resize((asUINT)in.size());
+	for (int i = 0; i < (int)in.size(); i++)
+	{
+		out->SetValue(i, &in[i]);
+	}
+}
+
+template < class T >
+void FillSTLVector(CScriptArray* in, std::vector < T >& out)
+{
+	out.resize(in->GetSize());
+	for (int i = 0; i < (int)in->GetSize(); i++)
+	{
+		out[i] = *(T*)(in->At(i));
+	}
+}
+
+void doCalculations(const std::string& /* geom_id */, const int& /* surf_indx */, const std::vector < double >& us, const std::vector < double >& ws, std::vector < double >& k1_out_vec, std::vector < double >& k2_out_vec, std::vector < double >& ka_out_vec, std::vector < double >& kg_out_vec)
+{
+	called = true;
+
+	k1_out_vec.resize(0);
+	k2_out_vec.resize(0);
+	ka_out_vec.resize(0);
+	kg_out_vec.resize(0);
+
+	if (us.size() == ws.size())
+	{
+		k1_out_vec.resize(us.size());
+		k2_out_vec.resize(us.size());
+		ka_out_vec.resize(us.size());
+		kg_out_vec.resize(us.size());
+
+		for (int i = 0; i < us.size(); i++)
+		{
+			k1_out_vec[i] = us[i];
+			k2_out_vec[i] = ws[i];
+			ka_out_vec[i] = us[i] * ws[i];
+			kg_out_vec[i] = us[i] / ws[i];
+
+			// Store last calculated value for checking later.
+			t1 = (float)k1_out_vec[i];
+			t2 = (float)k2_out_vec[i];
+			t3 = ka_out_vec[i];
+			t4 = (float)kg_out_vec[i];
+		}
+	}
+
+	double eps = 1e-4;
+	testVal = (std::abs(t1 - 0.833333) < eps) &&
+		(std::abs(t2 - 0.166667) < eps) &&
+		(std::abs(t3 - 0.138889) < eps) &&
+		(std::abs(t4 - 5.000000) < eps);
+}
+
+
+class TestClass
+{
+public:
+	void cfunction(const std::string& geom_id, const int& surf_indx, CScriptArray* us, CScriptArray* ws, CScriptArray* k1s,
+		CScriptArray* k2s, CScriptArray* kas, CScriptArray* kgs)
+	{
+		std::vector < double > in_us;
+		FillSTLVector(us, in_us);
+
+		std::vector < double > in_ws;
+		FillSTLVector(ws, in_ws);
+
+		std::vector < double > out_k1s;
+		std::vector < double > out_k2s;
+		std::vector < double > out_kas;
+		std::vector < double > out_kgs;
+
+		doCalculations(geom_id, surf_indx, in_us, in_ws, out_k1s, out_k2s, out_kas, out_kgs);
+
+		FillASArray(out_k1s, k1s);
+		FillASArray(out_k2s, k2s);
+		FillASArray(out_kas, kas);
+		FillASArray(out_kgs, kgs);
+	}
+};
+
 bool Test()
 {
 	bool fail = false;
@@ -221,6 +314,71 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
+
+	// Test a case with double arrays
+	// Reported by Rob McDonald
+	SKIP_ON_MAX_PORT
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		RegisterScriptArray(engine, true);
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		TestClass tc_instance;
+
+		r = engine->RegisterGlobalFunction("void cfunction(const string & in geom_id, const int & in surf_indx, array<double>@+ us, array<double>@+ ws, array<double>@+ k1s, array<double>@+ k2s, array<double>@+ kas, array<double>@+ kgs)", asMETHOD(TestClass, cfunction), asCALL_THISCALL_ASGLOBAL, &tc_instance);
+		assert(r >= 0);
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		const char* script =
+			"int n = 5;                                                       \n"
+			"string geom_id = 'ABCDEF';                                       \n"
+			"array<double> uvec, wvec;                                        \n"
+			"uvec.resize( n );                                                \n"
+			"wvec.resize( n );                                                \n"
+			"for( int i = 0 ; i < n ; i++ )                                   \n"
+			"{                                                                \n"
+			"    uvec[i] = (i+1)*1.0/(n+1);                                   \n"
+			"    wvec[i] = (n-i)*1.0/(n+1);                                   \n"
+			"}                                                                \n"
+			"array<double> k1vec, k2vec, kavec, kgvec;                        \n"
+			"cfunction( geom_id, 0, uvec, wvec, k1vec, k2vec, kavec, kgvec ); \n"
+			"assert( k1vec.length() == 5 && k2vec.length() == 5 && kavec.length() == 5 && kgvec.length() == 5 ); \n";
+
+		ExecuteString(engine, script);
+		if (!called)
+		{
+			// failure
+			PRINTF("\n%s: cfunction not called from script\n\n", TESTNAME);
+			TEST_FAILED;
+		}
+		else if (!testVal)
+		{
+			// failure
+			PRINTF("\n%s: testVal is not of expected value. Got (%f, %f, %f, %f), expected (%f, %f, %f, %f)\n\n", TESTNAME, t1, t2, t3, t4, 0.833333, 0.166667, 0.138889, 5.000000);
+			TEST_FAILED;
+		}
+
+		called = false;
+		testVal = false;
+		ExecuteString(engine, script);
+		if (!called)
+		{
+			// failure
+			PRINTF("\n%s: cfunction not called from script\n\n", TESTNAME);
+			TEST_FAILED;
+		}
+		else if (!testVal)
+		{
+			// failure
+			PRINTF("\n%s: testVal is not of expected value. Got (%f, %f, %f, %f), expected (%f, %f, %f, %f)\n\n", TESTNAME, t1, t2, t3, t4, 0.833333, 0.166667, 0.138889, 5.000000);
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test sort with callback as delegate
 	// Reported by Patrick Jeeves
