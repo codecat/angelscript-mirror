@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.37.0 WIP - 2024/02/24</h2>
+<h2>Version 2.37.0 WIP - 2024/02/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -41,8 +41,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>It is now possible to register factory functions receiving an auxiliary pointer with asCALL_CDECL_OBJLAST/OBJFIRST (Thanks Salvage)
 <li>Improved runtime performance with gnuc or clang compilers by using computed goto extension (Thanks Patrick Jeeves)
 <li>as_config.h now has configuration to detect Linux with RISC-V 64bit CPU (Thanks Vixea 0)
-<li>asEP_ALWAYS_IMPL_DEFAULT_COPY can be set to false to tell compiler only to implement default copy if no constructor is defined for script class
-<li>asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT can be set to false to tell compiler not to implement default copy constructor when the default destructor is auto generated
+<li>asEP_ALWAYS_IMPL_DEFAULT_COPY can be set to true to tell compiler to always implement default copy even if other opAssign is declared
+<li>asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT can be set to true to tell compiler not to always implement default copy constructor even if other copy constructor is declared
 </ul>
 <li>Library interface
 <ul>
@@ -53,8 +53,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 </ul>
 <li>Script language
 <ul>
-<li>A default copy opAssign method is always provided for script classes if none has been explicitly defined
-<li>A default copy constructor is always provided for script classes unless any constructor is explicitly defined (Thanks Patrick Jeeves)
+<li>A default copy opAssign method is provided for script classes if none has been explicitly defined
+<li>A default copy constructor is provided for script classes unless another copy constructor is explicitly defined (Thanks Patrick Jeeves)
 <li>An implicit conversion to primitive of same type by different size takes precedent over change in sign in function matching
 </ul>
 <li>Add-ons &amp; Samples

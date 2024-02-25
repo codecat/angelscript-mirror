@@ -746,35 +746,45 @@ void asCBuilder::ParseScripts()
 				node = next;
 			}
 
-			// If the script class doesn't declare any constructors and 
-			// doesn't override the opAssign for copying the object then a 
-			// default opAssign implementation is provided automatically 
+			// Add the default copy operator if needed (only if no other opAssign with single parameter is defined)
+			bool copyOperatorExists = false;
 			asCObjectType* ot = CastToObjectType(decl->typeInfo);
-			if ( ot->beh.construct != engine->scriptTypeBehaviours.beh.construct ||
-				 ot->beh.constructors.GetLength() > 1 )
+			for (asUINT i = 0; i < ot->methods.GetLength(); i++)
+			{
+				asCScriptFunction* f = engine->scriptFunctions[ot->methods[i]];
+				if (f->name == "opAssign" && f->parameterTypes == 1)
+				{
+					copyOperatorExists = true;
+					break;
+				}
+			}
+			if ( copyOperatorExists && ot->beh.copy == engine->scriptTypeBehaviours.beh.copy && !engine->ep.alwaysImplDefaultCopy )
 			{
 				// Script class has a declared constructor, so remove the default opAssign
 				// unless the engine is configured to always provide a default opAssign
-				if (ot->beh.copy == engine->scriptTypeBehaviours.beh.copy &&
-					!engine->ep.alwaysImplDefaultCopy )
-				{
-					engine->scriptFunctions[ot->beh.copy]->ReleaseInternal();
-					ot->beh.copy = 0;
-				}
+				engine->scriptFunctions[ot->beh.copy]->ReleaseInternal();
+				ot->beh.copy = 0;
 			}
 
-			// Add the default constructors if needed
-			if (((ot->beh.construct == engine->scriptTypeBehaviours.beh.construct && ot->beh.constructors.GetLength() == 1)) || 
+			// Add the default constructors if needed (only if no other constructor is explicitly defined)
+			if (((ot->beh.construct == engine->scriptTypeBehaviours.beh.construct && ot->beh.constructors.GetLength() == 1)) ||
 				engine->ep.alwaysImplDefaultConstruct)
 			{
 				AddDefaultConstructor(ot, decl->script);
-
-				// The copy constructor is only added if the default constructor is also added,
-				// unless the application has requested to turn off the addition of copy constructor to
-				// keep backwards compatibility with versions earlier than 2.37.0
-				if( engine->ep.alwaysImplDefaultCopyConstruct )
-					AddDefaultCopyConstructor(ot, decl->script);
 			}
+
+			// Add the default copy constructor if needed (only if no other constructor with single parameter is explicitly defined)
+			bool copyConstructExists = false;
+			for (asUINT i = 0; i < ot->beh.constructors.GetLength(); i++)
+			{
+				if (engine->scriptFunctions[ot->beh.constructors[i]]->parameterTypes.GetLength() == 1)
+				{
+					copyConstructExists = true;
+					break;
+				}
+			}
+			if( !copyConstructExists || engine->ep.alwaysImplDefaultCopyConstruct )
+				AddDefaultCopyConstructor(ot, decl->script);
 
 			// If the default constructor has not been generated now, then release the dummy 
 			if (ot->beh.construct == engine->scriptTypeBehaviours.beh.construct)
@@ -952,29 +962,66 @@ void asCBuilder::CompileFunctions()
 		}
 		else if( current->objType && current->name == current->objType->name )
 		{
-			asCScriptNode *node = classDecl->node;
-
-			int r = 0, c = 0;
-			if( node )
-				current->script->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
-			asCString str = func->GetDeclarationStr();
-			str.Format(TXT_COMPILING_AUTO_s, str.AddressOf());
-			WriteInfo(current->script->name, str, r, c, true);
+			asCScriptNode *node = classDecl ? classDecl->node : 0;
 
 			if (func->parameterTypes.GetLength() == 0)
 			{
+				int r = 0, c = 0;
+				if (node)
+					current->script->ConvertPosToRowCol(node->tokenPos, &r, &c);
+
+				asCString str = func->GetDeclarationStr();
+				str.Format(TXT_COMPILING_AUTO_s, str.AddressOf());
+				WriteInfo(current->script->name, str, r, c, true);
+
 				// This is the default constructor that is generated
 				// automatically if not implemented by the user.
-				compiler.CompileDefaultConstructor(this, current->script, node, func, classDecl);
+				r = compiler.CompileDefaultConstructor(this, current->script, node, func, classDecl);
 			}
 			else
 			{
 				asASSERT(func->parameterTypes.GetLength() == 1 && func->parameterTypes[0].GetTypeInfo() == current->objType);
 
+				// Backup the original message stream and error counter
+				bool                       msgCallback = engine->msgCallback;
+				asSSystemFunctionInterface msgCallbackFunc = engine->msgCallbackFunc;
+				void* msgCallbackObj = engine->msgCallbackObj;
+				int                        originalNumErrors = numErrors;
+
+				// Set the new temporary message stream
+				asCOutputBuffer outBuffer;
+				engine->SetMessageCallback(asFUNCTION(asCOutputBuffer::CDeclCallback), &outBuffer, asCALL_CDECL_OBJLAST);
+
+				int r = 0, c = 0;
+				if (node)
+					current->script->ConvertPosToRowCol(node->tokenPos, &r, &c);
+
+				asCString str = func->GetDeclarationStr();
+				str.Format(TXT_COMPILING_AUTO_s, str.AddressOf());
+				WriteInfo(current->script->name, str, r, c, true);
+
 				// This is the default copy constructor that is generated
 				// automatically if not implemented by the user.
-				compiler.CompileDefaultCopyConstructor(this, current->script, node, func, classDecl);
+				r = compiler.CompileDefaultCopyConstructor(this, current->script, node, func, classDecl);
+
+				// If the compilation of the default copy constructor fails, then it is silently removed
+				if (r < 0)
+				{
+					asCObjectType* ot = func->objectType;
+					engine->scriptFunctions[ot->beh.copyconstruct]->ReleaseInternal();
+					ot->beh.copyconstruct = 0;
+					ot->beh.constructors.RemoveValue(func->id);
+
+					engine->scriptFunctions[ot->beh.copyfactory]->ReleaseInternal();
+					ot->beh.factories.RemoveValue(ot->beh.copyfactory);
+					ot->beh.copyfactory = 0;
+				}
+
+				// Restore message callback and error counter
+				engine->msgCallback = msgCallback;
+				engine->msgCallbackFunc = msgCallbackFunc;
+				engine->msgCallbackObj = msgCallbackObj;
+				numErrors = originalNumErrors;
 			}
 
 			engine->preMessage.isSet = false;

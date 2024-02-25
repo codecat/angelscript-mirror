@@ -793,7 +793,7 @@ bool Test()
 		asITypeInfo* type = mod->GetTypeInfoByName("ssNode");
 		asEBehaviours behave;
 		asUINT behaveCount = type->GetBehaviourCount();
-		if (behaveCount != 9)
+		if (behaveCount != 10)
 			TEST_FAILED;
 		asIScriptFunction* func = type->GetBehaviourByIndex(8, &behave);
 		if (behave != asBEHAVE_CONSTRUCT)

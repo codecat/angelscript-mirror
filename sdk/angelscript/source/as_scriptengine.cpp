@@ -668,8 +668,8 @@ asCScriptEngine::asCScriptEngine()
 		ep.noDebugOutput                 = false;
 		ep.disableScriptClassGC          = false;
 		ep.jitInterfaceVersion           = 1;         // 1 = JIT compiler uses asJITCompiler, 2 = JIT compiler uses asJITCompilerV2
-		ep.alwaysImplDefaultCopy         = true;
-		ep.alwaysImplDefaultCopyConstruct = true;
+		ep.alwaysImplDefaultCopy         = false;
+		ep.alwaysImplDefaultCopyConstruct = false;
 	}
 
 	gc.engine = this;

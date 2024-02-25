@@ -966,8 +966,6 @@ bool Test()
 
 		if( bout.buffer != "test (7, 7) : Info    : Compiling auto generated Bar::Bar()\n"
 						   "test (7, 7) : Error   : Base class doesn't have default constructor. Make explicit call to base constructor\n"
-						   "test (7, 7) : Info    : Compiling auto generated Bar::Bar(const Bar&inout)\n"
-						   "test (7, 7) : Error   : Base class doesn't have copy constructor or default constructor and assign operator. Make explicit call to base constructor\n"
 						   "test (15, 3) : Info    : Compiling Bar2::Bar2()\n"
 						   "test (15, 10) : Error   : Base class doesn't have default constructor. Make explicit call to base constructor\n" )
 		{
@@ -1973,129 +1971,26 @@ bool Test()
 		engine->Release();
 	}
 
-	// Default constructor and copy constructor shouldn't be provided if a non-default constructor is implemented
-	// Default copy (opAssign) is still provided even if there is a constructor implemented
-	// Default constructor, copy constructor, and default copy is provided if no constructor is implemented
-	{
+	// It is possible to exclude the default implementation of constructor, copy constructor, and opAssign
+/* {
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
-
-		const char *script = 
-			"class CBar \n"
-			"{ \n"
-			" CBar(int a) {}\n"
-			"}; \n"
-			"class CBar2 \n"
-			"{ \n"
-			"}; \n"
-			"void func() \n"
-			"{ \n"
-			"  CBar a; \n" // not ok, default constructor is not implemented due to other explicit constructors
-			"  CBar b(1); \n" // ok, use explicit constructor
-			"  CBar c = CBar(1); \n" // not ok, default constructor and copy constructor is not implemented due to explicit constructors
-			"  b = b; \n" // ok, use of default opAssign
-			"  CBar d(CBar()); \n" // not ok, default constructor is not implemented
-			"  CBar2 a2; \n" // ok, default constructor is implemented
-			"  CBar2 c2 = CBar2(); \n" // ok, default constructor and default copy constructor are implemented
-			"  a2 = a2; \n" // ok, opAssign is implemented
-			"  CBar2 d2(CBar2()); \n" // ok, default constructor and default copy constructor are implemented
-			"}; \n";
-
-		mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("script", script);
-
-		bout.buffer = "";
-		r = mod->Build();
-		if( r >= 0 )
-			TEST_FAILED;
-
-		if( bout.buffer != "script (8, 1) : Info    : Compiling void func()\n"
-						   "script (10, 8) : Error   : No default constructor for object of type 'CBar'.\n"
-						   "script (12, 8) : Error   : No default constructor for object of type 'CBar'.\n"
-						   "script (14, 10) : Error   : No matching signatures to 'CBar()'\n"
-						   "script (14, 10) : Info    : Candidates are:\n"
-						   "script (14, 10) : Info    : CBar@ CBar(int a)\n")
-		{
-			PRINTF("%s", bout.buffer.c_str());
-			TEST_FAILED;
-		}
- 
-		engine->Release();
-	}
-
-	// inverted behaviour with engine properties
-	{
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
-		engine->SetEngineProperty(asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT, true);
-		engine->SetEngineProperty(asEP_ALWAYS_IMPL_DEFAULT_COPY, false);
 
 		const char* script =
 			"class CBar \n"
 			"{ \n"
+			" CBar() exclude; \n"
+			" CBar(const CBar &inout) exclude; \n"
+			" CBar &opAssign(const CBar &inout) exclude; \n"
 			" CBar(int a) {}\n"
-			"}; \n"
-			"class CBar2 \n"
-			"{ \n"
 			"}; \n"
 			"void func() \n"
 			"{ \n"
-			"  CBar a; \n" // ok, app requested to always implement default constructor even if other constructors are explicitly defined
+			"  CBar a; \n" // not ok, default constructor is excluded
 			"  CBar b(1); \n" // ok, use explicit constructor
-			"  CBar c = CBar(1); \n" // ok, default copy constructor is implemented even if other constructors are explicitly defined
-			"  b = b; \n" // not ok, default opAssign is not implement upon request from app
-			"  CBar d(CBar()); \n" // ok, default constructor and default copy constructor are implemented
-			"  CBar2 a2; \n" // ok, default constructor is implemented
-			"  CBar2 c2 = CBar2(); \n" // ok, default constructor and default copy constructor are implemented
-			"  a2 = a2; \n" // ok, default opAssign is implemented as there are no explicit constructors
-			"  CBar2 d2(CBar2()); \n" // ok, default constructor and default copy constructor are implemented
-			"}; \n";
-
-		mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("script", script);
-
-		bout.buffer = "";
-		r = mod->Build();
-		if (r >= 0)
-			TEST_FAILED;
-
-		if (bout.buffer != 
-			"script (8, 1) : Info    : Compiling void func()\n"
-			"script (13, 5) : Error   : No appropriate opAssign method found in 'CBar' for value assignment\n")
-		{
-			PRINTF("%s", bout.buffer.c_str());
-			TEST_FAILED;
-		}
-
-		engine->Release();
-	}
-
-	// partially inverted (only disable generation of copy constructor)
-	// backwards compatibility with pre-2.37.0
-	{
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
-		engine->SetEngineProperty(asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT, false);
-
-		const char* script =
-			"class CBar \n"
-			"{ \n"
-			" CBar(int a) {}\n"
-			"}; \n"
-			"class CBar2 \n"
-			"{ \n"
-			"}; \n"
-			"void func() \n"
-			"{ \n"
-			"  CBar a; \n" // not ok, default constructor not implemented because there is another explicitly defined constructor
-			"  CBar b(1); \n" // ok, use the explicit constructor
-			"  CBar c = CBar(1); \n" // not ok, no default constructor or copy constructor
-			"  b = b; \n" // ok, use the default opAssign
-			"  CBar d(CBar()); \n" // not ok, no default constructor and no copy constructor
-			"  CBar2 a2; \n" // ok, default constructor implemented because there are no other explicitly defined constructors
-			"  CBar2 c2 = CBar2(); \n" // ok, default constructor and opAssign
-			"  a2 = a2; \n" // ok, default opAssign
-			"  CBar2 d2(CBar2()); \n" // not ok, copy constructor not implemented because app requested not to
+			"  CBar c = CBar(1); \n" // not ok, default constructor and copy constructor are excluded, as is opAssign
+			"  b = b; \n" // not ok, default opAssign is excluded
+			"  CBar d(CBar(1)); \n" // not ok, default copy constructor is excluded
 			"}; \n";
 
 		mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
@@ -2111,10 +2006,105 @@ bool Test()
 			"script (12, 8) : Error   : No default constructor for object of type 'CBar'.\n"
 			"script (14, 10) : Error   : No matching signatures to 'CBar()'\n"
 			"script (14, 10) : Info    : Candidates are:\n"
-			"script (14, 10) : Info    : CBar@ CBar(int a)\n"
-			"script (18, 11) : Error   : No matching signatures to 'CBar2(CBar2@&)'\n"
-			"script (18, 11) : Info    : Candidates are:\n"
-			"script (18, 11) : Info    : CBar2@ CBar2()\n")
+			"script (14, 10) : Info    : CBar@ CBar(int a)\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	} */
+
+	// Default constructor shouldn't be provided if a non-default constructor is implemented
+	// Default copy (opAssign) is still provided even if there is no opAssign implemented
+	// Default copy constructor is provided if no copy constructor is implemented
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		const char *script = 
+			"class CBar \n" // no default constructor, no copy constructor, but opAssign is provided
+			"{ \n"
+			" CBar(int a) {}\n" // non default copy constructor (one parameter)
+			" CBar &opAssign(int a) {return this;}\n" // non default opAssign (one parameter)
+			"}; \n"
+			"class CBar2 \n" // default constructor, default copy constructor, default opAssign is provided
+			"{ \n"
+			"}; \n"
+			"void func() \n"
+			"{ \n"
+			"  CBar a; \n" // not ok, default constructor is not implemented due to other explicit constructors
+			"  CBar b(1); \n" // ok, use explicit constructor
+			"  CBar c = CBar(1); \n" // not ok, default constructor is not implemented due to explicit constructors
+			"  b = b; \n" // not ok, default opAssign is not implemented due to other explicit opAssign
+			"  CBar d(CBar(1)); \n" // not ok, default copy constructor is not implemented
+			"  CBar2 a2; \n" // ok, default constructor is implemented
+			"  CBar2 c2 = CBar2(); \n" // ok, default constructor and default copy constructor are implemented
+			"  a2 = a2; \n" // ok, opAssign is implemented
+			"  CBar2 d2(CBar2()); \n" // ok, default constructor and default copy constructor are implemented
+			"}; \n";
+
+		mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+
+		bout.buffer = "";
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "script (9, 1) : Info    : Compiling void func()\n"
+						   "script (11, 8) : Error   : No default constructor for object of type 'CBar'.\n"
+						   "script (13, 8) : Error   : No default constructor for object of type 'CBar'.\n"
+						   "script (15, 9) : Error   : No matching signatures to 'CBar(CBar&)'\n"
+						   "script (15, 9) : Info    : Candidates are:\n"
+						   "script (15, 9) : Info    : CBar@ CBar(int a)\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+ 
+		engine->Release();
+	}
+
+	// inverted behaviour with engine properties
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->SetEngineProperty(asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT, true);
+		engine->SetEngineProperty(asEP_ALWAYS_IMPL_DEFAULT_COPY, true);
+		engine->SetEngineProperty(asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT, true);
+
+		const char* script =
+			"class CBar \n"
+			"{ \n"
+			" CBar(int a) {}\n" // non default copy constructor (one parameter)
+			" CBar &opAssign(int a) {return this;}\n" // non default opAssign (one parameter)
+			"}; \n"
+			"class CBar2 \n"
+			"{ \n"
+			"}; \n"
+			"void func() \n"
+			"{ \n"
+			"  CBar a; \n" // ok, app requested to always implement default constructor even if other constructors are explicitly defined
+			"  CBar b(1); \n" // ok, use explicit constructor
+			"  CBar c = CBar(1); \n" // ok, default copy constructor is implemented even if other constructors are explicitly defined
+			"  b = b; \n" // ok, default opAssign is implemented upon request from app
+			"  CBar d(CBar(1)); \n" // ok, default constructor and default copy constructor are implemented
+			"  CBar2 a2; \n" // ok, default constructor is implemented
+			"  CBar2 c2 = CBar2(); \n" // ok, default constructor and default copy constructor are implemented
+			"  a2 = a2; \n" // ok, default opAssign is implemented as there are no explicit constructors
+			"  CBar2 d2(CBar2()); \n" // ok, default constructor and default copy constructor are implemented
+			"}; \n";
+
+		mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+
+		bout.buffer = "";
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
