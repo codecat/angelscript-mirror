@@ -239,7 +239,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 				{
 					const asDWORD *const contents = *(asDWORD**)&args[argsPos];
 					for( asUINT i = 0; i < parmDWords; i++ )
-						floatRegArgs[numFloatRegArgs++] = *(asQWORD*)&contents[i];
+						floatRegArgs[numFloatRegArgs++] = *(asDWORD*)&contents[i];
 				}
 				engine->CallFree(*(char**)(args+argsPos));
 				argsPos += AS_PTR_SIZE;
