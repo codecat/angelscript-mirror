@@ -490,7 +490,7 @@ public:
 		bool   expandDefaultArrayToTemplate;
 		bool   autoGarbageCollect;
 		bool   disallowGlobalVars;
-		bool   alwaysImplDefaultConstruct;
+		asUINT alwaysImplDefaultConstruct;
 		int    compilerWarnings;
 		bool   disallowValueAssignForRefType;
 		// TODO: 3.0.0: Remove the alterSyntaxNamedArgs
@@ -509,8 +509,8 @@ public:
 		bool   noDebugOutput;
 		bool   disableScriptClassGC;
 		asUINT jitInterfaceVersion;
-		bool   alwaysImplDefaultCopy;
-		bool   alwaysImplDefaultCopyConstruct;
+		asUINT alwaysImplDefaultCopy;
+		asUINT alwaysImplDefaultCopyConstruct;
 	} ep;
 
 	// Callbacks

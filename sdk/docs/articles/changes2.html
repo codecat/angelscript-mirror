@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.37.0 WIP - 2024/02/25</h2>
+<h2>Version 2.37.0 WIP - 2024/02/28</h2>
 
 <ul>
 <li>Bug fixes
@@ -42,8 +42,9 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>It is now possible to register factory functions receiving an auxiliary pointer with asCALL_CDECL_OBJLAST/OBJFIRST (Thanks Salvage)
 <li>Improved runtime performance with gnuc or clang compilers by using computed goto extension (Thanks Patrick Jeeves)
 <li>as_config.h now has configuration to detect Linux with RISC-V 64bit CPU (Thanks Vixea 0)
-<li>asEP_ALWAYS_IMPL_DEFAULT_COPY can be set to true to tell compiler to always implement default copy even if other opAssign is declared
-<li>asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT can be set to true to tell compiler not to always implement default copy constructor even if other copy constructor is declared
+<li>asEP_ALWAYS_IMPL_DEFAULT_COPY can be set to 1 to tell compiler to always implement default copy even if other opAssign is declared
+<li>asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT can be set to 1 to tell compiler not to always implement default copy constructor even if other copy constructor is declared
+<li>asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT, DEFAULT_COPY, and DEFAULT_COPY_CONSTRUCT can now be set to 2 to tell compiler never to implement these
 </ul>
 <li>Library interface
 <ul>

@@ -758,7 +758,8 @@ void asCBuilder::ParseScripts()
 					break;
 				}
 			}
-			if ( copyOperatorExists && ot->beh.copy == engine->scriptTypeBehaviours.beh.copy && !engine->ep.alwaysImplDefaultCopy )
+			if ( engine->ep.alwaysImplDefaultCopy == 2 || 
+				(copyOperatorExists && ot->beh.copy == engine->scriptTypeBehaviours.beh.copy && engine->ep.alwaysImplDefaultCopy == 0) )
 			{
 				// Script class has a declared constructor, so remove the default opAssign
 				// unless the engine is configured to always provide a default opAssign
@@ -767,8 +768,8 @@ void asCBuilder::ParseScripts()
 			}
 
 			// Add the default constructors if needed (only if no other constructor is explicitly defined)
-			if (((ot->beh.construct == engine->scriptTypeBehaviours.beh.construct && ot->beh.constructors.GetLength() == 1)) ||
-				engine->ep.alwaysImplDefaultConstruct)
+			if ((engine->ep.alwaysImplDefaultConstruct == 0 && ot->beh.construct == engine->scriptTypeBehaviours.beh.construct && ot->beh.constructors.GetLength() == 1) ||
+				engine->ep.alwaysImplDefaultConstruct == 1)
 			{
 				AddDefaultConstructor(ot, decl->script);
 			}
@@ -783,7 +784,7 @@ void asCBuilder::ParseScripts()
 					break;
 				}
 			}
-			if( !copyConstructExists || engine->ep.alwaysImplDefaultCopyConstruct )
+			if( (engine->ep.alwaysImplDefaultCopyConstruct == 0 && !copyConstructExists) || engine->ep.alwaysImplDefaultCopyConstruct == 1 )
 				AddDefaultCopyConstructor(ot, decl->script);
 
 			// If the default constructor has not been generated now, then release the dummy 
@@ -4319,12 +4320,8 @@ bool asCBuilder::DoesMethodExist(asCObjectType *objType, int methodId, asUINT *m
 void asCBuilder::AddDefaultCopyConstructor(asCObjectType* objType, asCScriptCode* file)
 {
 	// Check if a copy constructor does not already exist, in which case this should be skipped
-	for (asUINT n = 0; n < objType->beh.constructors.GetLength(); n++)
-	{
-		asCScriptFunction* func = engine->scriptFunctions[objType->beh.constructors[n]];
-		if (func && func->parameterTypes.GetLength() == 1 && func->parameterTypes[0].GetTypeInfo() == objType)
-			return;
-	}
+	if (objType->beh.copyconstruct != 0)
+		return;
 
 	int funcId = engine->GetNextScriptFunctionId();
 

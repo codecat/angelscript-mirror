@@ -380,7 +380,9 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		break;
 
 	case asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT:
-		ep.alwaysImplDefaultConstruct = value ? true : false;
+		if (value > 2)
+			return asINVALID_ARG;
+		ep.alwaysImplDefaultConstruct = value;
 		break;
 
 	case asEP_COMPILER_WARNINGS:
@@ -465,11 +467,15 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		break;
 
 	case asEP_ALWAYS_IMPL_DEFAULT_COPY:
-		ep.alwaysImplDefaultCopy = value ? true : false;
+		if (value > 2)
+			return asINVALID_ARG;
+		ep.alwaysImplDefaultCopy = value;
 		break;
 
 	case asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT:
-		ep.alwaysImplDefaultCopyConstruct = value ? true : false;
+		if (value > 2)
+			return asINVALID_ARG;
+		ep.alwaysImplDefaultCopyConstruct = value;
 		break;
 
 	default:
@@ -650,7 +656,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.expandDefaultArrayToTemplate  = false;
 		ep.autoGarbageCollect            = true;
 		ep.disallowGlobalVars            = false;
-		ep.alwaysImplDefaultConstruct    = false;
+		ep.alwaysImplDefaultConstruct    = 0;         // 0 = as per language spec, 1 = always implement it, 2, never implement
 		ep.compilerWarnings              = 1;         // 0 = no warnings, 1 = warning, 2 = treat as error
 		// TODO: 3.0.0: disallowValueAssignForRefType should be true by default
 		ep.disallowValueAssignForRefType = false;
@@ -668,8 +674,8 @@ asCScriptEngine::asCScriptEngine()
 		ep.noDebugOutput                 = false;
 		ep.disableScriptClassGC          = false;
 		ep.jitInterfaceVersion           = 1;         // 1 = JIT compiler uses asJITCompiler, 2 = JIT compiler uses asJITCompilerV2
-		ep.alwaysImplDefaultCopy         = false;
-		ep.alwaysImplDefaultCopyConstruct = false;
+		ep.alwaysImplDefaultCopy         = 0;         // 0 = as per language spec, 1 = always implement it, 2, never implement
+		ep.alwaysImplDefaultCopyConstruct = 0;        // 0 = as per language spec, 1 = always implement it, 2, never implement
 	}
 
 	gc.engine = this;
