@@ -608,7 +608,8 @@ void asCCompiler::CompileMemberInitializationCopy(asCByteCode* bc)
 
 			asCExprContext tmp(engine);
 			asCDataType dt = prop->type;
-			CompileInitAsCopy(dt, prop->byteOffset, &tmp, &ctx, declNode, false, asVGM_MEMBER);
+			bool isPodType = (prop->type.GetTypeInfo() && prop->type.GetTypeInfo()->flags & asOBJ_POD);
+			CompileInitAsCopy(dt, prop->byteOffset, &tmp, &ctx, declNode, isPodType, asVGM_MEMBER);
 			MergeExprBytecode(&ctx, &tmp);
 
 			ctx.bc.OptimizeLocally(tempVariableOffsets);
@@ -959,12 +960,11 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 			asCByteCode tmp(engine);
 			if( isVarGlobOrMem == asVGM_GLOBAL )
 				ctx->bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
-			else if( isVarGlobOrMem == asVGM_VARIABLE )
+			else if( isVarGlobOrMem == asVGM_VARIABLE && isObjectOnHeap )
 			{
-				if (isObjectOnHeap)
-					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+				ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
 			}
-			else
+			else if( isVarGlobOrMem == asVGM_MEMBER && isObjectOnHeap )
 			{
 				ctx->bc.InstrSHORT(asBC_PSF, 0);
 				ctx->bc.Instr(asBC_RDSPtr);
@@ -982,6 +982,12 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 					// The variable is a reference to the real location, so we need to dereference it
 					ctx->bc.Instr(asBC_RDSPtr);
 				}
+			}
+			else if (!isObjectOnHeap && isVarGlobOrMem == asVGM_MEMBER)
+			{
+				ctx->bc.InstrSHORT(asBC_PSF, 0);
+				ctx->bc.Instr(asBC_RDSPtr);
+				ctx->bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
 			}
 
 			PerformFunctionCall(func, ctx, isObjectOnHeap, &args, CastToObjectType(type.GetTypeInfo()));

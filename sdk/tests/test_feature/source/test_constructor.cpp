@@ -79,6 +79,55 @@ bool Test()
 	asIScriptModule* mod;
 	int r;
 
+	// Test auto generated copy constructor with registered pod value type
+	// https://www.gamedev.net/forums/topic/715625-copy-constructors-appear-to-be-broken/5461794/
+	{
+		engine = asCreateScriptEngine();
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
+
+		RegisterScriptMath3D(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME,
+			"class Foo {\n"
+			"	Foo() {}\n"
+			"	//Foo(int x) {}\n" // Uncomment this to fix the problem
+			"	vector3 v = vector3(0,0,0);\n"
+			"}\n"
+			"Foo LerpTest() {\n"
+			"	Foo p;\n"
+			"	p.v = vector3(1, 2, 3);\n"
+			"	return p;\n"
+			"}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "assert(LerpTest().v.x == 1 && LerpTest().v.y == 2 && LerpTest().v.z == 3);", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test auto generated copy constructor
 	// Reported by Patrick Jeeves
 	{
