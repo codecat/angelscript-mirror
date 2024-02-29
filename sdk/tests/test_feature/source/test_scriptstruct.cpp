@@ -156,6 +156,55 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test auto generated copy constructor in shared class that contains non-copyable member
+	// https://www.gamedev.net/forums/topic/715618-assertion-failed-when-adding-default-copy-constructor/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		const char* script = "shared class NotCopyable \n"
+			"{ \n"
+			"	NotCopyable(){} \n"
+			"	NotCopyable(int){} \n"
+			"   NotCopyable &opAssign(int){return this;} \n"
+			"} \n"
+			"shared class ContainsNotCopyable \n"
+			"{ \n"
+			"  NotCopyable nc;"
+			"} \n";
+
+		mod = engine->GetModule("module", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		mod = engine->GetModule("mod2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asITypeInfo *tp = mod->GetTypeInfoByName("ContainsNotCopyable");
+		if (tp)
+		{
+			int c = tp->GetBehaviourCount();
+			if (c != 9)  // default factory, default assign, addref, release, getrefcount, enumrefs, setgcflag, getgcflag, getweakrefflag
+				TEST_FAILED;
+		}
+		else
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test invalid copy constructor (when the type is passed by value instead of by ref or handle)
 	// https://www.gamedev.net/forums/topic/707147-runtime-crash-with-non-ref-copy-constructor/5427594/
 	{
@@ -2058,6 +2107,8 @@ bool Test()
 		if( bout.buffer != "script (9, 1) : Info    : Compiling void func()\n"
 						   "script (11, 8) : Error   : No default constructor for object of type 'CBar'.\n"
 						   "script (13, 8) : Error   : No default constructor for object of type 'CBar'.\n"
+						   "script (13, 8) : Error   : No appropriate opAssign method found in 'CBar' for value assignment\n"
+						   "script (14, 5) : Error   : No appropriate opAssign method found in 'CBar' for value assignment\n"
 						   "script (15, 9) : Error   : No matching signatures to 'CBar(CBar&)'\n"
 						   "script (15, 9) : Info    : Candidates are:\n"
 						   "script (15, 9) : Info    : CBar@ CBar(int a)\n" )

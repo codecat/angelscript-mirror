@@ -368,7 +368,6 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, as
 	dontCleanUpOnException = false;
 	vfTableIdx             = -1;
 	gcFlag                 = false;
-	userData               = 0;
 	id                     = 0;
 	accessMask             = 0xFFFFFFFF;
 	nameSpace              = engine->nameSpaces[0];

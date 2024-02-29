@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2023 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -53,7 +53,6 @@ asCModule::asCModule(const char *name, asCScriptEngine *engine)
 	m_name     = name;
 	m_engine   = engine;
 
-	m_userData = 0;
 	m_builder = 0;
 	m_isGlobalVarInitialized = false;
 

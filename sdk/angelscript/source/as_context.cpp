@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2023 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -197,7 +197,6 @@ asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 	m_exceptionCallback         = false;
 	m_regs.doProcessSuspend     = false;
 	m_doSuspend                 = false;
-	m_userData                  = 0;
 	m_exceptionWillBeCaught     = false;
 	m_regs.ctx                  = this;
 	m_regs.objectRegister       = 0;

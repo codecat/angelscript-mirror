@@ -746,59 +746,62 @@ void asCBuilder::ParseScripts()
 				node = next;
 			}
 
-			// Add the default copy operator if needed (only if no other opAssign with single parameter is defined)
-			bool copyOperatorExists = false;
-			asCObjectType* ot = CastToObjectType(decl->typeInfo);
-			for (asUINT i = 0; i < ot->methods.GetLength(); i++)
+			if (!decl->isExistingShared)
 			{
-				asCScriptFunction* f = engine->scriptFunctions[ot->methods[i]];
-				if (f->name == "opAssign" && f->parameterTypes == 1)
+				// Add the default copy operator if needed (only if no other opAssign with single parameter is defined)
+				bool copyOperatorExists = false;
+				asCObjectType* ot = CastToObjectType(decl->typeInfo);
+				for (asUINT i = 0; i < ot->methods.GetLength(); i++)
 				{
-					copyOperatorExists = true;
-					break;
+					asCScriptFunction* f = engine->scriptFunctions[ot->methods[i]];
+					if (f->name == "opAssign" && f->parameterTypes.GetLength() == 1)
+					{
+						copyOperatorExists = true;
+						break;
+					}
 				}
-			}
-			if ( engine->ep.alwaysImplDefaultCopy == 2 || 
-				(copyOperatorExists && ot->beh.copy == engine->scriptTypeBehaviours.beh.copy && engine->ep.alwaysImplDefaultCopy == 0) )
-			{
-				// Script class has a declared constructor, so remove the default opAssign
-				// unless the engine is configured to always provide a default opAssign
-				engine->scriptFunctions[ot->beh.copy]->ReleaseInternal();
-				ot->beh.copy = 0;
-			}
-
-			// Add the default constructors if needed (only if no other constructor is explicitly defined)
-			if ((engine->ep.alwaysImplDefaultConstruct == 0 && ot->beh.construct == engine->scriptTypeBehaviours.beh.construct && ot->beh.constructors.GetLength() == 1) ||
-				engine->ep.alwaysImplDefaultConstruct == 1)
-			{
-				AddDefaultConstructor(ot, decl->script);
-			}
-
-			// Add the default copy constructor if needed (only if no other constructor with single parameter is explicitly defined)
-			bool copyConstructExists = false;
-			for (asUINT i = 0; i < ot->beh.constructors.GetLength(); i++)
-			{
-				if (engine->scriptFunctions[ot->beh.constructors[i]]->parameterTypes.GetLength() == 1)
+				if (engine->ep.alwaysImplDefaultCopy == 2 ||
+					(copyOperatorExists && ot->beh.copy == engine->scriptTypeBehaviours.beh.copy && engine->ep.alwaysImplDefaultCopy == 0))
 				{
-					copyConstructExists = true;
-					break;
+					// Script class has a declared constructor, so remove the default opAssign
+					// unless the engine is configured to always provide a default opAssign
+					engine->scriptFunctions[ot->beh.copy]->ReleaseInternal();
+					ot->beh.copy = 0;
 				}
-			}
-			if( (engine->ep.alwaysImplDefaultCopyConstruct == 0 && !copyConstructExists) || engine->ep.alwaysImplDefaultCopyConstruct == 1 )
-				AddDefaultCopyConstructor(ot, decl->script);
 
-			// If the default constructor has not been generated now, then release the dummy 
-			if (ot->beh.construct == engine->scriptTypeBehaviours.beh.construct)
-			{
-				engine->scriptFunctions[ot->beh.construct]->ReleaseInternal();
-				ot->beh.construct = 0;
-				ot->beh.constructors.RemoveIndex(0);
-				
-				if (ot->beh.factory)
+				// Add the default constructors if needed (only if no other constructor is explicitly defined)
+				if ((engine->ep.alwaysImplDefaultConstruct == 0 && ot->beh.construct == engine->scriptTypeBehaviours.beh.construct && ot->beh.constructors.GetLength() == 1) ||
+					engine->ep.alwaysImplDefaultConstruct == 1)
 				{
-					engine->scriptFunctions[ot->beh.factory]->ReleaseInternal();
-					ot->beh.factory = 0;
-					ot->beh.factories.RemoveIndex(0);
+					AddDefaultConstructor(ot, decl->script);
+				}
+
+				// Add the default copy constructor if needed (only if no other constructor with single parameter is explicitly defined)
+				bool copyConstructExists = false;
+				for (asUINT i = 0; i < ot->beh.constructors.GetLength(); i++)
+				{
+					if (engine->scriptFunctions[ot->beh.constructors[i]]->parameterTypes.GetLength() == 1)
+					{
+						copyConstructExists = true;
+						break;
+					}
+				}
+				if ((engine->ep.alwaysImplDefaultCopyConstruct == 0 && !copyConstructExists) || engine->ep.alwaysImplDefaultCopyConstruct == 1)
+					AddDefaultCopyConstructor(ot, decl->script);
+
+				// If the default constructor has not been generated now, then release the dummy 
+				if (ot->beh.construct == engine->scriptTypeBehaviours.beh.construct)
+				{
+					engine->scriptFunctions[ot->beh.construct]->ReleaseInternal();
+					ot->beh.construct = 0;
+					ot->beh.constructors.RemoveIndex(0);
+
+					if (ot->beh.factory)
+					{
+						engine->scriptFunctions[ot->beh.factory]->ReleaseInternal();
+						ot->beh.factory = 0;
+						ot->beh.factories.RemoveIndex(0);
+					}
 				}
 			}
 		}
@@ -1010,8 +1013,8 @@ void asCBuilder::CompileFunctions()
 				{
 					asCObjectType* ot = func->objectType;
 					engine->scriptFunctions[ot->beh.copyconstruct]->ReleaseInternal();
+					ot->beh.constructors.RemoveValue(ot->beh.copyconstruct);
 					ot->beh.copyconstruct = 0;
-					ot->beh.constructors.RemoveValue(func->id);
 
 					engine->scriptFunctions[ot->beh.copyfactory]->ReleaseInternal();
 					ot->beh.factories.RemoveValue(ot->beh.copyfactory);
