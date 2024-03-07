@@ -101,17 +101,18 @@ enum asEObjVarInfoOption
 
 enum asEFuncTrait
 {
-	asTRAIT_CONSTRUCTOR = 1,    // method
-	asTRAIT_DESTRUCTOR  = 2,    // method
-	asTRAIT_CONST       = 4,    // method
-	asTRAIT_PRIVATE     = 8,    // method
-	asTRAIT_PROTECTED   = 16,   // method
-	asTRAIT_FINAL       = 32,   // method
-	asTRAIT_OVERRIDE    = 64,   // method
-	asTRAIT_SHARED      = 128,  // function
-	asTRAIT_EXTERNAL    = 256,  // function
-	asTRAIT_EXPLICIT    = 512,  // method
-	asTRAIT_PROPERTY    = 1024  // method/function
+	asTRAIT_CONSTRUCTOR = 1<<0,  // method
+	asTRAIT_DESTRUCTOR  = 1<<1,  // method
+	asTRAIT_CONST       = 1<<2,  // method
+	asTRAIT_PRIVATE     = 1<<3,  // method
+	asTRAIT_PROTECTED   = 1<<4,  // method
+	asTRAIT_FINAL       = 1<<5,  // method
+	asTRAIT_OVERRIDE    = 1<<6,  // method
+	asTRAIT_SHARED      = 1<<7,  // function
+	asTRAIT_EXTERNAL    = 1<<8,  // function
+	asTRAIT_EXPLICIT    = 1<<9,  // method
+	asTRAIT_PROPERTY    = 1<<10, // method/function
+	asTRAIT_DELETED     = 1<<11  // method
 };
 
 struct asSFunctionTraits

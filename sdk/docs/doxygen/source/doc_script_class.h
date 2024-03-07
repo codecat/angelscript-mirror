@@ -100,6 +100,8 @@ constructor without the need to write the initialization again.
 
 \todo Describe auto generated constructors
 
+\todo Describe possibility to delete the auto generated constructors
+
 \see \ref doc_script_class_memberinit, \ref doc_script_class_conv
 
 

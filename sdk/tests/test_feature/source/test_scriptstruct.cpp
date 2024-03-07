@@ -156,7 +156,125 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// When default functions are deleted it must not be possible to declared them separately without the delete
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		const char* script =
+			"class A \n"
+			"{ \n"
+			" A() delete; \n"
+			" A(const A &inout) delete; \n"
+			" A &opAssign(const A &inout) delete; \n"
+			" A() {}; \n"
+			" A(const A &inout) {}; \n"
+			" A &opAssign(const A &inout) {return this;}; \n"
+			"}; \n"
+			"class B \n"
+			"{ \n"
+			" B() {}; \n"
+			" B(const B &inout) {}; \n"
+			" B &opAssign(const B &inout) {return this;}; \n"
+			" B() delete; \n"
+			" B(const B &inout) delete; \n"
+			" B &opAssign(const B &inout) delete; \n"
+			"}; \n";
+
+		mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+
+		bout.buffer = "";
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != 
+			"script (6, 2) : Error   : Conflict with explicit declaration of function and deleted function\n"
+			"script (7, 2) : Error   : Conflict with explicit declaration of function and deleted function\n"
+			"script (8, 2) : Error   : Conflict with explicit declaration of function and deleted function\n"
+			"script (15, 2) : Error   : Conflict with explicit declaration of function and deleted function\n"
+			"script (16, 2) : Error   : Conflict with explicit declaration of function and deleted function\n"
+			"script (17, 2) : Error   : Conflict with explicit declaration of function and deleted function\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
+	// Give appropriate error if flagging auto generated functions as deleted but still providing statement block
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		const char* script =
+			"class CBar \n"
+			"{ \n"
+			" CBar() delete {}; \n"
+			" CBar(const CBar &inout) delete {}; \n"
+			" CBar &opAssign(const CBar &inout) delete {}; \n"
+			"}; \n";
+
+		mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+
+		bout.buffer = "";
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != 
+			"script (3, 2) : Error   : Deleted functions cannot have implementation\n"
+			"script (4, 2) : Error   : Deleted functions cannot have implementation\n"
+			"script (5, 2) : Error   : Deleted functions cannot have implementation\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
+	// Give appropriate error if flagging imported function, virtual property, ordinary function, class method, as 'delete', 
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"import void imported_function() delete from 'some module'; \n"
+			"void func() delete; \n"
+			"class foo { \n"
+			"  void method() delete; \n"
+			"  int prop { get delete; set delete; } \n"
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer !=
+			"test (1, 1) : Error   : Cannot flag function that will not be auto generated as deleted\n"
+			"test (2, 1) : Error   : Cannot flag function that will not be auto generated as deleted\n"
+			"test (4, 3) : Error   : Cannot flag function that will not be auto generated as deleted\n"
+			"test (5, 14) : Error   : Unexpected token 'delete'\n"
+			"test (5, 14) : Error   : Property accessor must be implemented\n"
+			"test (5, 24) : Error   : Missing definition of 'get_prop'\n"
+			"test (5, 26) : Error   : Unexpected token 'delete'\n"
+			"test (5, 26) : Error   : Property accessor must be implemented\n"
+			"test (5, 36) : Error   : Missing definition of 'set_prop'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test auto generated copy constructor in shared class that contains non-copyable member
+	// The copy constructor should not be generated in this case, since it would give error
 	// https://www.gamedev.net/forums/topic/715618-assertion-failed-when-adding-default-copy-constructor/
 	{
 		engine = asCreateScriptEngine();
@@ -2021,16 +2139,16 @@ bool Test()
 	}
 
 	// It is possible to exclude the default implementation of constructor, copy constructor, and opAssign
-/* {
+    {
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
 		const char* script =
 			"class CBar \n"
 			"{ \n"
-			" CBar() exclude; \n"
-			" CBar(const CBar &inout) exclude; \n"
-			" CBar &opAssign(const CBar &inout) exclude; \n"
+			" CBar() delete; \n"
+			" CBar(const CBar &inout) delete; \n"
+			" CBar &opAssign(const CBar &inout) delete; \n"
 			" CBar(int a) {}\n"
 			"}; \n"
 			"void func() \n"
@@ -2053,16 +2171,18 @@ bool Test()
 		if (bout.buffer != "script (8, 1) : Info    : Compiling void func()\n"
 			"script (10, 8) : Error   : No default constructor for object of type 'CBar'.\n"
 			"script (12, 8) : Error   : No default constructor for object of type 'CBar'.\n"
-			"script (14, 10) : Error   : No matching signatures to 'CBar()'\n"
-			"script (14, 10) : Info    : Candidates are:\n"
-			"script (14, 10) : Info    : CBar@ CBar(int a)\n")
+			"script (12, 8) : Error   : No appropriate opAssign method found in 'CBar' for value assignment\n"
+			"script (13, 5) : Error   : No appropriate opAssign method found in 'CBar' for value assignment\n"
+			"script (14, 9) : Error   : No matching signatures to 'CBar(CBar&)'\n"
+			"script (14, 9) : Info    : Candidates are:\n"
+			"script (14, 9) : Info    : CBar@ CBar(int a)\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
 		engine->Release();
-	} */
+	}
 
 	// Default constructor shouldn't be provided if a non-default constructor is implemented
 	//  - ref: https://en.cppreference.com/w/cpp/language/default_constructor

@@ -735,7 +735,7 @@ void asCBuilder::ParseScripts()
 				if( node->nodeType == snFunction )
 				{
 					node->DisconnectParent();
-					RegisterScriptFunctionFromNode(node, decl->script, CastToObjectType(decl->typeInfo), false, false, 0, decl->isExistingShared);
+					RegisterScriptFunctionFromNode(node, decl->script, CastToObjectType(decl->typeInfo), false, false, 0, decl->isExistingShared, false, decl);
 				}
 				else if( node->nodeType == snVirtualProperty )
 				{
@@ -760,7 +760,7 @@ void asCBuilder::ParseScripts()
 						break;
 					}
 				}
-				if (engine->ep.alwaysImplDefaultCopy == 2 ||
+				if (engine->ep.alwaysImplDefaultCopy == 2 || decl->isDefaultCopyDeleted ||
 					(copyOperatorExists && ot->beh.copy == engine->scriptTypeBehaviours.beh.copy && engine->ep.alwaysImplDefaultCopy == 0))
 				{
 					// Script class has a declared constructor, so remove the default opAssign
@@ -770,8 +770,9 @@ void asCBuilder::ParseScripts()
 				}
 
 				// Add the default constructors if needed (only if no other constructor is explicitly defined)
-				if ((engine->ep.alwaysImplDefaultConstruct == 0 && ot->beh.construct == engine->scriptTypeBehaviours.beh.construct && ot->beh.constructors.GetLength() == 1) ||
-					engine->ep.alwaysImplDefaultConstruct == 1)
+				if ( !decl->isDefaultConstructorDeleted && 
+					 ((engine->ep.alwaysImplDefaultConstruct == 0 && ot->beh.construct == engine->scriptTypeBehaviours.beh.construct && ot->beh.constructors.GetLength() == 1) ||
+					 engine->ep.alwaysImplDefaultConstruct == 1) )
 				{
 					AddDefaultConstructor(ot, decl->script);
 				}
@@ -786,7 +787,8 @@ void asCBuilder::ParseScripts()
 						break;
 					}
 				}
-				if ((engine->ep.alwaysImplDefaultCopyConstruct == 0 && !copyConstructExists) || engine->ep.alwaysImplDefaultCopyConstruct == 1)
+				if ( !decl->isDefaultCopyConstructorDeleted &&
+					 ((engine->ep.alwaysImplDefaultCopyConstruct == 0 && !copyConstructExists) || engine->ep.alwaysImplDefaultCopyConstruct == 1) )
 					AddDefaultCopyConstructor(ot, decl->script);
 
 				// If the default constructor has not been generated now, then release the dummy 
@@ -4811,6 +4813,8 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 				funcTraits.SetTrait(asTRAIT_EXPLICIT, true);
 			else if (file->TokenEquals(decorator->tokenPos, decorator->tokenLength, PROPERTY_TOKEN))
 				funcTraits.SetTrait(asTRAIT_PROPERTY, true);
+			else if (file->TokenEquals(decorator->tokenPos, decorator->tokenLength, DELETE_TOKEN))
+				funcTraits.SetTrait(asTRAIT_DELETED, true);
 			else
 			{
 				asCString msg(&file->code[decorator->tokenPos], decorator->tokenLength);
@@ -4915,7 +4919,7 @@ asCString asCBuilder::GetCleanExpressionString(asCScriptNode *node, asCScriptCod
 }
 
 #ifndef AS_NO_COMPILER
-int asCBuilder::RegisterScriptFunctionFromNode(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin)
+int asCBuilder::RegisterScriptFunctionFromNode(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin, sClassDeclaration* decl)
 {
 	asCString                  name;
 	asCDataType                returnType;
@@ -4938,7 +4942,7 @@ int asCBuilder::RegisterScriptFunctionFromNode(asCScriptNode *node, asCScriptCod
 
 	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, funcTraits, ns);
 
-	return RegisterScriptFunction(node, file, objType, isInterface, isGlobalFunction, ns, isExistingShared, isMixin, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, funcTraits);
+	return RegisterScriptFunction(node, file, objType, isInterface, isGlobalFunction, ns, isExistingShared, isMixin, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, funcTraits, decl);
 }
 
 asCScriptFunction *asCBuilder::RegisterLambda(asCScriptNode *node, asCScriptCode *file, asCScriptFunction *funcDef, const asCString &name, asSNameSpace *ns, bool isShared)
@@ -4971,7 +4975,7 @@ asCScriptFunction *asCBuilder::RegisterLambda(asCScriptNode *node, asCScriptCode
 	asCString funcName = name;
 	asSFunctionTraits traits;
 	traits.SetTrait(asTRAIT_SHARED, isShared);
-	int r = RegisterScriptFunction(args, file, 0, 0, true, ns, false, false, funcName, funcDef->returnType, parameterNames, funcDef->parameterTypes, funcDef->inOutFlags, defaultArgs, traits);
+	int r = RegisterScriptFunction(args, file, 0, 0, true, ns, false, false, funcName, funcDef->returnType, parameterNames, funcDef->parameterTypes, funcDef->inOutFlags, defaultArgs, traits, 0);
 	if( r < 0 )
 		return 0;
 
@@ -4979,7 +4983,7 @@ asCScriptFunction *asCBuilder::RegisterLambda(asCScriptNode *node, asCScriptCode
 	return engine->scriptFunctions[functions[functions.GetLength()-1]->funcId];
 }
 
-int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin, asCString &name, asCDataType &returnType, asCArray<asCString> &parameterNames, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, asSFunctionTraits funcTraits)
+int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin, asCString &name, asCDataType &returnType, asCArray<asCString> &parameterNames, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, asSFunctionTraits funcTraits, sClassDeclaration* classDecl)
 {
 	// Determine default namespace if not specified
 	if( ns == 0 )
@@ -5104,9 +5108,52 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 			WriteError(str, file, node);
 		}
 		
+		// Set the type as dummy so the clean-up works correctly
 		func.funcType = asFUNC_DUMMY;
 	}
 	
+	// If the method is deleted, then don't register it
+	if (funcTraits.GetTrait(asTRAIT_DELETED))
+	{
+		// Delete can only be used for default constructor, default copy constructor, and default copy operator
+		if (classDecl && funcTraits.GetTrait(asTRAIT_CONSTRUCTOR) && parameterTypes.GetLength() == 0)
+		{
+			classDecl->isDefaultConstructorDeleted = true;
+
+			if (objType->beh.construct && objType->beh.construct != engine->scriptTypeBehaviours.beh.construct)
+				WriteError(TXT_CANNOT_DEFINE_FUNC_THAT_IS_DELETED, file, node);
+		}
+		else if (classDecl && funcTraits.GetTrait(asTRAIT_CONSTRUCTOR) && parameterTypes.GetLength() == 1 && parameterTypes[0].GetTypeInfo() == objType)
+		{
+			classDecl->isDefaultCopyConstructorDeleted = true;
+
+			if (objType->beh.copyconstruct)
+				WriteError(TXT_CANNOT_DEFINE_FUNC_THAT_IS_DELETED, file, node);
+		}
+		else if (classDecl && name == "opAssign" && parameterTypes.GetLength() == 1 && parameterTypes[0].GetTypeInfo() == objType)
+		{
+			classDecl->isDefaultCopyDeleted = true;
+
+			if (objType->beh.copy && objType->beh.copy != engine->scriptTypeBehaviours.beh.copy)
+				WriteError(TXT_CANNOT_DEFINE_FUNC_THAT_IS_DELETED, file, node);
+		}
+		else
+			WriteError(TXT_CANNOT_DELETE_NON_AUTO_FUNC, file, node);
+
+		// Deleted functions must not have implementation
+		if (node && node->lastChild && node->lastChild->nodeType == snStatementBlock)
+			WriteError(TXT_DELETED_FUNC_CANT_HAVE_IMPL, file, node);
+
+		// Free the default args
+		for (asUINT n = 0; n < defaultArgs.GetLength(); n++)
+			if (defaultArgs[n])
+				asDELETE(defaultArgs[n], asCString);
+
+		node->Destroy(engine);
+
+		return 0;
+	}
+
 	isExistingShared = false;
 	int funcId = engine->GetNextScriptFunctionId();
 	if( !isInterface )
@@ -5167,13 +5214,13 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 		}
 
 		// External shared function must not try to redefine the interface
-		if (funcTraits.GetTrait(asTRAIT_EXTERNAL) && !(node->tokenType == ttEndStatement || node->lastChild->tokenType == ttEndStatement))
+		if (funcTraits.GetTrait(asTRAIT_EXTERNAL) && !(node == 0 || node->tokenType == ttEndStatement || (node->lastChild && node->lastChild->tokenType == ttEndStatement)))
 		{
 			asCString str;
 			str.Format(TXT_EXTERNAL_SHARED_s_CANNOT_REDEF, name.AddressOf());
 			WriteError(str, file, node);
 		}
-		else if (!funcTraits.GetTrait(asTRAIT_EXTERNAL) && !(node->nodeType == snStatementBlock || node->lastChild->nodeType == snStatementBlock) )
+		else if (!funcTraits.GetTrait(asTRAIT_EXTERNAL) && (node == 0 || !(node->nodeType == snStatementBlock || (node->lastChild && node->lastChild->nodeType == snStatementBlock))) )
 		{
 			asCString str;
 			str.Format(TXT_MISSING_DEFINITION_OF_s, name.AddressOf());
@@ -5318,6 +5365,9 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 				engine->scriptFunctions[objType->beh.factory]->ReleaseInternal();
 				objType->beh.factory = factoryId;
 				objType->beh.factories[0] = factoryId;
+
+				if( classDecl->isDefaultConstructorDeleted )
+					WriteError(TXT_CANNOT_DEFINE_FUNC_THAT_IS_DELETED, file, node);
 			}
 			else
 			{
@@ -5333,6 +5383,9 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 
 					objType->beh.copyconstruct = funcId;
 					objType->beh.copyfactory = factoryId;
+
+					if (classDecl->isDefaultCopyConstructorDeleted)
+						WriteError(TXT_CANNOT_DEFINE_FUNC_THAT_IS_DELETED, file, node);
 				}
 
 				// Register as a normal constructor
@@ -5375,6 +5428,9 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 				engine->scriptFunctions[objType->beh.copy]->ReleaseInternal();
 				objType->beh.copy = funcId;
 				f->AddRefInternal();
+
+				if (classDecl->isDefaultCopyDeleted)
+					WriteError(TXT_CANNOT_DEFINE_FUNC_THAT_IS_DELETED, file, node);
 			}
 
 			objType->methods.PushLast(funcId);
@@ -5469,7 +5525,7 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 				funcNode = funcNode->next;
 			}
 
-			while (funcNode && funcNode->nodeType != snStatementBlock)
+			while (funcNode && (funcNode->nodeType != snStatementBlock && funcNode->tokenType != ttEndStatement))
 			{
 				if (funcNode->tokenType == ttIdentifier && file->TokenEquals(funcNode->tokenPos, funcNode->tokenLength, FINAL_TOKEN))
 					funcTraits.SetTrait(asTRAIT_FINAL, true);
@@ -5488,7 +5544,7 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 			if (funcNode)
 				funcNode->DisconnectParent();
 
-			if (funcNode == 0 && (objType == 0 || !objType->IsInterface()))
+			if ((funcNode == 0 || funcNode->nodeType != snStatementBlock) && (objType == 0 || !objType->IsInterface()))
 			{
 				// TODO: getset: If no implementation is supplied the builder should provide an automatically generated implementation
 				//               The compiler needs to be able to handle the different types, primitive, value type, and handle
@@ -5517,7 +5573,7 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 		if( success )
 		{
 			if( !isExistingShared )
-				RegisterScriptFunction(funcNode, file, objType, isInterface, isGlobalFunction, ns, false, false, name, returnType, paramNames, paramTypes, paramModifiers, defaultArgs, funcTraits);
+				RegisterScriptFunction(funcNode ? funcNode : node, file, objType, isInterface, isGlobalFunction, ns, false, false, name, returnType, paramNames, paramTypes, paramModifiers, defaultArgs, funcTraits, 0);
 			else
 			{
 				// Free the funcNode as it won't be used
@@ -5581,6 +5637,10 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 			break;
 		}
 	}
+
+	// Check for invalid function traits
+	if (funcTraits.GetTrait(asTRAIT_DELETED))
+		WriteError(TXT_CANNOT_DELETE_NON_AUTO_FUNC, file, node);
 
 	// Read the module name as well
 	asCScriptNode *nd = node->lastChild;

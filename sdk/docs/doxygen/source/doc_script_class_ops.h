@@ -91,7 +91,7 @@ The assignment expressions <tt>a <i>op</i> b</tt> are rewritten as <tt>a.<i>opfu
 best matching method is used. An assignment operator can for example be implemented like this:
 
 <pre>
-  obj@ opAssign(const obj &in other)
+  obj &opAssign(const obj &inout other)
   {
     // Do the proper assignment
     ...
@@ -102,7 +102,11 @@ best matching method is used. An assignment operator can for example be implemen
 </pre>
 
 All script classes have a default assignment operator that does a bitwise copy of the content of the class,
-so if that is all you want to do, then there is no need to implement this method. \todo This statement is wrong. The auto generated opAssign doesn't do a bitwise copy. Also, it is not always generated, only when the script class isn't declaring any constructors
+so if that is all you want to do, then there is no need to implement this method. 
+
+\todo This statement is wrong. The auto generated opAssign doesn't do a bitwise copy. Also, it is not always generated, only when the script class isn't declaring any constructors
+
+\todo It is possible to delete the auto generated opAssign with obj &opAssign(const obj &inout) delete;
 
 
 

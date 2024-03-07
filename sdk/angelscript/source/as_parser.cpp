@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2023 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1220,7 +1220,7 @@ bool asCParser::IdentifierIs(const sToken &t, const char *str)
 	return script->TokenEquals(t.pos, t.length, str);
 }
 
-// BNF:6: FUNCATTR      ::= {'override' | 'final' | 'explicit' | 'property'}
+// BNF:6: FUNCATTR      ::= {'override' | 'final' | 'explicit' | 'property' | 'delete'}
 void asCParser::ParseMethodAttributes(asCScriptNode *funcNode)
 {
 	sToken t1;
@@ -1233,7 +1233,8 @@ void asCParser::ParseMethodAttributes(asCScriptNode *funcNode)
 		if( IdentifierIs(t1, FINAL_TOKEN) || 
 			IdentifierIs(t1, OVERRIDE_TOKEN) || 
 			IdentifierIs(t1, EXPLICIT_TOKEN) ||
-			IdentifierIs(t1, PROPERTY_TOKEN) )
+			IdentifierIs(t1, PROPERTY_TOKEN) ||
+			IdentifierIs(t1, DELETE_TOKEN) )
 			funcNode->AddChildLast(ParseIdentifier());
 		else
 			break;
@@ -2988,22 +2989,28 @@ bool asCParser::IsFuncDecl(bool isMethod)
 			}
 
 			// A function may also have any number of additional attributes
+			bool hasAttribs = false;
 			for( ; ; )
 			{
 				GetToken(&t1);
 				if( !IdentifierIs(t1, FINAL_TOKEN) && 
 					!IdentifierIs(t1, OVERRIDE_TOKEN) &&
 					!IdentifierIs(t1, EXPLICIT_TOKEN) &&
-					!IdentifierIs(t1, PROPERTY_TOKEN) )
+					!IdentifierIs(t1, PROPERTY_TOKEN) &&
+					!IdentifierIs(t1, DELETE_TOKEN) )
 				{
 					RewindTo(&t1);
 					break;
 				}
+				hasAttribs = true;
 			}
 			
 			GetToken(&t1);
 			RewindTo(&t);
-			if( t1.type == ttStartStatementBlock )
+
+			// If the function has an attribute, e.g. delete, it can be terminated with a ; if no 
+			// implementation is expected otherwise it must have a statement block
+			if( t1.type == ttEndStatement && hasAttribs || t1.type == ttStartStatementBlock )
 				return true;
 		}
 
@@ -3073,6 +3080,7 @@ asCScriptNode *asCParser::ParseFunction(bool isMethod)
 	asCScriptNode *node = CreateNode(snFunction);
 	if( node == 0 ) return 0;
 
+	// TODO: Why isn't ParseFunctionDefinition used?
 	sToken t1;
 	GetToken(&t1);
 	if (!isMethod)
@@ -3276,7 +3284,13 @@ asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterfa
 					accessorNode->AddChildLast(SuperficiallyParseStatementBlock());
 					if( isSyntaxError ) return node;
 				}
-				else if( t1.type != ttEndStatement )
+				else if (t1.type == ttEndStatement)
+				{
+					RewindTo(&t1);
+					accessorNode->AddChildLast(ParseToken(ttEndStatement));
+					if (isSyntaxError) return node;
+				}
+				else
 				{
 					Error(ExpectedTokens(";", "{"), &t1);
 					Error(InsteadFound(t1), &t1);
@@ -3286,7 +3300,13 @@ asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterfa
 			else
 			{
 				GetToken(&t1);
-				if( t1.type != ttEndStatement )
+				if (t1.type == ttEndStatement)
+				{
+					RewindTo(&t1);
+					accessorNode->AddChildLast(ParseToken(ttEndStatement));
+					if (isSyntaxError) return node;
+				}
+				else
 				{
 					Error(ExpectedToken(";"), &t1);
 					Error(InsteadFound(t1), &t1);

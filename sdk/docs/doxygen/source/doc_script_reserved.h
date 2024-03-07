@@ -21,9 +21,10 @@ class<br>
 const<br>
 continue<br>
 default<br>
-do<br>
+delete*<br>
 </code></td>
 <td width=100 valign=top><code>
+do<br>
 double<br>
 else<br>
 enum<br>
@@ -36,9 +37,9 @@ for<br>
 from*<br>
 funcdef<br>
 function*<br>
-get*<br>
 </code></td>
 <td width=100 valign=top><code>
+get*<br>
 if<br>
 import<br>
 in<br>
@@ -51,9 +52,9 @@ int32<br>
 int64<br>
 is<br>
 mixin<br>
-namespace<br>
 </code></td>
 <td width=100 valign=top><code>
+namespace<br>
 not<br>
 null<br>
 or<br>
@@ -66,9 +67,9 @@ return<br>
 set*<br>
 shared*<br>
 super*<br>
-switch<br>
 </code></td>
 <td width=100 valign=top><code>
+switch<br>
 this*<br>
 true<br>
 try<br>
