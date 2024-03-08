@@ -156,6 +156,42 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Interfaces do not support deleting methods
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		const char* script =
+			"interface A \n"
+			"{ \n"
+			" A() delete; \n"
+			" A(const A &inout) delete; \n"
+			" A &opAssign(const A &inout) delete; \n"
+			" void func() delete; \n"
+			"} \n";
+
+		mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+
+		bout.buffer = "";
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer !=
+			"script (3, 3) : Error   : Expected identifier\n"
+			"script (3, 3) : Error   : Instead found '('\n"
+			"script (4, 3) : Error   : Expected identifier\n"
+			"script (4, 3) : Error   : Instead found '('\n"
+			"script (7, 1) : Error   : Unexpected token '}'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// When default functions are deleted it must not be possible to declared them separately without the delete
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

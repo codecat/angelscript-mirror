@@ -150,6 +150,8 @@ bool Test()
 		builder.AddSectionFromMemory("test",
 			"class GameObject { \n"
 			"   [metadata] \n"
+			"   GameObject() delete; \n"
+			"   [metadata] \n"
 			"   private void onActivate1(int id, GameObject@ from) {} \n"
 			"   [metadata] \n"
 			"   void onActivate2(int id, GameObject@ from) final {} \n"
