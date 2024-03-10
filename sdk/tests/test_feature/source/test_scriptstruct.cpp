@@ -156,6 +156,47 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Mixins do not support deleting methods
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		const char* script =
+			"mixin class A \n"
+			"{ \n"
+			" A() delete; \n"
+			" A(const A &inout) delete; \n"
+			" A &opAssign(const A &inout) delete; \n"
+			" void func() delete; \n"
+			"} \n"
+			"class B : A {} \n";
+
+		mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+
+		bout.buffer = "";
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer !=
+			"script (3, 2) : Error   : Mixin classes cannot have constructors or destructors\n"
+			"script (4, 10) : Error   : Identifier 'A' is not a data type in global namespace\n"
+			"script (4, 12) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n"
+			"script (4, 2) : Error   : Mixin classes cannot have constructors or destructors\n"
+			"script (5, 2) : Error   : Identifier 'A' is not a data type in global namespace\n"
+			"script (5, 20) : Error   : Identifier 'A' is not a data type in global namespace\n"
+			"script (5, 22) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n"
+			"script (5, 2) : Error   : Cannot flag function that will not be auto generated as deleted\n"
+			"script (6, 2) : Error   : Cannot flag function that will not be auto generated as deleted\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Interfaces do not support deleting methods
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
