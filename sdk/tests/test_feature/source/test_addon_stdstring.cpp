@@ -26,6 +26,34 @@ namespace Test_Addon_StdString
 		COutStream out;
 		CBufferedOutStream bout;
 
+		// Test const string with int value assignment
+		// https://www.gamedev.net/forums/topic/715649-assertion-failure-const-string-asdf-10/5461912/
+		{
+			asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+			engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+			RegisterStdString(engine);
+			bout.buffer = "";
+
+			asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+			mod->AddScriptSection("test",
+				"const string ASDF = 10;\n");
+			r = mod->Build();
+			if (r < 0)
+				TEST_FAILED;
+
+			if (bout.buffer != "")
+			{
+				PRINTF("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
+
+			std::string *var = (std::string*)mod->GetAddressOfGlobalVar(0);
+			if (var == 0 || *var != "10")
+				TEST_FAILED;
+
+			engine->ShutDownAndRelease();
+		}
+
 		// Test concatenation with constants
 		// https://www.gamedev.net/forums/topic/709682-failed-assertion-due-to-implicit-cast-with-overloaded-functions/
 		{

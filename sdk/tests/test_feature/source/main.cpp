@@ -75,7 +75,6 @@ namespace TestMultiAssign       { bool Test(); }
 namespace TestSaveLoad          { bool Test(); }
 namespace TestConstructor2      { bool Test(); }
 namespace TestContext           { bool Test(); }
-namespace TestScriptCall        { bool Test(); }
 namespace TestArray             { bool Test(); }
 namespace TestArrayHandle       { bool Test(); }
 namespace TestStdVector         { bool Test(); }

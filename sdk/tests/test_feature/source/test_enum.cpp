@@ -53,6 +53,32 @@ static bool TestEnum()
 	int                r;
 	bool               fail = false;
 
+	// Test invalid enum usage
+	// https://www.gamedev.net/forums/topic/715661-crash-on-invalid-enum-usage/5461971/
+	{
+		engine = asCreateScriptEngine();
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"enum A {} \n"
+			"A a = {}; \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != 
+			"test (2, 3) : Info    : Compiling A a\n"
+			"test (2, 7) : Error   : Initialization lists cannot be used with 'A'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Report warning on enum values that do not fit in 32bit
 	// https://www.gamedev.net/forums/topic/687053-values-of-enum-constants/
 	{

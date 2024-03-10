@@ -3604,6 +3604,7 @@ void asCCompiler::CompileInitList(asCExprValue *var, asCScriptNode *node, asCByt
 {
 	// Check if the type supports initialization lists
 	if( var->dataType.GetTypeInfo() == 0 ||
+		var->dataType.GetBehaviour() == 0 ||
 		var->dataType.GetBehaviour()->listFactory == 0 )
 	{
 		asCString str;
