@@ -382,7 +382,7 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 	case asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT:
 		if (value > 2)
 			return asINVALID_ARG;
-		ep.alwaysImplDefaultConstruct = value;
+		ep.alwaysImplDefaultConstruct = (int)value;
 		break;
 
 	case asEP_COMPILER_WARNINGS:
@@ -469,13 +469,13 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 	case asEP_ALWAYS_IMPL_DEFAULT_COPY:
 		if (value > 2)
 			return asINVALID_ARG;
-		ep.alwaysImplDefaultCopy = value;
+		ep.alwaysImplDefaultCopy = (int)value;
 		break;
 
 	case asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT:
 		if (value > 2)
 			return asINVALID_ARG;
-		ep.alwaysImplDefaultCopyConstruct = value;
+		ep.alwaysImplDefaultCopyConstruct = (int)value;
 		break;
 
 	default:

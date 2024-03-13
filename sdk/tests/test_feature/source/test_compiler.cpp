@@ -180,6 +180,38 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test array of handles with default syntax
+	// https://www.gamedev.net/forums/topic/715669-4-assertion-errors-with-nested-lists-of-handles/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, true);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Cache { \n"
+			"	protected Obj@[]@[] _Blah; \n"
+			"	protected void AddObj(Obj@ o) { \n"
+			"		_Blah.insertLast({}); \n"
+			"	} \n"
+			"} \n"
+			"class Obj { \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test issue warning in ternary condition as func arg
 	// https://www.gamedev.net/forums/topic/715023-asserion-failure-compiling-a-weird-ternery-statement/5459701/
 	{
