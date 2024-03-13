@@ -104,7 +104,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 					argValues[numRegularRegistersUsed] = *(asQWORD*)&args[argsPos];
 				numRegularRegistersUsed++;
 			}
-			else (numStackValuesUsed < maxValuesOnStack)
+			else if (numStackValuesUsed < maxValuesOnStack)
 			{
 				// TODO: Is the values on the stack DWORD aligned or QWORD aligned?
 				if( parmDWords == 1 )
