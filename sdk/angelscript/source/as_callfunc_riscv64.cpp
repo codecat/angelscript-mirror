@@ -88,14 +88,13 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	for (asUINT n = 0; n < descr->parameterTypes.GetLength(); n++)
 	{
 		const asCDataType& parmType = descr->parameterTypes[n];
+		const asUINT parmDWords = parmType.GetSizeOnStackDWords();
 
 		// TODO: Check for object types
 		// TODO: Check for question type
-		// TODO: Check for float types
 		if (parmType.IsReference() || parmType.IsObjectHandle() || parmType.IsIntegerType() || parmType.IsUnsignedType() || parmType.IsBooleanType() )
 		{
 			// pointers, integers, and booleans go to regular registers
-			const asUINT parmDWords = parmType.GetSizeOnStackDWords();
 			if (numRegularRegistersUsed < maxRegularRegisters)
 			{
 				if (parmDWords == 1)
@@ -106,7 +105,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			}
 			else if (numStackValuesUsed < maxValuesOnStack)
 			{
-				// TODO: Is the values on the stack DWORD aligned or QWORD aligned?
+				// The values on the stack are QWORD aligned
 				if( parmDWords == 1 )
 					stackValues[numStackValuesUsed] = (asQWORD)args[argsPos];
 				else
@@ -119,8 +118,45 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 				// TODO: This should be validated as the function is registered
 				asASSERT(false);
 			}
-			argsPos += parmDWords;
 		}
+		else if (parmType.IsFloatType() || parmType.IsDoubleType())
+		{
+			// floats and doubles goes to the float registers
+			// if there are more float/double args than registers, and there are still regular registers available then use those
+			if (numFloatRegistersUsed < maxFloatRegisters)
+			{
+				if (parmDWords == 1)
+					argValues[maxRegularRegisters + numFloatRegistersUsed] = 0xFFFFFFFF00000000ull | (asQWORD)args[argsPos];
+				else
+					argValues[maxRegularRegisters + numFloatRegistersUsed] = *(asQWORD*)&args[argsPos];
+				numFloatRegistersUsed++;
+			}
+			else if (numRegularRegistersUsed < maxRegularRegisters)
+			{
+				if (parmDWords == 1)
+					argValues[numRegularRegistersUsed] = 0xFFFFFFFF00000000ull | (asQWORD)args[argsPos];
+				else
+					argValues[numRegularRegistersUsed] = *(asQWORD*)&args[argsPos];
+				numRegularRegistersUsed++;
+			}
+			else if (numStackValuesUsed < maxValuesOnStack)
+			{
+				// The values on the stack are QWORD aligned
+				if (parmDWords == 1)
+					stackValues[numStackValuesUsed] = 0xFFFFFFFF00000000ull | (asQWORD)args[argsPos];
+				else
+					stackValues[numStackValuesUsed] = *(asQWORD*)&args[argsPos];
+				numStackValuesUsed++;
+			}
+			else
+			{
+				// Oops, we ran out of space in the argValues array!
+				// TODO: This should be validated as the function is registered
+				asASSERT(false);
+			}
+		}
+
+		argsPos += parmDWords;
 	}
 
 	int retfloat = sysFunc->hostReturnFloat ? 1 : 0;

@@ -60,6 +60,7 @@ CallRiscVFunc:
 	sd      a2,-40(s0)        // store argValues arg on stack
 
 	ld      t1,-40(s0)        // load argValues arg into t1
+	// TODO: skip ahead to the number of generic args
 	ld      a7,56(t1)         // a7 = argValues[7]
 	ld      a6,48(t1)         // a6 = argValues[6]
 	ld      a5,40(t1)         // a5 = argValues[5]
@@ -68,6 +69,16 @@ CallRiscVFunc:
 	ld      a2,16(t1)         // a2 = argValues[2]
 	ld      a1,8(t1)          // a1 = argValues[1]
 	ld      a0,0(t1)          // a0 = argValues[0]
+	// TODO: skip ahead to the number of float args
+	fld     fa7,120(t1)       // fa7 = argValues[15]
+	fld     fa6,112(t1)       // fa6 = argValues[14]
+	fld     fa5,104(t1)       // fa5 = argValues[13]
+	fld     fa4,96(t1)        // fa4 = argValues[12]
+	fld     fa3,88(t1)        // fa3 = argValues[11]
+	fld     fa2,80(t1)        // fa2 = argValues[10]
+	fld     fa1,72(t1)        // fa1 = argValues[9]
+	fld     fa0,64(t1)        // fa0 = argValues[8]
+	// TODO: push the remaining args on the stack
 
 	ld      t1,-24(s0)        // load func arg to t1
 	jalr    t1                // call the function in func arg
