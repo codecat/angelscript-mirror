@@ -35,7 +35,8 @@
 // These functions handle the actual calling of system functions  
 // on the 64bit RISC-V call convention used for Linux
 //
-
+// ref: https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf
+//
 
 #include "as_config.h"
 
@@ -84,6 +85,15 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	int numRegularRegistersUsed = 0;
 	int numFloatRegistersUsed = 0;
 	int numStackValuesUsed = 0;
+
+	// A function returning an object by value must give the
+	// address of the memory to initialize as the first argument
+	if (sysFunc->hostReturnInMemory)
+	{
+		// Set the return pointer as the first argument
+		argValues[numRegularRegistersUsed++] = (asQWORD)retPointer;
+	}
+
 	asUINT argsPos = 0;
 	for (asUINT n = 0; n < descr->parameterTypes.GetLength(); n++)
 	{
@@ -95,7 +105,45 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		if (parmType.IsReference() || parmType.IsObjectHandle() || parmType.IsIntegerType() || parmType.IsUnsignedType() || parmType.IsBooleanType() )
 		{
 			// pointers, integers, and booleans go to regular registers
-			if (numRegularRegistersUsed < maxRegularRegisters)
+
+			if (parmType.GetTokenType() == ttQuestion)
+			{
+				// Copy the reference and type id as two separate arguments
+				if (numRegularRegistersUsed < maxRegularRegisters)
+				{
+					argValues[numRegularRegistersUsed] = *(asQWORD*)&args[argsPos];
+					numRegularRegistersUsed++;
+				}
+				else if (numStackValuesUsed < maxValuesOnStack)
+				{
+					stackValues[numStackValuesUsed] = *(asQWORD*)&args[argsPos];
+					numStackValuesUsed++;
+				}
+				else
+				{
+					// Oops, we ran out of space in the argValues array!
+					// TODO: This should be validated as the function is registered
+					asASSERT(false);
+				}
+
+				if (numRegularRegistersUsed < maxRegularRegisters)
+				{
+					argValues[numRegularRegistersUsed] = (asQWORD)args[argsPos + AS_PTR_SIZE];
+					numRegularRegistersUsed++;
+				}
+				else if (numStackValuesUsed < maxValuesOnStack)
+				{
+					stackValues[numStackValuesUsed] = (asQWORD)args[argsPos + AS_PTR_SIZE];
+					numStackValuesUsed++;
+				}
+				else
+				{
+					// Oops, we ran out of space in the argValues array!
+					// TODO: This should be validated as the function is registered
+					asASSERT(false);
+				}
+			}
+			else if (numRegularRegistersUsed < maxRegularRegisters)
 			{
 				if (parmDWords == 1)
 					argValues[numRegularRegistersUsed] = (asQWORD)args[argsPos];

@@ -47,19 +47,29 @@
 	.type CallRiscVFunc, @function
 CallRiscVFunc:
 	.cfi_startproc
-	addi    sp,sp,-64         // reserve bytes on stack (aligned to 16bytes)
-	.cfi_def_cfa_offset 64
-	sd      ra,56(sp)         // backup return address on stack, just below original stack frame pointer
-	sd      s0,48(sp)         // backup frame pointer on stack, below return address
+
+	// Setup call stack
+	addi    sp,sp,-80         // reserve bytes on stack (aligned to 16bytes)
+	.cfi_def_cfa_offset 80
+	sd      ra,72(sp)         // backup return address on stack, just below original stack frame pointer
+	sd      s0,64(sp)         // backup frame pointer on stack, below return address
 	.cfi_offset 1, -8
 	.cfi_offset 8, -16
-	addi    s0,sp,64          // load new frame pointer with the reserved space
+	addi    s0,sp,80          // load new frame pointer with the reserved space
 	.cfi_def_cfa 8,0
+
+	// Backup arguments on stack
+	// TODO: skip the backup and move them into the temp registers directly
 	sd      a0,-24(s0)        // store func arg on stack, below backup of s0
 	sd      a1,-32(s0)        // store retfloat arg on stack
 	sd      a2,-40(s0)        // store argValues arg on stack
+	sd      a3,-48(s0)        // store numRegularValues arg on stack
+	sd      a4,-56(s0)        // store numFloatValues arg on stack
+	sd      a5,-64(s0)        // store numStackValues arg on stack
 
 	ld      t1,-40(s0)        // load argValues arg into t1
+
+	// Load regular values into regular registers
 	// TODO: skip ahead to the number of generic args
 	ld      a7,56(t1)         // a7 = argValues[7]
 	ld      a6,48(t1)         // a6 = argValues[6]
@@ -69,6 +79,8 @@ CallRiscVFunc:
 	ld      a2,16(t1)         // a2 = argValues[2]
 	ld      a1,8(t1)          // a1 = argValues[1]
 	ld      a0,0(t1)          // a0 = argValues[0]
+	
+	// Load float values into float registers
 	// TODO: skip ahead to the number of float args
 	fld     fa7,120(t1)       // fa7 = argValues[15]
 	fld     fa6,112(t1)       // fa6 = argValues[14]
@@ -78,11 +90,27 @@ CallRiscVFunc:
 	fld     fa2,80(t1)        // fa2 = argValues[10]
 	fld     fa1,72(t1)        // fa1 = argValues[9]
 	fld     fa0,64(t1)        // fa0 = argValues[8]
-	// TODO: push the remaining args on the stack
 
+	// Push the remaining args on the stack
+	addi    t1,t1,128         // t1 = &argValues[16]
+	mv      t3,sp             // t3 = sp
+	ld      t2,-64(s0)        // t2 = numStackValues
+	beq     t2,x0,.L_nomore   // jump if t2 == 0
+.L_next:
+	addi    t2,t2,-1          // t2--
+    ld      t5,0(t1)          // t5 value from argValues
+	sd      t5,0(t3)          // store the value on the stack
+	addi    t3,t3,8           // move t3 to the next slot on the stack
+	addi    t1,t1,8           // move to the next value in argValues
+	bne     t2,x0,.L_next     // reiterate if t2 is not zero
+.L_nomore:
+
+	// Call the function
 	ld      t1,-24(s0)        // load func arg to t1
 	jalr    t1                // call the function in func arg
 	nop
+
+	// If the function returns a float value, then retrieve that
 	ld      a5,-32(s0)        // restore retfloat
 	sext.w  a4,a5             // load lower 32bit word of retfloat into a4
 	li      a5,1              // set a5 = 1
@@ -90,14 +118,17 @@ CallRiscVFunc:
 	fsd     fa0,-32(s0)       // store the raw returned 64bit float/double value on the stack (where retfloat was)
 	ld      a0,-32(s0)        // load the raw 64bit value into a0 for return
 .L_nofloat:
-	ld      ra,56(sp)         // restore return address from stack
+
+	// Clean up call stack
+	ld      ra,72(sp)         // restore return address from stack
 	.cfi_restore 1
-	ld      s0,48(sp)         // restore frame pointer from stack
+	ld      s0,64(sp)         // restore frame pointer from stack
 	.cfi_restore 8
-	.cfi_def_cfa 2, 64
-	addi    sp,sp,64          // clear reserved space from stack
+	.cfi_def_cfa 2, 80
+	addi    sp,sp,80          // clear reserved space from stack
 	.cfi_def_cfa_offset 0
 	jr      ra
+
 	.cfi_endproc
 	.size CallRiscVFunc, .-CallRiscVFunc
 
