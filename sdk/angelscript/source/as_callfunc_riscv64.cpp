@@ -78,7 +78,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	// rest of the values are pushed on the stack
 	const int maxRegularRegisters = 8;
 	const int maxFloatRegisters = 8;
-	const int maxValuesOnStack = 64 - maxRegularRegisters - maxFloatRegisters;
+	const int maxValuesOnStack = 48 - maxRegularRegisters - maxFloatRegisters;
 	asQWORD argValues[maxRegularRegisters + maxFloatRegisters + maxValuesOnStack];
 	asQWORD* stackValues = argValues + maxRegularRegisters + maxFloatRegisters;
 	

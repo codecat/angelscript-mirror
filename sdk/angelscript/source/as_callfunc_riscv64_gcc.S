@@ -49,13 +49,13 @@ CallRiscVFunc:
 	.cfi_startproc
 
 	// Setup call stack
-	addi    sp,sp,-80         // reserve bytes on stack (aligned to 16bytes)
-	.cfi_def_cfa_offset 80
-	sd      ra,72(sp)         // backup return address on stack, just below original stack frame pointer
-	sd      s0,64(sp)         // backup frame pointer on stack, below return address
+	addi    sp,sp,-336        // reserve bytes on stack (aligned to 16bytes). 256 bytes (32*8) is reserved for values that will be pushed on the stack for the function call, the rest is for local backup of registers
+	.cfi_def_cfa_offset 336
+	sd      ra,328(sp)        // backup return address on stack, just below original stack frame pointer
+	sd      s0,320(sp)        // backup frame pointer on stack, below return address
 	.cfi_offset 1, -8
 	.cfi_offset 8, -16
-	addi    s0,sp,80          // load new frame pointer with the reserved space
+	addi    s0,sp,336         // load new frame pointer with the reserved space
 	.cfi_def_cfa 8,0
 
 	// Backup arguments on stack
@@ -120,12 +120,12 @@ CallRiscVFunc:
 .L_nofloat:
 
 	// Clean up call stack
-	ld      ra,72(sp)         // restore return address from stack
+	ld      ra,328(sp)        // restore return address from stack
 	.cfi_restore 1
-	ld      s0,64(sp)         // restore frame pointer from stack
+	ld      s0,320(sp)        // restore frame pointer from stack
 	.cfi_restore 8
-	.cfi_def_cfa 2, 80
-	addi    sp,sp,80          // clear reserved space from stack
+	.cfi_def_cfa 2, 336
+	addi    sp,sp,336         // clear reserved space from stack
 	.cfi_def_cfa_offset 0
 	jr      ra
 
