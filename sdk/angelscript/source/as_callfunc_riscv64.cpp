@@ -57,7 +57,8 @@ BEGIN_AS_NAMESPACE
 // numRegularValues holds the number of regular values to put in a0-a7 registers
 // numFloatValues hold the number of float values to put in fa0-fa7 registers
 // numStackValues hold the number of values to push on the stack
-extern "C" asQWORD CallRiscVFunc(asFUNCTION_t func, int retfloat, asQWORD *argValues, int numRegularValues, int numFloatValues, int numStackValues);
+struct asDBLQWORD { asQWORD qw1, qw2; };
+extern "C" asDBLQWORD CallRiscVFunc(asFUNCTION_t func, int retfloat, asQWORD *argValues, int numRegularValues, int numFloatValues, int numStackValues);
 
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2, void *secondObject)
 {
@@ -67,7 +68,6 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	const asCTypeInfo *const retTypeInfo = retType.GetTypeInfo();
 	asFUNCTION_t func = sysFunc->func;
 	int callConv = sysFunc->callConv;
-	asQWORD retQW = 0;
 
 	// TODO: retrieve correct function pointer to call (e.g. from virtual function table, auxiliary pointer, etc)
 
@@ -101,7 +101,6 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		const asUINT parmDWords = parmType.GetSizeOnStackDWords();
 
 		// TODO: Check for object types
-		// TODO: Check for question type
 		if (parmType.IsReference() || parmType.IsObjectHandle() || parmType.IsIntegerType() || parmType.IsUnsignedType() || parmType.IsBooleanType() )
 		{
 			// pointers, integers, and booleans go to regular registers
@@ -203,14 +202,47 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 				asASSERT(false);
 			}
 		}
+		else if (parmType.IsObject())
+		{
+			// simple object types are passed in registers
+			// TODO: what if part of the structure fits in registers but not the other part? would part of the object be pushed on the stack?
+			// TODO: what of large objects? are they passed by value in registers/stack? Or by reference?
+			const asUINT sizeInMemoryDWords = parmType.GetSizeInMemoryDWords();
+			const asUINT parmQWords = (sizeInMemoryDWords >> 1) + (sizeInMemoryDWords & 1);
+
+			if ( (maxRegularRegisters - numRegularRegistersUsed) > parmQWords)
+			{
+				if (sizeInMemoryDWords == 1)
+					argValues[numRegularRegistersUsed] = (asQWORD)**(asDWORD**)&args[argsPos];
+				else
+					memcpy(&argValues[numRegularRegistersUsed], *(void**)&args[argsPos], sizeInMemoryDWords * 4);
+				numRegularRegistersUsed += parmQWords;
+			}
+			else if( (maxValuesOnStack - numStackValuesUsed) > parmQWords )
+			{
+				if (sizeInMemoryDWords == 1)
+					stackValues[numStackValuesUsed] = (asQWORD)**(asDWORD**)&args[argsPos];
+				else
+					memcpy(&stackValues[numStackValuesUsed], *(void**)&args[argsPos], sizeInMemoryDWords * 4);
+				numStackValuesUsed += parmQWords;
+			}
+			else
+			{
+				// Oops, we ran out of space in the argValues array!
+				// TODO: This should be validated as the function is registered
+				asASSERT(false);
+			}
+		}
 
 		argsPos += parmDWords;
 	}
 
 	int retfloat = sysFunc->hostReturnFloat ? 1 : 0;
-	retQW = CallRiscVFunc(func, retfloat, argValues, numRegularRegistersUsed, numFloatRegistersUsed, numStackValuesUsed);
 
-	return retQW;
+	// Integer values are returned in a0 and a1, allowing simple structures with up to 128bits to be returned in registers
+	asDBLQWORD ret = CallRiscVFunc(func, retfloat, argValues, numRegularRegistersUsed, numFloatRegistersUsed, numStackValuesUsed);
+	retQW2 = ret.qw2;
+	return ret.qw1;
 }
 
 END_AS_NAMESPACE

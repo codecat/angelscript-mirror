@@ -631,6 +631,10 @@ int asCDataType::GetSizeInMemoryBytes() const
 	if( tokenType == ttBool )
 		return AS_SIZEOF_BOOL;
 
+	// ?& is actually a reference + an int 
+	if (tokenType == ttQuestion)
+		return AS_PTR_SIZE * 4 + 4;
+
 	// null handle
 	if( tokenType == ttUnrecognizedToken )
 		return 4*AS_PTR_SIZE;
@@ -659,6 +663,8 @@ int asCDataType::GetSizeOnStackDWords() const
 	if( isReference ) return AS_PTR_SIZE + size;
 
 	// TODO: bug: Registered value types are also stored on the stack. Before changing though, check how GetSizeOnStackDWords is used
+	//            When called to determine size of type as parameter then it is correct, as objects are implicitly passed by reference in AngelScript
+	//            To correct this it would be necessary to know if the method is called for a parameter, or for a local variable
 	if( typeInfo && !IsEnumType() ) return AS_PTR_SIZE + size;
 
 	return GetSizeInMemoryDWords() + size;
