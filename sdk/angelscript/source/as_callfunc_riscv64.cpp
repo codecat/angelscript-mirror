@@ -100,7 +100,6 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		const asCDataType& parmType = descr->parameterTypes[n];
 		const asUINT parmDWords = parmType.GetSizeOnStackDWords();
 
-		// TODO: Check for object types
 		if (parmType.IsReference() || parmType.IsObjectHandle() || parmType.IsIntegerType() || parmType.IsUnsignedType() || parmType.IsBooleanType() )
 		{
 			// pointers, integers, and booleans go to regular registers
@@ -204,33 +203,56 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		}
 		else if (parmType.IsObject())
 		{
-			// simple object types are passed in registers
-			// TODO: what if part of the structure fits in registers but not the other part? would part of the object be pushed on the stack?
-			// TODO: what of large objects? are they passed by value in registers/stack? Or by reference?
-			const asUINT sizeInMemoryDWords = parmType.GetSizeInMemoryDWords();
-			const asUINT parmQWords = (sizeInMemoryDWords >> 1) + (sizeInMemoryDWords & 1);
-
-			if ( (maxRegularRegisters - numRegularRegistersUsed) > parmQWords)
+			if (parmType.GetTypeInfo()->flags & COMPLEX_MASK)
 			{
-				if (sizeInMemoryDWords == 1)
-					argValues[numRegularRegistersUsed] = (asQWORD)**(asDWORD**)&args[argsPos];
+				// complex object types are passed by address
+				if (numRegularRegistersUsed < maxRegularRegisters)
+				{
+					argValues[numRegularRegistersUsed] = *(asQWORD*)&args[argsPos];
+					numRegularRegistersUsed++;
+				}
+				else if (numStackValuesUsed < maxValuesOnStack)
+				{
+					stackValues[numStackValuesUsed] = *(asQWORD*)&args[argsPos];
+					numStackValuesUsed++;
+				}
 				else
-					memcpy(&argValues[numRegularRegistersUsed], *(void**)&args[argsPos], sizeInMemoryDWords * 4);
-				numRegularRegistersUsed += parmQWords;
-			}
-			else if( (maxValuesOnStack - numStackValuesUsed) > parmQWords )
-			{
-				if (sizeInMemoryDWords == 1)
-					stackValues[numStackValuesUsed] = (asQWORD)**(asDWORD**)&args[argsPos];
-				else
-					memcpy(&stackValues[numStackValuesUsed], *(void**)&args[argsPos], sizeInMemoryDWords * 4);
-				numStackValuesUsed += parmQWords;
+				{
+					// Oops, we ran out of space in the argValues array!
+					// TODO: This should be validated as the function is registered
+					asASSERT(false);
+				}
 			}
 			else
 			{
-				// Oops, we ran out of space in the argValues array!
-				// TODO: This should be validated as the function is registered
-				asASSERT(false);
+				// simple object types are passed in registers
+				// TODO: what if part of the structure fits in registers but not the other part? would part of the object be pushed on the stack?
+				// TODO: what of large objects? are they passed by value in registers/stack? Or by reference?
+				const asUINT sizeInMemoryDWords = parmType.GetSizeInMemoryDWords();
+				const asUINT parmQWords = (sizeInMemoryDWords >> 1) + (sizeInMemoryDWords & 1);
+
+				if ((maxRegularRegisters - numRegularRegistersUsed) > parmQWords)
+				{
+					if (sizeInMemoryDWords == 1)
+						argValues[numRegularRegistersUsed] = (asQWORD) * *(asDWORD**)&args[argsPos];
+					else
+						memcpy(&argValues[numRegularRegistersUsed], *(void**)&args[argsPos], sizeInMemoryDWords * 4);
+					numRegularRegistersUsed += parmQWords;
+				}
+				else if ((maxValuesOnStack - numStackValuesUsed) > parmQWords)
+				{
+					if (sizeInMemoryDWords == 1)
+						stackValues[numStackValuesUsed] = (asQWORD) * *(asDWORD**)&args[argsPos];
+					else
+						memcpy(&stackValues[numStackValuesUsed], *(void**)&args[argsPos], sizeInMemoryDWords * 4);
+					numStackValuesUsed += parmQWords;
+				}
+				else
+				{
+					// Oops, we ran out of space in the argValues array!
+					// TODO: This should be validated as the function is registered
+					asASSERT(false);
+				}
 			}
 		}
 
@@ -242,6 +264,14 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	// Integer values are returned in a0 and a1, allowing simple structures with up to 128bits to be returned in registers
 	asDBLQWORD ret = CallRiscVFunc(func, retfloat, argValues, numRegularRegistersUsed, numFloatRegistersUsed, numStackValuesUsed);
 	retQW2 = ret.qw2;
+
+	// Special case for returning a struct with two floats. C++ will return this in fa0:fa1. These needs to be compacted into a single qword
+	if (retfloat && retTypeInfo && !(retTypeInfo->flags & asOBJ_APP_CLASS_ALIGN8) && retTypeInfo->flags & asOBJ_APP_CLASS_ALLFLOATS)
+	{
+		ret.qw1 &= 0xFFFFFFFF;
+		ret.qw1 |= (retQW2 << 32);
+	}
+
 	return ret.qw1;
 }
 

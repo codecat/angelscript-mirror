@@ -117,6 +117,8 @@ CallRiscVFunc:
 	bne     a4,a5,.L_nofloat  // jump if a4 != 1  TODO: rewrite to compare with x0 which is hardwired to 0 so there is no need to set a5
 	fsd     fa0,-32(s0)       // store the raw returned 64bit float/double value on the stack (where retfloat was)
 	ld      a0,-32(s0)        // load the raw 64bit value into a0 for return
+	fsd     fa1,-32(s0)       // store the raw returned 64bit float/double value on the stack (where retfloat was)
+	ld      a1,-32(s0)        // load the raw 64bit value into a1 for return
 .L_nofloat:
 
 	// Clean up call stack

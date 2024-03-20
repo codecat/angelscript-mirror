@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2023 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -317,10 +317,23 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 				else
 				{
 					internal->hostReturnInMemory = false;
-					internal->hostReturnSize     = func->returnType.GetSizeInMemoryDWords();
+					internal->hostReturnSize = func->returnType.GetSizeInMemoryDWords();
 #ifdef SPLIT_OBJS_BY_MEMBER_TYPES
-					if( func->returnType.GetTypeInfo()->flags & asOBJ_APP_CLASS_ALLFLOATS )
+					if (func->returnType.GetTypeInfo()->flags & asOBJ_APP_CLASS_ALLFLOATS)
+					{
 						internal->hostReturnFloat = true;
+#ifdef AS_RISCV64
+						// TODO: There shouldn't be platform specific code in this file. Need to have a better way of controlling this
+						//       Perhaps by having a specific RETURN_MAX_FLOAT_REGS in as_config
+						// On RISC-V 64bit & Linux only structures with two float or doubles can be returned in fa0:fa1
+						if (!(func->returnType.GetTypeInfo()->flags & asOBJ_APP_CLASS_ALIGN8) && func->returnType.GetSizeInMemoryDWords() > 2)
+						{
+							// Since asOBJ_APP_ALIGN8 is not set we assume it is floats, and only 2 floats can be returned in registers
+							// In this case the object will not be split by members, and instead it will be returned in a0:a1
+							internal->hostReturnFloat = false;
+						}
+#endif
+					}
 #endif
 				}
 

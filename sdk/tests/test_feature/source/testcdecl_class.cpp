@@ -356,7 +356,7 @@ bool TestReturnStructAllFloats()
 {
 	RET_ON_MAX_PORT
 
-		bool fail = false;
+	bool fail = false;
 	int r;
 
 	asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
