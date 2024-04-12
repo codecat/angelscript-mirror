@@ -76,15 +76,15 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	// fa0-fa7 used for float values
 	// if more than 8 float values and there is space left in regular registers then those are used
 	// rest of the values are pushed on the stack
-	const int maxRegularRegisters = 8;
-	const int maxFloatRegisters = 8;
-	const int maxValuesOnStack = 48 - maxRegularRegisters - maxFloatRegisters;
+	const asUINT maxRegularRegisters = 8;
+	const asUINT maxFloatRegisters = 8;
+	const asUINT maxValuesOnStack = 48 - maxRegularRegisters - maxFloatRegisters;
 	asQWORD argValues[maxRegularRegisters + maxFloatRegisters + maxValuesOnStack];
 	asQWORD* stackValues = argValues + maxRegularRegisters + maxFloatRegisters;
 	
-	int numRegularRegistersUsed = 0;
-	int numFloatRegistersUsed = 0;
-	int numStackValuesUsed = 0;
+	asUINT numRegularRegistersUsed = 0;
+	asUINT numFloatRegistersUsed = 0;
+	asUINT numStackValuesUsed = 0;
 
 	// A function returning an object by value must give the
 	// address of the memory to initialize as the first argument
@@ -92,6 +92,28 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	{
 		// Set the return pointer as the first argument
 		argValues[numRegularRegistersUsed++] = (asQWORD)retPointer;
+	}
+
+	// Check if the object pointer must be added as the first argument
+	if (callConv == ICC_CDECL_OBJFIRST || callConv == ICC_CDECL_OBJFIRST_RETURNINMEM)
+	{
+		if (numRegularRegistersUsed < maxRegularRegisters)
+		{
+			argValues[numRegularRegistersUsed] = (asPWORD)obj;
+			numRegularRegistersUsed++;
+		}
+		else if (numStackValuesUsed < maxValuesOnStack)
+		{
+			// The values on the stack are QWORD aligned
+			stackValues[numStackValuesUsed] = (asPWORD)obj;
+			numStackValuesUsed++;
+		}
+		else
+		{
+			// Oops, we ran out of space in the argValues array!
+			// TODO: This should be validated as the function is registered
+			asASSERT(false);
+		}
 	}
 
 	asUINT argsPos = 0;
@@ -257,6 +279,28 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		}
 
 		argsPos += parmDWords;
+	}
+
+	// Check if the object pointer must be added as the last argument
+	if (callConv == ICC_CDECL_OBJLAST || callConv == ICC_CDECL_OBJLAST_RETURNINMEM)
+	{
+		if (numRegularRegistersUsed < maxRegularRegisters)
+		{
+			argValues[numRegularRegistersUsed] = (asPWORD)obj;
+			numRegularRegistersUsed++;
+		}
+		else if (numStackValuesUsed < maxValuesOnStack)
+		{
+			// The values on the stack are QWORD aligned
+			stackValues[numStackValuesUsed] = (asPWORD)obj;
+			numStackValuesUsed++;
+		}
+		else
+		{
+			// Oops, we ran out of space in the argValues array!
+			// TODO: This should be validated as the function is registered
+			asASSERT(false);
+		}
 	}
 
 	int retfloat = sysFunc->hostReturnFloat ? 1 : 0;
