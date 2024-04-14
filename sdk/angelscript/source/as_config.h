@@ -1053,7 +1053,7 @@
 				// 64-bit
 				#define AS_RISCV64
 
-				#undef GNU_STYLE_VIRTUAL_METHOD
+				#define GNU_STYLE_VIRTUAL_METHOD
 				#undef AS_NO_THISCALL_FUNCTOR_METHOD
 
 				#define HAS_128_BIT_PRIMITIVES

@@ -98,7 +98,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	if (obj && (callConv == ICC_VIRTUAL_THISCALL || callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM))
 	{
 		asFUNCTION_t* vftable = *((asFUNCTION_t**)obj);
-		func = vftable[FuncPtrToUInt(func) >> 3];
+		func = vftable[FuncPtrToUInt(func) / sizeof(void*)];
 	}
 
 	// Check if the object pointer must be added as the first argument
