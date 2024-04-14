@@ -62,7 +62,7 @@ extern "C" asDBLQWORD CallRiscVFunc(asFUNCTION_t func, int retfloat, asQWORD *ar
 
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2, void *secondObject)
 {
-	asCScriptEngine *engine = context->m_engine;
+	//asCScriptEngine *engine = context->m_engine;
 	const asSSystemFunctionInterface *const sysFunc = descr->sysFuncIntf;
 	const asCDataType &retType = descr->returnType;
 	const asCTypeInfo *const retTypeInfo = retType.GetTypeInfo();
@@ -94,8 +94,20 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		argValues[numRegularRegistersUsed++] = (asQWORD)retPointer;
 	}
 
+	// Determine the real function pointer in case of virtual method
+	if (obj && (callConv == ICC_VIRTUAL_THISCALL || callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM))
+	{
+		asFUNCTION_t* vftable = *((asFUNCTION_t**)obj);
+		func = vftable[FuncPtrToUInt(func) >> 3];
+	}
+
 	// Check if the object pointer must be added as the first argument
-	if (callConv == ICC_CDECL_OBJFIRST || callConv == ICC_CDECL_OBJFIRST_RETURNINMEM)
+	if (callConv == ICC_CDECL_OBJFIRST || 
+		callConv == ICC_CDECL_OBJFIRST_RETURNINMEM ||
+		callConv == ICC_THISCALL ||
+		callConv == ICC_VIRTUAL_THISCALL ||
+		callConv == ICC_THISCALL_RETURNINMEM ||
+		callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM)
 	{
 		if (numRegularRegistersUsed < maxRegularRegisters)
 		{
