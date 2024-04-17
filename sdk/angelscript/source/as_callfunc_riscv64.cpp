@@ -60,7 +60,7 @@ BEGIN_AS_NAMESPACE
 struct asDBLQWORD { asQWORD qw1, qw2; };
 extern "C" asDBLQWORD CallRiscVFunc(asFUNCTION_t func, int retfloat, asQWORD *argValues, int numRegularValues, int numFloatValues, int numStackValues);
 
-asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2, void *secondObject)
+asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2, void *secondObj)
 {
 	//asCScriptEngine *engine = context->m_engine;
 	const asSSystemFunctionInterface *const sysFunc = descr->sysFuncIntf;
@@ -95,7 +95,12 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	}
 
 	// Determine the real function pointer in case of virtual method
-	if (obj && (callConv == ICC_VIRTUAL_THISCALL || callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM))
+	if (obj && (callConv == ICC_VIRTUAL_THISCALL || 
+		callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM ||
+		callConv == ICC_VIRTUAL_THISCALL_OBJFIRST ||
+		callConv == ICC_VIRTUAL_THISCALL_OBJFIRST_RETURNINMEM ||
+		callConv == ICC_VIRTUAL_THISCALL_OBJLAST ||
+		callConv == ICC_VIRTUAL_THISCALL_OBJLAST_RETURNINMEM))
 	{
 		asFUNCTION_t* vftable = *((asFUNCTION_t**)obj);
 		func = vftable[FuncPtrToUInt(func) / sizeof(void*)];
@@ -107,7 +112,11 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		callConv == ICC_THISCALL ||
 		callConv == ICC_VIRTUAL_THISCALL ||
 		callConv == ICC_THISCALL_RETURNINMEM ||
-		callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM)
+		callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM ||
+		callConv == ICC_THISCALL_OBJLAST ||
+		callConv == ICC_THISCALL_OBJLAST_RETURNINMEM || 
+		callConv == ICC_VIRTUAL_THISCALL_OBJLAST || 
+		callConv == ICC_VIRTUAL_THISCALL_OBJLAST_RETURNINMEM)
 	{
 		if (numRegularRegistersUsed < maxRegularRegisters)
 		{
@@ -118,6 +127,47 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		{
 			// The values on the stack are QWORD aligned
 			stackValues[numStackValuesUsed] = (asPWORD)obj;
+			numStackValuesUsed++;
+		}
+		else
+		{
+			// Oops, we ran out of space in the argValues array!
+			// TODO: This should be validated as the function is registered
+			asASSERT(false);
+		}
+	}
+	else if (callConv == ICC_THISCALL_OBJFIRST ||
+		callConv == ICC_VIRTUAL_THISCALL_OBJFIRST ||
+		callConv == ICC_THISCALL_OBJFIRST_RETURNINMEM ||
+		callConv == ICC_VIRTUAL_THISCALL_OBJFIRST_RETURNINMEM)
+	{
+		if (numRegularRegistersUsed < maxRegularRegisters)
+		{
+			argValues[numRegularRegistersUsed] = (asPWORD)obj;
+			numRegularRegistersUsed++;
+		}
+		else if (numStackValuesUsed < maxValuesOnStack)
+		{
+			// The values on the stack are QWORD aligned
+			stackValues[numStackValuesUsed] = (asPWORD)obj;
+			numStackValuesUsed++;
+		}
+		else
+		{
+			// Oops, we ran out of space in the argValues array!
+			// TODO: This should be validated as the function is registered
+			asASSERT(false);
+		}
+
+		if (numRegularRegistersUsed < maxRegularRegisters)
+		{
+			argValues[numRegularRegistersUsed] = (asPWORD)secondObj;
+			numRegularRegistersUsed++;
+		}
+		else if (numStackValuesUsed < maxValuesOnStack)
+		{
+			// The values on the stack are QWORD aligned
+			stackValues[numStackValuesUsed] = (asPWORD)secondObj;
 			numStackValuesUsed++;
 		}
 		else
@@ -313,6 +363,28 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			// TODO: This should be validated as the function is registered
 			asASSERT(false);
 		}
+	}
+	else if (callConv == ICC_THISCALL_OBJLAST || callConv == ICC_THISCALL_OBJLAST_RETURNINMEM ||
+		callConv == ICC_VIRTUAL_THISCALL_OBJLAST || callConv == ICC_VIRTUAL_THISCALL_OBJLAST_RETURNINMEM)
+	{
+		if (numRegularRegistersUsed < maxRegularRegisters)
+		{
+			argValues[numRegularRegistersUsed] = (asPWORD)secondObj;
+			numRegularRegistersUsed++;
+		}
+		else if (numStackValuesUsed < maxValuesOnStack)
+		{
+			// The values on the stack are QWORD aligned
+			stackValues[numStackValuesUsed] = (asPWORD)secondObj;
+			numStackValuesUsed++;
+		}
+		else
+		{
+			// Oops, we ran out of space in the argValues array!
+			// TODO: This should be validated as the function is registered
+			asASSERT(false);
+		}
+
 	}
 
 	int retfloat = sysFunc->hostReturnFloat ? 1 : 0;
