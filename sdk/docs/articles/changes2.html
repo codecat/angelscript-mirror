@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.37.0 WIP - 2024/03/13</h2>
+<h2>Version 2.37.0 WIP - 2024/04/19</h2>
 
 <ul>
 <li>Bug fixes
@@ -35,6 +35,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>asCDataType::GetSizeInMemoryBytes was not returning the correct size of handles (Thanks Rob McDonald)
 <li>Fixed crash when attempting to use init list with enum type (Thanks Miss)
 <li>Fixed assert failure on passing anonymous init list to function argument expecting a handle (Thanks xertrov)
+<li>Registered copy factories were not properly identified as copy factories if the parameter used &amp;inout instead of &amp;in
 </ul>
 <li>Library
 <ul>

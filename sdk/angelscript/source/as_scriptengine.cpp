@@ -2366,7 +2366,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 
 				// If the parameter is object, and const reference for input,
 				// and same type as this class, then this is a copy constructor.
-				if( paramType.IsObject() && paramType.IsReference() && paramType.IsReadOnly() && func.inOutFlags[func.parameterTypes.GetLength()-1] == asTM_INREF && paramType.GetTypeInfo() == objectType )
+				if( paramType.IsObject() && paramType.IsReference() && paramType.IsReadOnly() && (func.inOutFlags[func.parameterTypes.GetLength()-1] & asTM_INREF) && paramType.GetTypeInfo() == objectType )
 					beh->copyfactory = func.id;
 			}
 		}

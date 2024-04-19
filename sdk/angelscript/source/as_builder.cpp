@@ -1014,13 +1014,20 @@ void asCBuilder::CompileFunctions()
 				if (r < 0)
 				{
 					asCObjectType* ot = func->objectType;
-					engine->scriptFunctions[ot->beh.copyconstruct]->ReleaseInternal();
+					module->m_scriptFunctions.RemoveValue(func);
+					func->module = 0;
+					func->ReleaseInternal();
 					ot->beh.constructors.RemoveValue(ot->beh.copyconstruct);
 					ot->beh.copyconstruct = 0;
+					func->ReleaseInternal();
 
-					engine->scriptFunctions[ot->beh.copyfactory]->ReleaseInternal();
+					func = engine->scriptFunctions[ot->beh.copyfactory];
+					module->m_scriptFunctions.RemoveValue(func);
+					func->module = 0;
+					func->ReleaseInternal();
 					ot->beh.factories.RemoveValue(ot->beh.copyfactory);
 					ot->beh.copyfactory = 0;
+					func->ReleaseInternal();
 				}
 
 				// Restore message callback and error counter

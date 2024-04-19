@@ -792,7 +792,7 @@ bool Test()
 		engine->Release();
 	}
 
-	// For backwards compatibility the engine can be configured to allow acccess to private properties
+	// For backwards compatibility the engine can be configured to allow access to private properties
 	// http://www.gamedev.net/topic/658646-private-class-member-variables-act-like-cs-protected/
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

@@ -1739,6 +1739,62 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test a problem with jit and copy constructor for class containing a non-copyable member
+	// https://www.gamedev.net/forums/topic/716517-new-generated-constructor-amp-jit-issue/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		class JitCompiler : public asIJITCompiler
+		{
+		public:
+			JitCompiler() : invokeCount(0) {}
+			virtual int  CompileFunction(asIScriptFunction* /*function*/, asJITFunction* output) {
+				invokeCount++;
+				*reinterpret_cast<int**>(output) = new int[1];
+				return 0;
+			}
+			virtual void ReleaseJITFunction(asJITFunction func) {
+				delete reinterpret_cast<int*>(func);
+			}
+			int invokeCount;
+		} jit;
+
+		engine->SetEngineProperty(asEP_INCLUDE_JIT_INSTRUCTIONS, true);
+		engine->SetJITCompiler(&jit);
+
+		engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
+
+		engine->RegisterObjectType("file", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("file", asBEHAVE_FACTORY, "file @f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("file", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("file", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"class WarningIssue \n"
+			"{ \n"
+			"	file    f; \n" // removing the file field fixes the problem
+			"	int i = 0; \n"
+			"}; \n"
+			"WarningIssue  issue; \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		if (jit.invokeCount != 2)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test the logic for JIT compilation (version 2)
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -1771,6 +1827,7 @@ bool Test()
 			int compileCount;
 		} jit;
 
+		engine->SetEngineProperty(asEP_INCLUDE_JIT_INSTRUCTIONS, true);
 		engine->SetEngineProperty(asEP_JIT_INTERFACE_VERSION, 2);
 		engine->SetJITCompiler(&jit);
 
@@ -1780,7 +1837,7 @@ bool Test()
 		if (r < 0)
 			TEST_FAILED;
 
-		if (bout.buffer != " (0, 0) : Warning : Function 'void func()' appears to have been compiled without JIT entry points\n")
+		if (bout.buffer != "")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -1821,6 +1878,7 @@ bool Test()
 			int invokeCount;
 		} jit;
 
+		engine->SetEngineProperty(asEP_INCLUDE_JIT_INSTRUCTIONS, true);
 		engine->SetJITCompiler(&jit);
 
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
@@ -1829,7 +1887,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != " (0, 0) : Warning : Function 'void func()' appears to have been compiled without JIT entry points\n" )
+		if( bout.buffer != "" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
