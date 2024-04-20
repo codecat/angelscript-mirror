@@ -689,7 +689,7 @@ bool Test()
 		engine->Release();
 	}
 
-	// The sub type must not be const, except if it is a handle to const
+	// It is allowed to declare sub types as const
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -704,15 +704,15 @@ bool Test()
 		mod->AddScriptSection("test",
 			"class A {} \n"
 			"void func() { \n"
-			"  MyTmpl<const A> a; \n" // not allowed
+			"  MyTmpl<const A> a; \n" // allowed
 			"  MyTmpl<const A@> b; \n" // allowed
+			"  MyTmpl<const A@const> c; \n" // allowed
 			"} \n");
 		r = mod->Build();
-		if( r > 0 )
+		if (r < 0)
 			TEST_FAILED;
 
-		if( bout.buffer != "test (2, 1) : Info    : Compiling void func()\n"
-		                   "test (3, 10) : Error   : Template subtype must not be read-only\n" )
+		if( bout.buffer != "" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -961,10 +961,7 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "test (2, 1) : Info    : Compiling void func()\n"
-					  	   "test (4, 9) : Error   : Template subtype must not be read-only\n"
-						   "test (4, 21) : Error   : Only objects have constructors\n"
-						   "test (6, 4) : Warning : 'i' is not initialized.\n"
-						   "test (6, 4) : Error   : Type 'int' doesn't support the indexing operator\n"
+						   "test (6, 8) : Error   : Reference is read-only\n"
 						   "test (8, 8) : Error   : Reference is read-only\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());

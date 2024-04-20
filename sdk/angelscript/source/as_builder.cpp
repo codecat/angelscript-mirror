@@ -6355,16 +6355,6 @@ asCObjectType *asCBuilder::GetTemplateInstanceFromNode(asCScriptNode *node, asCS
 		// that should be allowed.
 		asCDataType subType = CreateDataTypeFromNode(n, file, implicitNamespace, false, module ? 0 : (currentType ? currentType : templateType));
 		subTypes.PushLast(subType);
-
-		if (subType.IsReadOnly())
-		{
-			asCString msg;
-			msg.Format(TXT_TMPL_SUBTYPE_MUST_NOT_BE_READ_ONLY);
-			WriteError(msg, file, n);
-
-			// Return a dummy
-			return 0;
-		}
 	}
 
 	if (next)

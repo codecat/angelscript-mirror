@@ -315,6 +315,39 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// Allow registering a property with arrays of const handles that cannot be modified by the script
+	// Reported by Tomasz
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, true);
+
+		engine->RegisterObjectType("foo", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("foo", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("foo", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
+
+		r = engine->RegisterGlobalProperty("const array<const foo @const> arr", (void*)1);
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "void func() { @arr[0] = null; }");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 1) : Info    : Compiling void func()\n"
+						   "test (1, 23) : Error   : Reference is read-only\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test a case with double arrays
 	// Reported by Rob McDonald
 	SKIP_ON_MAX_PORT
@@ -396,7 +429,7 @@ bool Test()
 			"class Test { \n"
 			"  Test() { val = 0; } \n"
 			"  Test(int a) { val = a; } \n"
-			"  bool Less(const Test @&in a, const Test @&in b) { return a.val < b.val; } \n"
+			"  bool Less(const Test @const&in a, const Test @const&in b) { return a.val < b.val; } \n"
 			"  int val; \n"
 			"} \n"
 			"void main() { \n"
@@ -453,7 +486,7 @@ bool Test()
 
 		if (bout.buffer != "test (7, 1) : Info    : Compiling void main()\n"
 						   "test (10, 12) : Error   : Can't create delegate\n"
-						   "test (10, 12) : Info    : No matching signatures to 'bool array<Test@>::less(const Test@&in, const Test@&in)'\n")
+						   "test (10, 12) : Info    : No matching signatures to 'bool array<Test@>::less(const Test@const&in, const Test@const&in)'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -539,7 +572,7 @@ bool Test()
 			"	~Foo() { print('dtor ' + m_i + '\\n'); } \n"
 			"} \n"
 
-			"bool SortFunc(const Foo@ & in a, const Foo@ & in b) \n"
+			"bool SortFunc(const Foo@const & in a, const Foo@const & in b) \n"
 			"{ \n"
 			"	return b.m_i % 7 == 0; \n"
 			"} \n"
@@ -844,7 +877,7 @@ bool Test()
 			"	Test(int x1) { x = x1; } \n"
 			"	int value { get const { return x + 10; } } \n"
 			"} \n"
-			"bool less(const Test @&in a, const Test @&in b) { //print(a); \n"
+			"bool less(const Test @const &in a, const Test @const &in b) { //print(a); \n"
 			"		return a.value<b.value; } \n"
 			"void main() { \n"
 			"	array<const Test@> a = { \n"

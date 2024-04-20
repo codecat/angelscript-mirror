@@ -1413,6 +1413,13 @@ bool asCParser::CheckTemplateType(const sToken &t)
 					if( t1.type != ttCloseBracket )
 						return false;
 				}
+				else if (t1.type == ttHandle)
+				{
+					// after @ there can be a const
+					GetToken(&t1);
+					if (t1.type != ttConst)
+						RewindTo(&t1);
+				}
 
 				GetToken(&t1);
 			}

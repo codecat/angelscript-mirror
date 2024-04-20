@@ -3817,11 +3817,6 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 
 					dt.MakeReference(orig.IsReference());
 					dt.MakeReadOnly(ot->templateSubTypes[n].IsReadOnly() || orig.IsReadOnly());
-
-					// If the target is a @& then don't make the handle const, 
-					// as it is not possible to declare functions with @const &
-					if (orig.IsReference() && dt.IsObjectHandle())
-						dt.MakeReadOnly(false);
 				}
 				break;
 			}

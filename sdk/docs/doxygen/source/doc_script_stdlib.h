@@ -198,7 +198,7 @@ Here's another example where the callback function is declared explicitly:
   {
     return a < b;
   }
-  bool lessForHandle(const obj \@&in a, const obj \@&in b)
+  bool lessForHandle(const obj \@ const &in a, const obj \@ const &in b)
   {
     return a < b;
   }
