@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.37.0 WIP - 2024/04/20</h2>
+<h2>Version 2.37.0 WIP - 2024/04/22</h2>
 
 <ul>
 <li>Bug fixes
@@ -48,6 +48,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>asEP_ALWAYS_IMPL_DEFAULT_COPY can be set to 1 to tell compiler to always implement default copy even if other opAssign is declared
 <li>asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT can be set to 1 to tell compiler not to always implement default copy constructor even if other copy constructor is declared
 <li>asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT, DEFAULT_COPY, and DEFAULT_COPY_CONSTRUCT can now be set to 2 to tell compiler never to implement these
+<li>A new flag asOBJ_APP_CLASS_UNION is added to inform when a registered class contains unions, needed for Risc-V native ABI
 </ul>
 <li>Library interface
 <ul>
@@ -55,6 +56,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Introduced a new JIT compiler interface asIJITCompilerV2, use asEP_JIT_INTERFACE_VERSION to set which should be used (Thanks Denis Naumov)
 <li>The new JIT compiler interface can use SetJITFunction to set the JIT compiled function at a later time, to allow better optimizations (Thanks Denis Naumov)
 <li>Added asIScriptFunction::GetDeclaredAt
+<li>RegisterObjectType now takes a qword for the flags to make room for asOBJ_APP_CLASS_UNION
+<li>asITypeInfo::GetFlags also returns a qword to make room for asOBJ_APP_CLASS_UNION
 </ul>
 <li>Script language
 <ul>
@@ -62,7 +65,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>A default copy constructor is provided for script classes unless another copy constructor is explicitly defined (Thanks Patrick Jeeves)
 <li>An implicit conversion to primitive of same type by different size takes precedent over change in sign in function matching
 <li>It is now possible to explicitly delete auto generated constructor, copy constructor, and copy operator if they are not wanted
-<li>Templates can now be instantiated with const sub types (Thanks Tomasz)
+<li>Templates can now be instantiated with const sub types (Thanks tomek0055)
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

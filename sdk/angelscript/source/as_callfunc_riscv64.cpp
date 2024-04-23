@@ -62,7 +62,7 @@ extern "C" asDBLQWORD CallRiscVFunc(asFUNCTION_t func, int retfloat, asQWORD *ar
 
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2, void *secondObj)
 {
-	//asCScriptEngine *engine = context->m_engine;
+	asCScriptEngine *engine = context->m_engine;
 	const asSSystemFunctionInterface *const sysFunc = descr->sysFuncIntf;
 	const asCDataType &retType = descr->returnType;
 	const asCTypeInfo *const retTypeInfo = retType.GetTypeInfo();
@@ -337,6 +337,9 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 					// TODO: This should be validated as the function is registered
 					asASSERT(false);
 				}
+
+				// Delete the original memory
+				engine->CallFree(*(void**)&args[argsPos]);
 			}
 		}
 
@@ -384,7 +387,6 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			// TODO: This should be validated as the function is registered
 			asASSERT(false);
 		}
-
 	}
 
 	int retfloat = sysFunc->hostReturnFloat ? 1 : 0;

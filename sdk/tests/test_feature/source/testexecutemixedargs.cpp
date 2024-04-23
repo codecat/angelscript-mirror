@@ -128,7 +128,7 @@ static CComplex cfunction5(int f1, double f3, float f2, int f4)
 	return CComplex();
 }
 
-static void cfunction6(int a, void* a1, int t1, void* a2, int t2, void* a3, int t3, void* a4, int t4, void* a5, int t5)
+static void cfunction6(int a, void* a1, int ti1, void* a2, int ti2, void* a3, int ti3, void* a4, int ti4, void* a5, int ti5)
 {
 	called = true;
 
@@ -139,7 +139,7 @@ static void cfunction6(int a, void* a1, int t1, void* a2, int t2, void* a3, int 
 	i[4] = *(int*)a4;
 	i[5] = *(int*)a5;
 
-	testVal = (t1 == asTYPEID_INT32) && (t2 == asTYPEID_INT32) && (t3 == asTYPEID_INT32) && (t4 == asTYPEID_INT32) && (t5 == asTYPEID_INT32) &&
+	testVal = (ti1 == asTYPEID_INT32) && (ti2 == asTYPEID_INT32) && (ti3 == asTYPEID_INT32) && (ti4 == asTYPEID_INT32) && (ti5 == asTYPEID_INT32) &&
 		(a == 42) && (*(int*)a1 == 1) && (*(int*)a2 == 2) && (*(int*)a3 == 3) && (*(int*)a4 == 4) && (*(int*)a5 == 5);
 }
 

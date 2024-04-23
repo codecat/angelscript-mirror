@@ -3017,7 +3017,7 @@ bool asCParser::IsFuncDecl(bool isMethod)
 
 			// If the function has an attribute, e.g. delete, it can be terminated with a ; if no 
 			// implementation is expected otherwise it must have a statement block
-			if( t1.type == ttEndStatement && hasAttribs || t1.type == ttStartStatementBlock )
+			if( (t1.type == ttEndStatement && hasAttribs) || t1.type == ttStartStatementBlock )
 				return true;
 		}
 

@@ -76,6 +76,42 @@ class asIThreadManager;
 class asILockableSharedBool;
 class asIStringFactory;
 
+//
+// asBYTE  =  8 bits
+// asWORD  = 16 bits
+// asDWORD = 32 bits
+// asQWORD = 64 bits
+// asPWORD = size of pointer
+//
+typedef signed char    asINT8;
+typedef signed short   asINT16;
+typedef signed int     asINT32;
+typedef unsigned char  asBYTE;
+typedef unsigned short asWORD;
+typedef unsigned int   asUINT;
+#if (defined(_MSC_VER) && _MSC_VER <= 1200) || defined(__S3E__) || (defined(_MSC_VER) && defined(__clang__))
+// size_t is not really correct, since it only guaranteed to be large enough to hold the segment size.
+// For example, on 16bit systems the size_t may be 16bits only even if pointers are 32bit. But nobody
+// is likely to use MSVC6 to compile for 16bit systems anymore, so this should be ok.
+typedef size_t         asPWORD;
+#else
+typedef uintptr_t      asPWORD;
+#endif
+#ifdef __LP64__
+typedef unsigned int  asDWORD;
+typedef unsigned long asQWORD;
+typedef long asINT64;
+#else
+typedef unsigned long asDWORD;
+#if !defined(_MSC_VER) && (defined(__GNUC__) || defined(__MWERKS__) || defined(__SUNPRO_CC) || defined(__psp2__))
+typedef uint64_t asQWORD;
+typedef int64_t asINT64;
+#else
+typedef unsigned __int64 asQWORD;
+typedef __int64 asINT64;
+#endif
+#endif
+
 // Enumerations and constants
 
 // Return codes
@@ -171,57 +207,58 @@ enum asECallConvTypes
 };
 
 // Object type flags
-enum asEObjTypeFlags
+enum asEObjTypeFlags : asQWORD
 {
-	asOBJ_REF                        = (1<<0),
-	asOBJ_VALUE                      = (1<<1),
-	asOBJ_GC                         = (1<<2),
-	asOBJ_POD                        = (1<<3),
-	asOBJ_NOHANDLE                   = (1<<4),
-	asOBJ_SCOPED                     = (1<<5),
-	asOBJ_TEMPLATE                   = (1<<6),
-	asOBJ_ASHANDLE                   = (1<<7),
-	asOBJ_APP_CLASS                  = (1<<8),
-	asOBJ_APP_CLASS_CONSTRUCTOR      = (1<<9),
-	asOBJ_APP_CLASS_DESTRUCTOR       = (1<<10),
-	asOBJ_APP_CLASS_ASSIGNMENT       = (1<<11),
-	asOBJ_APP_CLASS_COPY_CONSTRUCTOR = (1<<12),
-	asOBJ_APP_CLASS_C                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR),
-	asOBJ_APP_CLASS_CD               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR),
-	asOBJ_APP_CLASS_CA               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
-	asOBJ_APP_CLASS_CK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
-	asOBJ_APP_CLASS_CDA              = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
-	asOBJ_APP_CLASS_CDK              = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
-	asOBJ_APP_CLASS_CAK              = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
-	asOBJ_APP_CLASS_CDAK             = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
-	asOBJ_APP_CLASS_D                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR),
-	asOBJ_APP_CLASS_DA               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
-	asOBJ_APP_CLASS_DK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
-	asOBJ_APP_CLASS_DAK              = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
-	asOBJ_APP_CLASS_A                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT),
-	asOBJ_APP_CLASS_AK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
-	asOBJ_APP_CLASS_K                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
-	asOBJ_APP_CLASS_MORE_CONSTRUCTORS = (1<<31),
-	asOBJ_APP_PRIMITIVE              = (1<<13),
-	asOBJ_APP_FLOAT                  = (1<<14),
-	asOBJ_APP_ARRAY                  = (1<<15),
-	asOBJ_APP_CLASS_ALLINTS          = (1<<16),
-	asOBJ_APP_CLASS_ALLFLOATS        = (1<<17),
-	asOBJ_NOCOUNT                    = (1<<18),
-	asOBJ_APP_CLASS_ALIGN8           = (1<<19),
-	asOBJ_IMPLICIT_HANDLE            = (1<<20),
-	asOBJ_MASK_VALID_FLAGS           = 0x801FFFFF,
+	asOBJ_REF                         = (1<<0),
+	asOBJ_VALUE                       = (1<<1),
+	asOBJ_GC                          = (1<<2),
+	asOBJ_POD                         = (1<<3),
+	asOBJ_NOHANDLE                    = (1<<4),
+	asOBJ_SCOPED                      = (1<<5),
+	asOBJ_TEMPLATE                    = (1<<6),
+	asOBJ_ASHANDLE                    = (1<<7),
+	asOBJ_APP_CLASS                   = (1<<8),
+	asOBJ_APP_CLASS_CONSTRUCTOR       = (1<<9),
+	asOBJ_APP_CLASS_DESTRUCTOR        = (1<<10),
+	asOBJ_APP_CLASS_ASSIGNMENT        = (1<<11),
+	asOBJ_APP_CLASS_COPY_CONSTRUCTOR  = (1<<12),
+	asOBJ_APP_CLASS_C                 = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR),
+	asOBJ_APP_CLASS_CD                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR),
+	asOBJ_APP_CLASS_CA                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
+	asOBJ_APP_CLASS_CK                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	asOBJ_APP_CLASS_CDA               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
+	asOBJ_APP_CLASS_CDK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	asOBJ_APP_CLASS_CAK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	asOBJ_APP_CLASS_CDAK              = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	asOBJ_APP_CLASS_D                 = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR),
+	asOBJ_APP_CLASS_DA                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
+	asOBJ_APP_CLASS_DK                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	asOBJ_APP_CLASS_DAK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	asOBJ_APP_CLASS_A                 = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT),
+	asOBJ_APP_CLASS_AK                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	asOBJ_APP_CLASS_K                 = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	asOBJ_APP_CLASS_MORE_CONSTRUCTORS = (asQWORD(1) << 31),
+	asOBJ_APP_PRIMITIVE               = (1<<13),
+	asOBJ_APP_FLOAT                   = (1<<14),
+	asOBJ_APP_ARRAY                   = (1<<15),
+	asOBJ_APP_CLASS_ALLINTS           = (1<<16),
+	asOBJ_APP_CLASS_ALLFLOATS         = (1<<17),
+	asOBJ_NOCOUNT                     = (1<<18),
+	asOBJ_APP_CLASS_ALIGN8            = (1<<19),
+	asOBJ_IMPLICIT_HANDLE             = (1<<20),
+	asOBJ_APP_CLASS_UNION             = (asQWORD(1)<<32),
+	asOBJ_MASK_VALID_FLAGS            = 0x1801FFFFFul,
 	// Internal flags
-	asOBJ_SCRIPT_OBJECT              = (1<<21),
-	asOBJ_SHARED                     = (1<<22),
-	asOBJ_NOINHERIT                  = (1<<23),
-	asOBJ_FUNCDEF                    = (1<<24),
-	asOBJ_LIST_PATTERN               = (1<<25),
-	asOBJ_ENUM                       = (1<<26),
-	asOBJ_TEMPLATE_SUBTYPE           = (1<<27),
-	asOBJ_TYPEDEF                    = (1<<28),
-	asOBJ_ABSTRACT                   = (1<<29),
-	asOBJ_APP_ALIGN16                = (1<<30)
+	asOBJ_SCRIPT_OBJECT               = (1<<21),
+	asOBJ_SHARED                      = (1<<22),
+	asOBJ_NOINHERIT                   = (1<<23),
+	asOBJ_FUNCDEF                     = (1<<24),
+	asOBJ_LIST_PATTERN                = (1<<25),
+	asOBJ_ENUM                        = (1<<26),
+	asOBJ_TEMPLATE_SUBTYPE            = (1<<27),
+	asOBJ_TYPEDEF                     = (1<<28),
+	asOBJ_ABSTRACT                    = (1<<29),
+	asOBJ_APP_ALIGN16                 = (1<<30)
 };
 
 // Behaviours
@@ -356,42 +393,6 @@ enum asEFuncType
 	asFUNC_IMPORTED  = 5,
 	asFUNC_DELEGATE  = 6
 };
-
-//
-// asBYTE  =  8 bits
-// asWORD  = 16 bits
-// asDWORD = 32 bits
-// asQWORD = 64 bits
-// asPWORD = size of pointer
-//
-typedef signed char    asINT8;
-typedef signed short   asINT16;
-typedef signed int     asINT32;
-typedef unsigned char  asBYTE;
-typedef unsigned short asWORD;
-typedef unsigned int   asUINT;
-#if (defined(_MSC_VER) && _MSC_VER <= 1200) || defined(__S3E__) || (defined(_MSC_VER) && defined(__clang__))
-	// size_t is not really correct, since it only guaranteed to be large enough to hold the segment size.
-	// For example, on 16bit systems the size_t may be 16bits only even if pointers are 32bit. But nobody
-	// is likely to use MSVC6 to compile for 16bit systems anymore, so this should be ok.
-	typedef size_t         asPWORD;
-#else
-	typedef uintptr_t      asPWORD;
-#endif
-#ifdef __LP64__
-	typedef unsigned int  asDWORD;
-	typedef unsigned long asQWORD;
-	typedef long asINT64;
-#else
-	typedef unsigned long asDWORD;
-  #if !defined(_MSC_VER) && (defined(__GNUC__) || defined(__MWERKS__) || defined(__SUNPRO_CC) || defined(__psp2__))
-	typedef uint64_t asQWORD;
-	typedef int64_t asINT64;
-  #else
-	typedef unsigned __int64 asQWORD;
-	typedef __int64 asINT64;
-  #endif
-#endif
 
 // Is the target a 64bit system?
 #if defined(__LP64__) || defined(__amd64__) || defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__) || defined(_M_ARM64)
@@ -693,7 +694,7 @@ public:
 	virtual int    GetGlobalPropertyIndexByDecl(const char *decl) const = 0;
 
 	// Object types
-	virtual int            RegisterObjectType(const char *obj, int byteSize, asDWORD flags) = 0;
+	virtual int            RegisterObjectType(const char *obj, int byteSize, asQWORD flags) = 0;
 	virtual int            RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset, int compositeOffset = 0, bool isCompositeIndirect = false) = 0;
 	virtual int            RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0, int compositeOffset = 0, bool isCompositeIndirect = false) = 0;
 	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0, int compositeOffset = 0, bool isCompositeIndirect = false) = 0;
@@ -1074,7 +1075,7 @@ public:
 	virtual	const char      *GetNamespace() const = 0;
 	virtual asITypeInfo     *GetBaseType() const = 0;
 	virtual bool             DerivesFrom(const asITypeInfo *objType) const = 0;
-	virtual asDWORD          GetFlags() const = 0;
+	virtual asQWORD          GetFlags() const = 0;
 	virtual asUINT           GetSize() const = 0;
 	virtual int              GetTypeId() const = 0;
 	virtual int              GetSubTypeId(asUINT subTypeIndex = 0) const = 0;

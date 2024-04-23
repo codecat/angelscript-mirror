@@ -273,7 +273,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 	// Registered types have special flags that determine how they are returned
 	else if( func->returnType.IsObject() )
 	{
-		asDWORD objType = func->returnType.GetTypeInfo()->flags;
+		asQWORD objType = func->returnType.GetTypeInfo()->flags;
 
 		// Only value types can be returned by value
 		asASSERT( objType & asOBJ_VALUE );
@@ -330,6 +330,11 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 						{
 							// Since asOBJ_APP_ALIGN8 is not set we assume it is floats, and only 2 floats can be returned in registers
 							// In this case the object will not be split by members, and instead it will be returned in a0:a1
+							internal->hostReturnFloat = false;
+						}
+						// On RISC-V 64bit & Linux floats within unions are not returned in fa0:fa1
+						if (func->returnType.GetTypeInfo()->flags & asOBJ_APP_CLASS_UNION)
+						{
 							internal->hostReturnFloat = false;
 						}
 #endif

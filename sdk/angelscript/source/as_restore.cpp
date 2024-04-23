@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2023 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1537,7 +1537,7 @@ void asCReader::ReadTypeDeclaration(asCTypeInfo *type, int phase, bool *isExtern
 
 		// Read the initial attributes
 		ReadString(&type->name);
-		ReadData(&type->flags, 4);
+		ReadData(&type->flags, 8);
 		type->size = SanityCheck(ReadEncodedUInt(), 1000000);
 		asCString ns;
 		ReadString(&ns);
@@ -4371,7 +4371,7 @@ void asCWriter::WriteTypeDeclaration(asCTypeInfo *type, int phase)
 		// name
 		WriteString(&type->name);
 		// flags
-		WriteData(&type->flags, 4);
+		WriteData(&type->flags, 8);
 
 		// size
 		// TODO: Do we really need to store this? The reader should be able to

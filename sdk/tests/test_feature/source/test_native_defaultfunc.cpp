@@ -199,7 +199,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
-		r = engine->RegisterObjectType("vec2", sizeof(Class1), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Class1>() | asOBJ_APP_CLASS_ALLFLOATS); assert(r >= 0);
+		r = engine->RegisterObjectType("vec2", sizeof(Class1), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Class1>() | asOBJ_APP_CLASS_ALLFLOATS | asOBJ_APP_CLASS_UNION); assert(r >= 0);
 		r = engine->RegisterObjectProperty("vec2", "float x", asOFFSET(Class1 , x)); assert(r >= 0);
 		r = engine->RegisterObjectProperty("vec2", "float y", asOFFSET(Class1, y)); assert(r >= 0);
 
@@ -230,7 +230,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
-		r = engine->RegisterObjectType("vec2", sizeof(Class2), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Class2>() | asOBJ_APP_CLASS_ALLFLOATS); assert(r >= 0);
+		r = engine->RegisterObjectType("vec2", sizeof(Class2), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Class2>() | asOBJ_APP_CLASS_ALLFLOATS | asOBJ_APP_CLASS_UNION); assert(r >= 0);
 		r = engine->RegisterObjectProperty("vec2", "float x", asOFFSET(Class2, x)); assert(r >= 0);
 		r = engine->RegisterObjectProperty("vec2", "float y", asOFFSET(Class2, y)); assert(r >= 0);
 
@@ -261,7 +261,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
-		r = engine->RegisterObjectType("vec2", sizeof(Class3), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Class3>() | asOBJ_APP_CLASS_ALLFLOATS); assert(r >= 0);
+		r = engine->RegisterObjectType("vec2", sizeof(Class3), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Class3>() | asOBJ_APP_CLASS_ALLFLOATS | asOBJ_APP_CLASS_UNION); assert(r >= 0);
 		r = engine->RegisterObjectProperty("vec2", "float x", asOFFSET(Class3, x)); assert(r >= 0);
 		r = engine->RegisterObjectProperty("vec2", "float y", asOFFSET(Class3, y)); assert(r >= 0);
 
@@ -292,7 +292,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
-		r = engine->RegisterObjectType("vec2", sizeof(Class4), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Class4>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS | asOBJ_APP_CLASS_ALLFLOATS); assert(r >= 0);
+		r = engine->RegisterObjectType("vec2", sizeof(Class4), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Class4>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS | asOBJ_APP_CLASS_ALLFLOATS | asOBJ_APP_CLASS_UNION); assert(r >= 0);
 		r = engine->RegisterObjectProperty("vec2", "float x", asOFFSET(Class4, x)); assert(r >= 0);
 		r = engine->RegisterObjectProperty("vec2", "float y", asOFFSET(Class4, y)); assert(r >= 0);
 
@@ -324,7 +324,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
-		r = engine->RegisterObjectType("vec2", sizeof(glm::vec2), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<glm::vec2>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS | asOBJ_APP_CLASS_ALLFLOATS); assert(r >= 0);
+		r = engine->RegisterObjectType("vec2", sizeof(glm::vec2), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<glm::vec2>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS | asOBJ_APP_CLASS_ALLFLOATS | asOBJ_APP_CLASS_UNION); assert(r >= 0);
 		r = engine->RegisterObjectProperty("vec2", "float x", asOFFSET(glm::vec2, x)); assert(r >= 0);
 		r = engine->RegisterObjectProperty("vec2", "float y", asOFFSET(glm::vec2, y)); assert(r >= 0);
 
@@ -357,7 +357,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
-		r = engine->RegisterObjectType("quat", sizeof(glm::quat), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<glm::quat>() | asOBJ_APP_CLASS_ALLFLOATS); assert(r >= 0);
+		r = engine->RegisterObjectType("quat", sizeof(glm::quat), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<glm::quat>() | asOBJ_APP_CLASS_ALLFLOATS | asOBJ_APP_CLASS_UNION); assert(r >= 0);
 		r = engine->RegisterObjectProperty("quat", "float x", asOFFSET(glm::quat, x)); assert(r >= 0);
 		r = engine->RegisterObjectProperty("quat", "float y", asOFFSET(glm::quat, y)); assert(r >= 0);
 		r = engine->RegisterObjectProperty("quat", "float z", asOFFSET(glm::quat, z)); assert(r >= 0);
