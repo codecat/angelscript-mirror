@@ -340,6 +340,11 @@ struct asRect
 	asPoint tl, br;
 };
 
+float TestPointByVal(asPoint p)
+{
+	return p.x + p.y;
+}
+
 asPoint TestPoint()
 {
 	asPoint p = { 1,2 };
@@ -357,13 +362,19 @@ bool TestReturnStructAllFloats()
 	RET_ON_MAX_PORT
 
 	bool fail = false;
+	COutStream out;
 	int r;
 
 	asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	r = engine->RegisterObjectType("point", sizeof(asPoint), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLFLOATS); assert(r >= 0);
 	r = engine->RegisterObjectType("rect", sizeof(asRect), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLFLOATS); assert(r >= 0);
+	r = engine->RegisterObjectProperty("point", "float x", asOFFSET(asPoint, x));
+	r = engine->RegisterObjectProperty("point", "float y", asOFFSET(asPoint, y));
 	r = engine->RegisterGlobalFunction("point Point()", asFUNCTION(TestPoint), asCALL_CDECL); assert(r >= 0);
 	r = engine->RegisterGlobalFunction("rect Rect()", asFUNCTION(TestRect), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("float PointByVal(point)", asFUNCTION(TestPointByVal), asCALL_CDECL); assert(r >= 0);
 	asPoint p = { 0,0 };
 	asRect rc = { {0,0},{0,0} };
 	r = engine->RegisterGlobalProperty("point p", &p); assert(r >= 0);
@@ -383,6 +394,11 @@ bool TestReturnStructAllFloats()
 	}
 
 	// at that point, 'p' should contain 1,2 while 'rc' should contain 3,4,5,6
+
+	// On some CPUs a struct with two floats are split in two float registers
+	r = ExecuteString(engine, "point p; p.x = 1; p.y = 2; float f = PointByVal(p); assert( f > 2.99999 && f < 3.00001 );");
+	if (r != asEXECUTION_FINISHED)
+		TEST_FAILED;
 
 	engine->Release();
 

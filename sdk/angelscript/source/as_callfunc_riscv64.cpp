@@ -60,6 +60,43 @@ BEGIN_AS_NAMESPACE
 struct asDBLQWORD { asQWORD qw1, qw2; };
 extern "C" asDBLQWORD CallRiscVFunc(asFUNCTION_t func, int retfloat, asQWORD *argValues, int numRegularValues, int numFloatValues, int numStackValues);
 
+// a0-a7 used for non-float values
+// fa0-fa7 used for float values
+// if more than 8 float values and there is space left in regular registers then those are used
+// rest of the values are pushed on the stack
+const asUINT maxRegularRegisters = 8;
+const asUINT maxFloatRegisters = 8;
+const asUINT maxValuesOnStack = 48 - maxRegularRegisters - maxFloatRegisters;
+
+bool PushToFloatRegs(asQWORD val, asQWORD *argValues, asUINT &numFloatRegistersUsed, asUINT &numRegularRegistersUsed, asUINT &numStackValuesUsed)
+{
+	asQWORD* stackValues = argValues + maxRegularRegisters + maxFloatRegisters;
+
+	if (numFloatRegistersUsed < maxFloatRegisters)
+	{
+		argValues[maxRegularRegisters + numFloatRegistersUsed] = val;
+		numFloatRegistersUsed++;
+	}
+	else if (numRegularRegistersUsed < maxRegularRegisters)
+	{
+		argValues[numRegularRegistersUsed] = val;
+		numRegularRegistersUsed++;
+	}
+	else if (numStackValuesUsed < maxValuesOnStack)
+	{
+		stackValues[numStackValuesUsed] = val;
+		numStackValuesUsed++;
+	}
+	else
+	{
+		// Oops, we ran out of space in the argValues array!
+		// TODO: This should be validated as the function is registered
+		asASSERT(false);
+		return false;
+	}
+	return true;
+}
+
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2, void *secondObj)
 {
 	asCScriptEngine *engine = context->m_engine;
@@ -72,13 +109,6 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	// TODO: retrieve correct function pointer to call (e.g. from virtual function table, auxiliary pointer, etc)
 
 	// Prepare the values that will be sent to the native function
-	// a0-a7 used for non-float values
-	// fa0-fa7 used for float values
-	// if more than 8 float values and there is space left in regular registers then those are used
-	// rest of the values are pushed on the stack
-	const asUINT maxRegularRegisters = 8;
-	const asUINT maxFloatRegisters = 8;
-	const asUINT maxValuesOnStack = 48 - maxRegularRegisters - maxFloatRegisters;
 	asQWORD argValues[maxRegularRegisters + maxFloatRegisters + maxValuesOnStack];
 	asQWORD* stackValues = argValues + maxRegularRegisters + maxFloatRegisters;
 	
@@ -253,37 +283,10 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		{
 			// floats and doubles goes to the float registers
 			// if there are more float/double args than registers, and there are still regular registers available then use those
-			if (numFloatRegistersUsed < maxFloatRegisters)
-			{
-				if (parmDWords == 1)
-					argValues[maxRegularRegisters + numFloatRegistersUsed] = 0xFFFFFFFF00000000ull | (asQWORD)args[argsPos];
-				else
-					argValues[maxRegularRegisters + numFloatRegistersUsed] = *(asQWORD*)&args[argsPos];
-				numFloatRegistersUsed++;
-			}
-			else if (numRegularRegistersUsed < maxRegularRegisters)
-			{
-				if (parmDWords == 1)
-					argValues[numRegularRegistersUsed] = 0xFFFFFFFF00000000ull | (asQWORD)args[argsPos];
-				else
-					argValues[numRegularRegistersUsed] = *(asQWORD*)&args[argsPos];
-				numRegularRegistersUsed++;
-			}
-			else if (numStackValuesUsed < maxValuesOnStack)
-			{
-				// The values on the stack are QWORD aligned
-				if (parmDWords == 1)
-					stackValues[numStackValuesUsed] = 0xFFFFFFFF00000000ull | (asQWORD)args[argsPos];
-				else
-					stackValues[numStackValuesUsed] = *(asQWORD*)&args[argsPos];
-				numStackValuesUsed++;
-			}
+			if (parmDWords == 1)
+				PushToFloatRegs(0xFFFFFFFF00000000ull | (asQWORD)args[argsPos], argValues, numFloatRegistersUsed, numRegularRegistersUsed, numStackValuesUsed);
 			else
-			{
-				// Oops, we ran out of space in the argValues array!
-				// TODO: This should be validated as the function is registered
-				asASSERT(false);
-			}
+				PushToFloatRegs(*(asQWORD*)&args[argsPos], argValues, numFloatRegistersUsed, numRegularRegistersUsed, numStackValuesUsed);
 		}
 		else if (parmType.IsObject())
 		{
@@ -306,6 +309,31 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 					// TODO: This should be validated as the function is registered
 					asASSERT(false);
 				}
+			}
+			else if ((parmType.GetTypeInfo()->flags & asOBJ_APP_CLASS_ALLFLOATS) && !(parmType.GetTypeInfo()->flags & asOBJ_APP_CLASS_UNION) &&
+				((parmType.GetSizeInMemoryDWords() <= 2 && !(parmType.GetTypeInfo()->flags & asOBJ_APP_CLASS_ALIGN8)) ||
+				 (parmType.GetSizeInMemoryDWords() <= 4 && (parmType.GetTypeInfo()->flags & asOBJ_APP_CLASS_ALIGN8))) )
+			{
+				// simple structs with 1 or 2 floats/doubles are loaded into into float registers
+				if (!(parmType.GetTypeInfo()->flags & asOBJ_APP_CLASS_ALIGN8))
+				{
+					// Unpack the floats
+					asQWORD arg1 = 0xFFFFFFFF00000000ull | **(asDWORD**)&args[argsPos];
+					asQWORD arg2 = 0xFFFFFFFF00000000ull | *((*(asDWORD**)&args[argsPos])+1);
+					PushToFloatRegs(arg1, argValues, numFloatRegistersUsed, numRegularRegistersUsed, numStackValuesUsed);
+					PushToFloatRegs(arg2, argValues, numFloatRegistersUsed, numRegularRegistersUsed, numStackValuesUsed);
+				}
+				else
+				{
+					// Unpack the doubles
+					asQWORD arg1 = **(asQWORD**)&args[argsPos];
+					asQWORD arg2 = *((*(asQWORD**)&args[argsPos]) + 1);
+					PushToFloatRegs(arg1, argValues, numFloatRegistersUsed, numRegularRegistersUsed, numStackValuesUsed);
+					PushToFloatRegs(arg2, argValues, numFloatRegistersUsed, numRegularRegistersUsed, numStackValuesUsed);
+				}
+
+				// Delete the original memory
+				engine->CallFree(*(void**)&args[argsPos]);
 			}
 			else
 			{
