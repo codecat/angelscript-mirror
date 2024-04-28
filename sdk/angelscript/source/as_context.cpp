@@ -1908,6 +1908,14 @@ int asCContext::GetLineNumber(asUINT stackLevel, int *column, const char **secti
 		return 0;
 	}
 
+	if (bytePos == 0)
+	{
+		// If the context has been Prepared but Execute hasn't been called yet the 
+		// programPointer will be zero. In this case simply use the address of the 
+		// bytecode as starting point
+		bytePos = func->scriptData->byteCode.AddressOf();
+	}
+
 	int sectionIdx;
 	asDWORD line = func->GetLineNumber(int(bytePos - func->scriptData->byteCode.AddressOf()), &sectionIdx);
 	if( column ) *column = (line >> 20);

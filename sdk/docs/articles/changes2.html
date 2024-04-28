@@ -36,6 +36,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash when attempting to use init list with enum type (Thanks Miss)
 <li>Fixed assert failure on passing anonymous init list to function argument expecting a handle (Thanks xertrov)
 <li>Registered copy factories were not properly identified as copy factories if the parameter used &amp;inout instead of &amp;in
+<li>Fixed GetLineNumber that could randomly return the last line number of a function if called between Prepare and Execute (Thanks Sam Tupy)
 </ul>
 <li>Library
 <ul>
