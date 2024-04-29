@@ -102,6 +102,7 @@ static asvec3_t vec3_123()
 static asvec3_t v3;
 
 bool TestReturnStructAllFloats();
+bool TestReturnStructAllDoubles();
 
 bool TestCDecl_Class()
 {
@@ -324,6 +325,7 @@ bool TestCDecl_Class()
 	}
 
 	fail = TestReturnStructAllFloats() || fail;
+	fail = TestReturnStructAllDoubles() || fail;
 
 	return fail;
 }
@@ -405,3 +407,54 @@ bool TestReturnStructAllFloats()
 	return fail;
 }
 
+struct asPointD
+{
+	double x, y;
+};
+
+double TestPointByValD(asPointD p)
+{
+	return p.x + p.y;
+}
+
+asPointD TestPointD()
+{
+	asPointD p = { 1,2 };
+	return p;
+}
+
+bool TestReturnStructAllDoubles()
+{
+	RET_ON_MAX_PORT
+
+	bool fail = false;
+	COutStream out;
+	int r;
+
+	asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+	r = engine->RegisterObjectType("point", sizeof(asPointD), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLFLOATS | asOBJ_APP_CLASS_ALIGN8); assert(r >= 0);
+	r = engine->RegisterObjectProperty("point", "double x", asOFFSET(asPointD, x));
+	r = engine->RegisterObjectProperty("point", "double y", asOFFSET(asPointD, y));
+	r = engine->RegisterGlobalFunction("point Point()", asFUNCTION(TestPointD), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("double PointByVal(point)", asFUNCTION(TestPointByValD), asCALL_CDECL); assert(r >= 0);
+	asPointD p = { 0,0 };
+	r = engine->RegisterGlobalProperty("point p", &p); assert(r >= 0);
+	r = ExecuteString(engine, "p=Point();");
+	if (r != asEXECUTION_FINISHED)
+		TEST_FAILED;
+	if (p.x != 1 || p.y != 2)
+		TEST_FAILED;
+
+	// at that point, 'p' should contain 1,2
+
+	// On some CPUs a struct with two doubles are split in two float registers
+	r = ExecuteString(engine, "point p; p.x = 1; p.y = 2; float f = PointByVal(p); assert( f > 2.99999 && f < 3.00001 );");
+	if (r != asEXECUTION_FINISHED)
+		TEST_FAILED;
+
+	engine->Release();
+
+	return fail;
+}

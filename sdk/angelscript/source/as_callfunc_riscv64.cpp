@@ -94,6 +94,32 @@ bool PushToFloatRegs(asQWORD val, asQWORD *argValues, asUINT &numFloatRegistersU
 		asASSERT(false);
 		return false;
 	}
+
+	return true;
+}
+
+bool PushToRegularRegs(asQWORD val, asQWORD* argValues, asUINT& numRegularRegistersUsed, asUINT& numStackValuesUsed)
+{
+	asQWORD* stackValues = argValues + maxRegularRegisters + maxFloatRegisters;
+
+	if (numRegularRegistersUsed < maxRegularRegisters)
+	{
+		argValues[numRegularRegistersUsed] = val;
+		numRegularRegistersUsed++;
+	}
+	else if (numStackValuesUsed < maxValuesOnStack)
+	{
+		stackValues[numStackValuesUsed] = val;
+		numStackValuesUsed++;
+	}
+	else
+	{
+		// Oops, we ran out of space in the argValues array!
+		// TODO: This should be validated as the function is registered
+		asASSERT(false);
+		return false;
+	}
+
 	return true;
 }
 
@@ -148,64 +174,15 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		callConv == ICC_VIRTUAL_THISCALL_OBJLAST || 
 		callConv == ICC_VIRTUAL_THISCALL_OBJLAST_RETURNINMEM)
 	{
-		if (numRegularRegistersUsed < maxRegularRegisters)
-		{
-			argValues[numRegularRegistersUsed] = (asPWORD)obj;
-			numRegularRegistersUsed++;
-		}
-		else if (numStackValuesUsed < maxValuesOnStack)
-		{
-			// The values on the stack are QWORD aligned
-			stackValues[numStackValuesUsed] = (asPWORD)obj;
-			numStackValuesUsed++;
-		}
-		else
-		{
-			// Oops, we ran out of space in the argValues array!
-			// TODO: This should be validated as the function is registered
-			asASSERT(false);
-		}
+		PushToRegularRegs((asPWORD)obj, argValues, numRegularRegistersUsed, numStackValuesUsed);
 	}
 	else if (callConv == ICC_THISCALL_OBJFIRST ||
 		callConv == ICC_VIRTUAL_THISCALL_OBJFIRST ||
 		callConv == ICC_THISCALL_OBJFIRST_RETURNINMEM ||
 		callConv == ICC_VIRTUAL_THISCALL_OBJFIRST_RETURNINMEM)
 	{
-		if (numRegularRegistersUsed < maxRegularRegisters)
-		{
-			argValues[numRegularRegistersUsed] = (asPWORD)obj;
-			numRegularRegistersUsed++;
-		}
-		else if (numStackValuesUsed < maxValuesOnStack)
-		{
-			// The values on the stack are QWORD aligned
-			stackValues[numStackValuesUsed] = (asPWORD)obj;
-			numStackValuesUsed++;
-		}
-		else
-		{
-			// Oops, we ran out of space in the argValues array!
-			// TODO: This should be validated as the function is registered
-			asASSERT(false);
-		}
-
-		if (numRegularRegistersUsed < maxRegularRegisters)
-		{
-			argValues[numRegularRegistersUsed] = (asPWORD)secondObj;
-			numRegularRegistersUsed++;
-		}
-		else if (numStackValuesUsed < maxValuesOnStack)
-		{
-			// The values on the stack are QWORD aligned
-			stackValues[numStackValuesUsed] = (asPWORD)secondObj;
-			numStackValuesUsed++;
-		}
-		else
-		{
-			// Oops, we ran out of space in the argValues array!
-			// TODO: This should be validated as the function is registered
-			asASSERT(false);
-		}
+		PushToRegularRegs((asPWORD)obj, argValues, numRegularRegistersUsed, numStackValuesUsed);
+		PushToRegularRegs((asPWORD)secondObj, argValues, numRegularRegistersUsed, numStackValuesUsed);
 	}
 
 	asUINT argsPos = 0;
@@ -221,62 +198,15 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			if (parmType.GetTokenType() == ttQuestion)
 			{
 				// Copy the reference and type id as two separate arguments
-				if (numRegularRegistersUsed < maxRegularRegisters)
-				{
-					argValues[numRegularRegistersUsed] = *(asQWORD*)&args[argsPos];
-					numRegularRegistersUsed++;
-				}
-				else if (numStackValuesUsed < maxValuesOnStack)
-				{
-					stackValues[numStackValuesUsed] = *(asQWORD*)&args[argsPos];
-					numStackValuesUsed++;
-				}
-				else
-				{
-					// Oops, we ran out of space in the argValues array!
-					// TODO: This should be validated as the function is registered
-					asASSERT(false);
-				}
-
-				if (numRegularRegistersUsed < maxRegularRegisters)
-				{
-					argValues[numRegularRegistersUsed] = (asQWORD)args[argsPos + AS_PTR_SIZE];
-					numRegularRegistersUsed++;
-				}
-				else if (numStackValuesUsed < maxValuesOnStack)
-				{
-					stackValues[numStackValuesUsed] = (asQWORD)args[argsPos + AS_PTR_SIZE];
-					numStackValuesUsed++;
-				}
-				else
-				{
-					// Oops, we ran out of space in the argValues array!
-					// TODO: This should be validated as the function is registered
-					asASSERT(false);
-				}
+				PushToRegularRegs(*(asQWORD*)&args[argsPos], argValues, numRegularRegistersUsed, numStackValuesUsed);
+				PushToRegularRegs((asQWORD)args[argsPos + AS_PTR_SIZE], argValues, numRegularRegistersUsed, numStackValuesUsed);
 			}
-			else if (numRegularRegistersUsed < maxRegularRegisters)
+			else 
 			{
 				if (parmDWords == 1)
-					argValues[numRegularRegistersUsed] = (asQWORD)args[argsPos];
+					PushToRegularRegs((asQWORD)args[argsPos], argValues, numRegularRegistersUsed, numStackValuesUsed);
 				else
-					argValues[numRegularRegistersUsed] = *(asQWORD*)&args[argsPos];
-				numRegularRegistersUsed++;
-			}
-			else if (numStackValuesUsed < maxValuesOnStack)
-			{
-				// The values on the stack are QWORD aligned
-				if( parmDWords == 1 )
-					stackValues[numStackValuesUsed] = (asQWORD)args[argsPos];
-				else
-					stackValues[numStackValuesUsed] = *(asQWORD*)&args[argsPos];
-				numStackValuesUsed++;
-			}
-			else
-			{
-				// Oops, we ran out of space in the argValues array!
-				// TODO: This should be validated as the function is registered
-				asASSERT(false);
+					PushToRegularRegs(*(asQWORD*)&args[argsPos], argValues, numRegularRegistersUsed, numStackValuesUsed);
 			}
 		}
 		else if (parmType.IsFloatType() || parmType.IsDoubleType())
@@ -293,22 +223,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			if (parmType.GetTypeInfo()->flags & COMPLEX_MASK)
 			{
 				// complex object types are passed by address
-				if (numRegularRegistersUsed < maxRegularRegisters)
-				{
-					argValues[numRegularRegistersUsed] = *(asQWORD*)&args[argsPos];
-					numRegularRegistersUsed++;
-				}
-				else if (numStackValuesUsed < maxValuesOnStack)
-				{
-					stackValues[numStackValuesUsed] = *(asQWORD*)&args[argsPos];
-					numStackValuesUsed++;
-				}
-				else
-				{
-					// Oops, we ran out of space in the argValues array!
-					// TODO: This should be validated as the function is registered
-					asASSERT(false);
-				}
+				PushToRegularRegs(*(asQWORD*)&args[argsPos], argValues, numRegularRegistersUsed, numStackValuesUsed);
 			}
 			else if ((parmType.GetTypeInfo()->flags & asOBJ_APP_CLASS_ALLFLOATS) && !(parmType.GetTypeInfo()->flags & asOBJ_APP_CLASS_UNION) &&
 				((parmType.GetSizeInMemoryDWords() <= 2 && !(parmType.GetTypeInfo()->flags & asOBJ_APP_CLASS_ALIGN8)) ||
@@ -377,44 +292,12 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	// Check if the object pointer must be added as the last argument
 	if (callConv == ICC_CDECL_OBJLAST || callConv == ICC_CDECL_OBJLAST_RETURNINMEM)
 	{
-		if (numRegularRegistersUsed < maxRegularRegisters)
-		{
-			argValues[numRegularRegistersUsed] = (asPWORD)obj;
-			numRegularRegistersUsed++;
-		}
-		else if (numStackValuesUsed < maxValuesOnStack)
-		{
-			// The values on the stack are QWORD aligned
-			stackValues[numStackValuesUsed] = (asPWORD)obj;
-			numStackValuesUsed++;
-		}
-		else
-		{
-			// Oops, we ran out of space in the argValues array!
-			// TODO: This should be validated as the function is registered
-			asASSERT(false);
-		}
+		PushToRegularRegs((asPWORD)obj, argValues, numRegularRegistersUsed, numStackValuesUsed);
 	}
 	else if (callConv == ICC_THISCALL_OBJLAST || callConv == ICC_THISCALL_OBJLAST_RETURNINMEM ||
 		callConv == ICC_VIRTUAL_THISCALL_OBJLAST || callConv == ICC_VIRTUAL_THISCALL_OBJLAST_RETURNINMEM)
 	{
-		if (numRegularRegistersUsed < maxRegularRegisters)
-		{
-			argValues[numRegularRegistersUsed] = (asPWORD)secondObj;
-			numRegularRegistersUsed++;
-		}
-		else if (numStackValuesUsed < maxValuesOnStack)
-		{
-			// The values on the stack are QWORD aligned
-			stackValues[numStackValuesUsed] = (asPWORD)secondObj;
-			numStackValuesUsed++;
-		}
-		else
-		{
-			// Oops, we ran out of space in the argValues array!
-			// TODO: This should be validated as the function is registered
-			asASSERT(false);
-		}
+		PushToRegularRegs((asPWORD)secondObj, argValues, numRegularRegistersUsed, numStackValuesUsed);
 	}
 
 	int retfloat = sysFunc->hostReturnFloat ? 1 : 0;
