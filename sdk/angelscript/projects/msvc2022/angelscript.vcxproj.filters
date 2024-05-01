@@ -279,5 +279,8 @@
     <None Include="..\..\source\as_callfunc_riscv64_gcc.S">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="..\..\source\as_callfunc_arm64_xcode.S">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

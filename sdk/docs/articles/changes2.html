@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.37.0 WIP - 2024/04/27</h2>
+<h2>Version 2.37.0 WIP - 2024/05/01</h2>
 
 <ul>
 <li>Bug fixes
@@ -37,6 +37,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed assert failure on passing anonymous init list to function argument expecting a handle (Thanks xertrov)
 <li>Registered copy factories were not properly identified as copy factories if the parameter used &amp;inout instead of &amp;in
 <li>Fixed GetLineNumber that could randomly return the last line number of a function if called between Prepare and Execute (Thanks Sam Tupy)
+<li>Fixed support for returning structs with 2 doubles in native calling conventions on arm64 (Thanks Sam Tupy)
 </ul>
 <li>Library
 <ul>

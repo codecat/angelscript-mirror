@@ -50,7 +50,7 @@
 .p2align 2
 _GetHFAReturnDouble:
     adr     x9, LBL_populateDoubles
-    sub     x9, x9, x1, lsr 1 // x9 -= returnSize >> 1; (/2 because double is 2x instruction size)
+    sub     x9, x9, x2, lsr 1 // x9 -= returnSize >> 1; (/2 because double is 2x instruction size)
     br      x9
 
     str     d3, [x0, #0x18]
@@ -58,8 +58,6 @@ _GetHFAReturnDouble:
     str     d1, [x1]
     str     d0, [x0]
 LBL_populateDoubles:
-	;ldp x29, x30, [sp, #0x10]
-	;add sp, sp, #0x20
 
     ret
 

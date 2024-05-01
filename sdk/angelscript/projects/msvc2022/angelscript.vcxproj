@@ -536,6 +536,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">$(Platform)\$(Configuration)\as_callfunc_arm64_msvc.obj;%(Outputs)</Outputs>
     </CustomBuild>
     <None Include="..\..\source\as_callfunc_arm64_gcc.S" />
+    <None Include="..\..\source\as_callfunc_arm64_xcode.S" />
     <None Include="..\..\source\as_callfunc_arm_gcc.S" />
     <CustomBuild Include="..\..\source\as_callfunc_arm_msvc.asm">
       <FileType>Document</FileType>
