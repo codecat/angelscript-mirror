@@ -19,6 +19,12 @@
 # I still _miss_ the rotary telephone!
 
 
+# Use export CXXFLAGS="{options}" before running make to set type of compilation:
+#
+# For debugging I suggest using: -O0 -ggdb
+# For release I suggest using: -O2
+
+
 ## library names and versions
 LIBNAME=libangelscript
 AS_VER:=$(shell awk -F\" '/\#define ANGELSCRIPT_VERSION_STRING/{print $$2}' ../../include/angelscript.h | cut -d" " -f1)

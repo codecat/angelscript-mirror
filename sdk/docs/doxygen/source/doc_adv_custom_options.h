@@ -113,9 +113,11 @@ If this flag is set to true, the compiler will always provide a default construc
 by the script. Normally this option is not recommended, because if a script class provides a non-default constructor but not the 
 default constructor it is most likely because it is desired that the class should always be initialized with the non-default constructor.
 
+\todo describe Option 2
+
 \todo A default copy constructor is also provided
 
-\ref asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCTOR
+\ref asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT
 
 \todo Describe this, backwards compatiblity with pre-2.37.0
 

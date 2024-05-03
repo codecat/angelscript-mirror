@@ -13,6 +13,7 @@ If the application sets the \ref asIJITCompiler "JIT compiler" with \ref asIScri
 AngelScript will automatically invoke it to provide the \ref asJITFunction "JIT functions" with each compilation or 
 \ref doc_adv_precompile "loading of pre-compiled bytecode".
 
+\todo Detail information about the different JITCompiler interface version. \ref asEP_JIT_INTERFACE_VERSION
 
 
 

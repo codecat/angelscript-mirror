@@ -13,6 +13,8 @@ the script side that the scripts can see and inherit from.
 
 The following is an example implementation of such a proxy class.
 
+\todo Add code in CallMe to detect when the call is coming from the script, so the call is not routed back to the script again in a recursive loop
+
 \code
 // On the C++ side
 class FooScripted

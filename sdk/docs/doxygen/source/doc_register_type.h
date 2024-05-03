@@ -72,6 +72,8 @@ CRef *Ref_Factory()
 r = engine->RegisterObjectBehaviour("ref", asBEHAVE_FACTORY, "ref@ f()", asFUNCTION(Ref_Factory), asCALL_CDECL); assert( r >= 0 );
 \endcode
 
+\todo Explain use of asCALL_CDECL_OBJLAST/OBJFIRST and auxiliary object
+
 You may also register factory functions that take parameters, which may
 then be used when initializing the object.
 
@@ -303,6 +305,8 @@ AngelScript lets the application give information that cover the most common var
 if all members are integers (or non-float primitives), or it should be treated as if all members are floats. It is also possible to inform if the class
 has more constructors than the traditional default and copy constructors. This last one normally only has importance if the default and copy constructors 
 are defaulted. 
+
+\todo Add info on \ref asOBJ_APP_CLASS_UNION. Perhaps give C++ examples of when to use different flags
 
 <table border=0 cellspacing=0 cellpadding=0>
 <tr><td>\ref asOBJ_APP_CLASS_MORE_CONSTRUCTORS &nbsp; </td><td>The C++ class has additional constructors beyond the default and copy constructors</td></tr>

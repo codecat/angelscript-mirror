@@ -3,6 +3,8 @@
 
 \page doc_script_bnf Script language grammar
 
+\todo update this for the 'delete' keyword
+
 This is language grammar in Backus-Naur Form (BNF).
 
 The following convention is used:

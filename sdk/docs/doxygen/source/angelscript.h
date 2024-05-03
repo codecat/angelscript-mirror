@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2023 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.36.2
-#define ANGELSCRIPT_VERSION        23602
-#define ANGELSCRIPT_VERSION_STRING "2.36.2"
+//! Version 2.37.0
+#define ANGELSCRIPT_VERSION        23700
+#define ANGELSCRIPT_VERSION_STRING "2.37.0"
 
 // Data types
 
@@ -77,10 +77,76 @@ class asIScriptObject;
 class asITypeInfo;
 class asIScriptFunction;
 class asIBinaryStream;
-class asIJITCompiler;
+class asIJITCompilerAbstract;
 class asIThreadManager;
 class asILockableSharedBool;
 class asIStringFactory;
+
+//! \typedef asINT8
+//! \brief 8 bit signed integer
+
+//! \typedef asINT16
+//! \brief 16 bit signed integer
+
+//! \typedef asINT32
+//! \brief 32 bit signed integer
+
+//! \typedef asBYTE
+//! \brief 8 bit unsigned integer
+
+//! \typedef asWORD
+//! \brief 16 bit unsigned integer
+
+//! \typedef asDWORD
+//! \brief 32 bit unsigned integer
+
+//! \typedef asQWORD
+//! \brief 64 bit unsigned integer
+
+//! \typedef asUINT
+//! \brief 32 bit unsigned integer
+
+//! \typedef asINT64
+//! \brief 64 bit integer
+
+//! \typedef asPWORD
+//! \brief Unsigned integer with the size of a pointer.
+
+//
+// asBYTE  =  8 bits
+// asWORD  = 16 bits
+// asDWORD = 32 bits
+// asQWORD = 64 bits
+// asPWORD = size of pointer
+//
+typedef signed char    asINT8;
+typedef signed short   asINT16;
+typedef signed int     asINT32;
+typedef unsigned char  asBYTE;
+typedef unsigned short asWORD;
+typedef unsigned int   asUINT;
+#if (defined(_MSC_VER) && _MSC_VER <= 1200) || defined(__S3E__) || (defined(_MSC_VER) && defined(__clang__))
+// size_t is not really correct, since it only guaranteed to be large enough to hold the segment size.
+// For example, on 16bit systems the size_t may be 16bits only even if pointers are 32bit. But nobody
+// is likely to use MSVC6 to compile for 16bit systems anymore, so this should be ok.
+typedef size_t         asPWORD;
+#else
+typedef uintptr_t      asPWORD;
+#endif
+#ifdef __LP64__
+typedef unsigned int  asDWORD;
+typedef unsigned long asQWORD;
+typedef long asINT64;
+#else
+typedef unsigned long asDWORD;
+#if !defined(_MSC_VER) && (defined(__GNUC__) || defined(__MWERKS__) || defined(__SUNPRO_CC) || defined(__psp2__))
+typedef uint64_t asQWORD;
+typedef int64_t asINT64;
+#else
+typedef unsigned __int64 asQWORD;
+typedef __int64 asINT64;
+#endif
+#endif
 
 // Enumerations and constants
 
@@ -189,7 +255,7 @@ enum asEEngineProp
 	asEP_DISALLOW_GLOBAL_VARS               = 17,
 	//! When true, the compiler will always provide a default constructor for script classes. Default: false
 	asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT      = 18,
-	//! Set how warnings should be treated: 0 - dismiss, 1 - emit, 2 - treat as error. Default: \todo
+	//! Set how warnings should be treated: 0 - dismiss, 1 - emit, 2 - treat as error. Default: 1
 	asEP_COMPILER_WARNINGS                  = 19,
 	//! Disallow value assignment for reference types to avoid ambiguity. Default: false
 	asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE = 20,
@@ -221,6 +287,12 @@ enum asEEngineProp
 	asEP_NO_DEBUG_OUTPUT                    = 33,
 	//! Disable GC for classes compiled from scripts. Default: false
 	asEP_DISABLE_SCRIPT_CLASS_GC            = 34,
+	//! Set the JIT interface version used. 1 - JIT compiler uses asJITCompiler, 2 - JIT compiler uses asJITCompilerV2. Default: 1
+	asEP_JIT_INTERFACE_VERSION              = 35,
+	//! Determine if the default copy behaviour is provided automatically by compiler. 0 - as per language spec, 1 - always, 2 - never. Default: 0
+	asEP_ALWAYS_IMPL_DEFAULT_COPY           = 36,
+	//! Determine if the default copy constructor is provided automatically by compiler. 0 - as per language spec, 1 - always, 2 - never. Default: 0
+	asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT = 37,
 
 	asEP_LAST_PROPERTY
 };
@@ -251,105 +323,107 @@ enum asECallConvTypes
 
 // Object type flags
 //! Object type flags
-enum asEObjTypeFlags
+enum asEObjTypeFlags : asQWORD
 {
 	//! A reference type.
-	asOBJ_REF                        = (1<<0),
+	asOBJ_REF                         = (1<<0),
 	//! A value type.
-	asOBJ_VALUE                      = (1<<1),
+	asOBJ_VALUE                       = (1<<1),
 	//! A garbage collected type. Only valid for reference types.
-	asOBJ_GC                         = (1<<2),
+	asOBJ_GC                          = (1<<2),
 	//! A plain-old-data type. Only valid for value types.
-	asOBJ_POD                        = (1<<3),
+	asOBJ_POD                         = (1<<3),
 	//! This reference type doesn't allow handles to be held. Only valid for reference types.
-	asOBJ_NOHANDLE                   = (1<<4),
+	asOBJ_NOHANDLE                    = (1<<4),
 	//! The life time of objects of this type are controlled by the scope of the variable. Only valid for reference types.
-	asOBJ_SCOPED                     = (1<<5),
+	asOBJ_SCOPED                      = (1<<5),
 	//! A template type.
-	asOBJ_TEMPLATE                   = (1<<6),
+	asOBJ_TEMPLATE                    = (1<<6),
 	//! The value type should be treated as a handle.
-	asOBJ_ASHANDLE                   = (1<<7),
+	asOBJ_ASHANDLE                    = (1<<7),
 	//! The C++ type is a class type. Only valid for value types.
-	asOBJ_APP_CLASS                  = (1<<8),
+	asOBJ_APP_CLASS                   = (1<<8),
 	//! The C++ class has an explicit constructor. Only valid for value types.
-	asOBJ_APP_CLASS_CONSTRUCTOR      = (1<<9),
+	asOBJ_APP_CLASS_CONSTRUCTOR       = (1<<9),
 	//! The C++ class has an explicit destructor. Only valid for value types.
-	asOBJ_APP_CLASS_DESTRUCTOR       = (1<<10),
+	asOBJ_APP_CLASS_DESTRUCTOR        = (1<<10),
 	//! The C++ class has an explicit assignment operator. Only valid for value types.
-	asOBJ_APP_CLASS_ASSIGNMENT       = (1<<11),
+	asOBJ_APP_CLASS_ASSIGNMENT        = (1<<11),
 	//! The C++ class has an explicit copy constructor. Only valid for value types.
-	asOBJ_APP_CLASS_COPY_CONSTRUCTOR = (1<<12),
+	asOBJ_APP_CLASS_COPY_CONSTRUCTOR  = (1<<12),
 	//! The C++ type is a class with a constructor.
-	asOBJ_APP_CLASS_C                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR),
+	asOBJ_APP_CLASS_C                 = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR),
 	//! The C++ type is a class with a constructor and destructor.
-	asOBJ_APP_CLASS_CD               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR),
+	asOBJ_APP_CLASS_CD                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR),
 	//! The C++ type is a class with a constructor and assignment operator.
-	asOBJ_APP_CLASS_CA               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
+	asOBJ_APP_CLASS_CA                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
 	//! The C++ type is a class with a constructor and copy constructor.
-	asOBJ_APP_CLASS_CK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	asOBJ_APP_CLASS_CK                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
 	//! The C++ type is a class with a constructor, destructor, and assignment operator.
-	asOBJ_APP_CLASS_CDA              = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
+	asOBJ_APP_CLASS_CDA               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
 	//! The C++ type is a class with a constructor, destructor, and copy constructor.
-	asOBJ_APP_CLASS_CDK              = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	asOBJ_APP_CLASS_CDK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
 	//! The C++ type is a class with a constructor, assignment operator, and copy constructor.
-	asOBJ_APP_CLASS_CAK              = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	asOBJ_APP_CLASS_CAK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
 	//! The C++ type is a class with a constructor, destructor, assignment operator, and copy constructor.
-	asOBJ_APP_CLASS_CDAK             = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	asOBJ_APP_CLASS_CDAK              = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
 	//! The C++ type is a class with a destructor.
-	asOBJ_APP_CLASS_D                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR),
+	asOBJ_APP_CLASS_D                 = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR),
 	//! The C++ type is a class with a destructor and assignment operator.
-	asOBJ_APP_CLASS_DA               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
+	asOBJ_APP_CLASS_DA                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
 	//! The C++ type is a class with a destructor and copy constructor.
-	asOBJ_APP_CLASS_DK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	asOBJ_APP_CLASS_DK                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
 	//! The C++ type is a class with a destructor, assignment operator, and copy constructor.
-	asOBJ_APP_CLASS_DAK              = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	asOBJ_APP_CLASS_DAK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
 	//! The C++ type is a class with an assignment operator.
-	asOBJ_APP_CLASS_A                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT),
+	asOBJ_APP_CLASS_A                 = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT),
 	//! The C++ type is a class with an assignment operator and copy constructor.
-	asOBJ_APP_CLASS_AK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	asOBJ_APP_CLASS_AK                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
 	//! The C++ type is a class with a copy constructor.
-	asOBJ_APP_CLASS_K                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
+	asOBJ_APP_CLASS_K                 = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
 	//! The C++ class has additional constructors beyond the default and copy constructors
-	asOBJ_APP_CLASS_MORE_CONSTRUCTORS = (1<<31),
+	asOBJ_APP_CLASS_MORE_CONSTRUCTORS = (asQWORD(1) << 31),
 	//! The C++ type is a primitive type. Only valid for value types.
-	asOBJ_APP_PRIMITIVE              = (1<<13),
+	asOBJ_APP_PRIMITIVE               = (1<<13),
 	//! The C++ type is a float or double. Only valid for value types.
-	asOBJ_APP_FLOAT                  = (1<<14),
+	asOBJ_APP_FLOAT                   = (1<<14),
 	//! The C++ type is a static array. Only valid for value types.
-	asOBJ_APP_ARRAY                  = (1<<15),
+	asOBJ_APP_ARRAY                   = (1<<15),
 	//! The C++ class can be treated as if all its members are integers.
-	asOBJ_APP_CLASS_ALLINTS          = (1<<16),
+	asOBJ_APP_CLASS_ALLINTS           = (1<<16),
 	//! The C++ class can be treated as if all its members are floats or doubles.
-	asOBJ_APP_CLASS_ALLFLOATS        = (1<<17),
+	asOBJ_APP_CLASS_ALLFLOATS         = (1<<17),
 	//! The type doesn't use reference counting. Only valid for reference types.
-	asOBJ_NOCOUNT                    = (1<<18),
+	asOBJ_NOCOUNT                     = (1<<18),
 	//! The C++ class contains types that may require 8byte alignment. Only valid for value types.
-	asOBJ_APP_CLASS_ALIGN8           = (1<<19),
+	asOBJ_APP_CLASS_ALIGN8            = (1<<19),
 	//! The object is declared for implicit handle. Only valid for reference types.
-	asOBJ_IMPLICIT_HANDLE            = (1<<20),
+	asOBJ_IMPLICIT_HANDLE             = (1<<20),
+	//! The C++ class contains unions. Only valid for value types.
+	asOBJ_APP_CLASS_UNION             = (asQWORD(1)<<32),
 	//! This mask shows which flags are value for RegisterObjectType
-	asOBJ_MASK_VALID_FLAGS           = 0x801FFFFF,
+	asOBJ_MASK_VALID_FLAGS            = 0x1801FFFFFul,
 	// Internal flags
 	//! The object is a script class or an interface.
-	asOBJ_SCRIPT_OBJECT              = (1<<21),
+	asOBJ_SCRIPT_OBJECT               = (1<<21),
 	//! Type object type is shared between modules.
-	asOBJ_SHARED                     = (1<<22),
+	asOBJ_SHARED                      = (1<<22),
 	//! The object type is marked as final and cannot be inherited.
-	asOBJ_NOINHERIT                  = (1<<23),
+	asOBJ_NOINHERIT                   = (1<<23),
 	//! The type is a script funcdef
-	asOBJ_FUNCDEF                    = (1<<24),
+	asOBJ_FUNCDEF                     = (1<<24),
 	//! Internal type. Do not use
-	asOBJ_LIST_PATTERN               = (1<<25),
+	asOBJ_LIST_PATTERN                = (1<<25),
 	//! The type is an enum
-	asOBJ_ENUM                       = (1<<26),
+	asOBJ_ENUM                        = (1<<26),
 	//! Internal type. Do no use
-	asOBJ_TEMPLATE_SUBTYPE           = (1<<27),
+	asOBJ_TEMPLATE_SUBTYPE            = (1<<27),
 	//! The type is a typedef
-	asOBJ_TYPEDEF                    = (1<<28),
+	asOBJ_TYPEDEF                     = (1<<28),
 	//! The class is abstract, i.e. cannot be instantiated
-	asOBJ_ABSTRACT                   = (1<<29),
+	asOBJ_ABSTRACT                    = (1<<29),
 	//! Reserved for future use.
-	asOBJ_APP_ALIGN16                = (1<<30)
+	asOBJ_APP_ALIGN16                 = (1<<30)
 };
 
 // Behaviours
@@ -566,74 +640,6 @@ enum asEFuncType
 	asFUNC_DELEGATE  = 6
 };
 
-
-
-//! \typedef asINT8
-//! \brief 8 bit signed integer
-
-//! \typedef asINT16
-//! \brief 16 bit signed integer
-
-//! \typedef asINT32
-//! \brief 32 bit signed integer
-
-//! \typedef asBYTE
-//! \brief 8 bit unsigned integer
-
-//! \typedef asWORD
-//! \brief 16 bit unsigned integer
-
-//! \typedef asDWORD
-//! \brief 32 bit unsigned integer
-
-//! \typedef asQWORD
-//! \brief 64 bit unsigned integer
-
-//! \typedef asUINT
-//! \brief 32 bit unsigned integer
-
-//! \typedef asINT64
-//! \brief 64 bit integer
-
-//! \typedef asPWORD
-//! \brief Unsigned integer with the size of a pointer.
-
-//
-// asBYTE  =  8 bits
-// asWORD  = 16 bits
-// asDWORD = 32 bits
-// asQWORD = 64 bits
-// asPWORD = size of pointer
-//
-typedef signed char    asINT8;
-typedef signed short   asINT16;
-typedef signed int     asINT32;
-typedef unsigned char  asBYTE;
-typedef unsigned short asWORD;
-typedef unsigned int   asUINT;
-#if (defined(_MSC_VER) && _MSC_VER <= 1200) || defined(__S3E__) || (defined(_MSC_VER) && defined(__clang__))
-	// size_t is not really correct, since it only guaranteed to be large enough to hold the segment size.
-	// For example, on 16bit systems the size_t may be 16bits only even if pointers are 32bit. But nobody
-	// is likely to use MSVC6 to compile for 16bit systems anymore, so this should be ok.
-	typedef size_t         asPWORD;
-#else
-	typedef uintptr_t      asPWORD;
-#endif
-#ifdef __LP64__
-	typedef unsigned int  asDWORD;
-	typedef unsigned long asQWORD;
-	typedef long asINT64;
-#else
-	typedef unsigned long asDWORD;
-  #if !defined(_MSC_VER) && (defined(__GNUC__) || defined(__MWERKS__) || defined(__SUNPRO_CC) || defined(__psp2__))
-	typedef uint64_t asQWORD;
-	typedef int64_t asINT64;
-  #else
-	typedef unsigned __int64 asQWORD;
-	typedef __int64 asINT64;
-  #endif
-#endif
-
 // Is the target a 64bit system?
 #if defined(__LP64__) || defined(__amd64__) || defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__) || defined(_M_ARM64)
 	#ifndef AS_64BIT_PTR
@@ -666,6 +672,19 @@ typedef asIScriptContext *(*asREQUESTCONTEXTFUNC_t)(asIScriptEngine *, void *);
 typedef void (*asRETURNCONTEXTFUNC_t)(asIScriptEngine *, asIScriptContext *, void *);
 //! The function signature for the callback used when detecting a circular reference in garbage
 typedef void (*asCIRCULARREFFUNC_t)(asITypeInfo *, const void *, void *);
+
+struct asSVMRegisters;
+//! \brief The function signature of a JIT compiled function
+//! \param [in] registers  A pointer to the virtual machine's registers.
+//! \param [in] jitArg     The value defined by the JIT compiler for the current entry point in the JIT function.
+//!
+//! A JIT function receives a pointer to the virtual machine's registers when called and 
+//! an argument telling it where in the script function to continue the execution. The JIT
+//! function must make sure to update the VM's registers according to the actions performed
+//! before returning control to the VM.
+//!
+//! \see \ref doc_adv_jit
+typedef void (*asJITFunction)(asSVMRegisters* registers, asPWORD jitArg);
 
 // Check if the compiler can use C++11 features
 #if !defined(_MSC_VER) || _MSC_VER >= 1700   // MSVC 2012
@@ -1019,14 +1038,14 @@ BEGIN_AS_NAMESPACE
 template<typename T>
 asUINT asGetTypeTraits()
 {
-#if defined(_MSC_VER) || defined(_LIBCPP_TYPE_TRAITS) || (__GNUC__ >= 5) || defined(__clang__)
+#if defined(_MSC_VER) || defined(_LIBCPP_TYPE_TRAITS) || (__GNUC__ >= 5) || (defined(__clang__) && !defined(CLANG_PRE_STANDARD))
 	// MSVC, XCode/Clang, and gnuc 5+
 	// C++11 compliant code
 	bool hasConstructor        = std::is_default_constructible<T>::value && !std::is_trivially_default_constructible<T>::value;
 	bool hasDestructor         = std::is_destructible<T>::value          && !std::is_trivially_destructible<T>::value;
 	bool hasAssignmentOperator = std::is_copy_assignable<T>::value       && !std::is_trivially_copy_assignable<T>::value;
 	bool hasCopyConstructor    = std::is_copy_constructible<T>::value    && !std::is_trivially_copy_constructible<T>::value;
-#elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
+#elif (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))) || (defined(__clang__) && defined(CLANG_PRE_STANDARD))
 	// gnuc 4.8 is using a mix of C++11 standard and pre-standard templates
 	bool hasConstructor        = std::is_default_constructible<T>::value && !std::has_trivial_default_constructor<T>::value;
 	bool hasDestructor         = std::is_destructible<T>::value          && !std::is_trivially_destructible<T>::value;
@@ -1217,10 +1236,10 @@ public:
 	//! after compiling scripts or loading pre-compiled byte code.
 	//! 
 	//! \see \ref doc_adv_jit
-	virtual int SetJITCompiler(asIJITCompiler *compiler) = 0;
+	virtual int SetJITCompiler(asIJITCompilerAbstract *compiler) = 0;
 	//! \brief Returns the JIT compiler
 	//! \return Returns a pointer to the JIT compiler
-	virtual asIJITCompiler *GetJITCompiler() const = 0;
+	virtual asIJITCompilerAbstract *GetJITCompiler() const = 0;
 	//! \}
 
 	// Global functions
@@ -1343,7 +1362,7 @@ public:
 	//! Value types, which have their memory managed by the engine, should be registered with \ref asOBJ_VALUE.
 	//!
 	//! \see \ref doc_register_type
-	virtual int            RegisterObjectType(const char *obj, int byteSize, asDWORD flags) = 0;
+	virtual int            RegisterObjectType(const char *obj, int byteSize, asQWORD flags) = 0;
 	//! \brief Registers a property for the object type.
 	//! \param[in] obj The name of the type.
 	//! \param[in] declaration The property declaration in script syntax.
@@ -1705,6 +1724,11 @@ public:
 	//! \name Script functions
 	//! \{
 
+	//! \brief
+	//! \return
+	//!
+	//! \todo document this
+	virtual int                GetLastFunctionId() const = 0;
 	//! \brief Returns the function by its id.
 	//! \param[in] funcId The id of the function or method.
 	//! \return A pointer to the function description interface, or null if not found.
@@ -3783,7 +3807,7 @@ public:
 	//! Interfaces are identified as a script class with a size of 0.
 	//!
 	//! \see \ref GetSize
-	virtual asDWORD          GetFlags() const = 0;
+	virtual asQWORD          GetFlags() const = 0;
 	//! \brief Returns the size of the object type.
 	//! \return The number of bytes necessary to store instances of this type.
 	//!
@@ -4184,6 +4208,10 @@ public:
 	//! \param[in] line A line number
 	//! \return The number of the next line with code, or a negative value if the line is outside the function.
 	virtual int              FindNextLineWithCode(int line) const = 0;
+	//! \brief
+	//! \return
+	//! \todo document this
+	virtual int              GetDeclaredAt(const char** scriptSection, int* row, int* col) const = 0;
 	//! \}
 
 	//! \name JIT compilation
@@ -4197,6 +4225,14 @@ public:
 	//! This function is used by the \ref asIJITCompiler to obtain the byte
 	//! code buffer for building the native machine code representation.
 	virtual asDWORD         *GetByteCode(asUINT *length = 0) = 0;
+	//! \brief
+	//! \return
+	//! \todo document this
+	virtual int              SetJITFunction(asJITFunction jitFunc) = 0;
+	//! \brief
+	//! \return
+	//! \todo document this
+	virtual asJITFunction    GetJITFunction() const = 0;
 	//! \}
 
 	// User data
@@ -4488,26 +4524,24 @@ struct asSVMRegisters
 	asIScriptContext *ctx;                // the active context
 };
 
-//! \brief The function signature of a JIT compiled function
-//! \param [in] registers  A pointer to the virtual machine's registers.
-//! \param [in] jitArg     The value defined by the JIT compiler for the current entry point in the JIT function.
-//!
-//! A JIT function receives a pointer to the virtual machine's registers when called and 
-//! an argument telling it where in the script function to continue the execution. The JIT
-//! function must make sure to update the VM's registers according to the actions performed
-//! before returning control to the VM.
-//!
-//! \see \ref doc_adv_jit
-typedef void (*asJITFunction)(asSVMRegisters *registers, asPWORD jitArg);
+//! \ingroup api_auxiliary_interfaces
+//! \brief
+//! \todo document this
+class asIJITCompilerAbstract 
+{ 
+public: 
+	virtual ~asIJITCompilerAbstract() {}
+};
 
+// JIT Compiler interface version 1
 //! \ingroup api_auxiliary_interfaces
 //! \brief The interface that AS use to interact with the JIT compiler
 //!
-//! This is the minimal interface that the JIT compiler must implement
+//! This is the minimal interface that the JIT compiler must implement for version 1
 //! so that AngelScript can request the compilation of the script functions.
 //!
 //! \see \ref doc_adv_jit
-class asIJITCompiler
+class asIJITCompiler : public asIJITCompilerAbstract
 {
 public:
 	//! \brief Called by AngelScript to begin the compilation
@@ -4527,6 +4561,23 @@ public:
 	virtual void ReleaseJITFunction(asJITFunction func) = 0;
 public:
 	virtual ~asIJITCompiler() {}
+};
+
+// JIT Compiler interface version 2
+//! \ingroup api_auxiliary_interfaces
+//! \brief
+//! \todo document this
+class asIJITCompilerV2 : public asIJITCompilerAbstract
+{
+public:
+	//! \brief
+	//! \todo document this
+	virtual void NewFunction(asIScriptFunction* scriptFunc) = 0;
+	//! \brief
+	//! \todo document this
+	virtual void CleanFunction(asIScriptFunction *scriptFunc, asJITFunction jitFunc) = 0;
+public:
+	virtual ~asIJITCompilerV2() {}
 };
 
 // Byte code instructions
