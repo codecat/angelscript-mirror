@@ -1724,10 +1724,11 @@ public:
 	//! \name Script functions
 	//! \{
 
-	//! \brief
-	//! \return
+	//! \brief Returns the highest id used for functions
+	//! \return The highest id used for functions
 	//!
-	//! \todo document this
+	//! The function can be used to get the last function id in order to enumerate 
+	//! all known functions with the use of \ref GetFunctionById.
 	virtual int                GetLastFunctionId() const = 0;
 	//! \brief Returns the function by its id.
 	//! \param[in] funcId The id of the function or method.
@@ -4208,9 +4209,12 @@ public:
 	//! \param[in] line A line number
 	//! \return The number of the next line with code, or a negative value if the line is outside the function.
 	virtual int              FindNextLineWithCode(int line) const = 0;
-	//! \brief
-	//! \return
-	//! \todo document this
+	//! \brief Returns the location in the script where the function was declared
+	//! \param[out] scriptSection The name of the script section where the function was declared
+	//! \param[out] row The row number where the function was declared
+	//! \param[out] col The column number where the function was declared
+	//! \return A negative value on error
+	//! \retval asNOT_SUPPORTED The function is not a script function
 	virtual int              GetDeclaredAt(const char** scriptSection, int* row, int* col) const = 0;
 	//! \}
 

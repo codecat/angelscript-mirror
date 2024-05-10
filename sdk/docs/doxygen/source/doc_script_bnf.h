@@ -3,8 +3,6 @@
 
 \page doc_script_bnf Script language grammar
 
-\todo update this for the 'delete' keyword
-
 This is language grammar in Backus-Naur Form (BNF).
 
 The following convention is used:
@@ -39,7 +37,7 @@ INITLIST      ::= '{' [ASSIGN | INITLIST] {',' [ASSIGN | INITLIST]} '}'
 SCOPE         ::= ['::'] {IDENTIFIER '::'} [IDENTIFIER ['<' TYPE {',' TYPE} '>'] '::']
 DATATYPE      ::= (IDENTIFIER | PRIMTYPE | '?' | 'auto')
 PRIMTYPE      ::= 'void' | 'int' | 'int8' | 'int16' | 'int32' | 'int64' | 'uint' | 'uint8' | 'uint16' | 'uint32' | 'uint64' | 'float' | 'double' | 'bool'
-FUNCATTR      ::= {'override' | 'final' | 'explicit' | 'property'}
+FUNCATTR      ::= {'override' | 'final' | 'explicit' | 'property' | 'delete'}
 STATEMENT     ::= (IF | FOR | WHILE | RETURN | STATBLOCK | BREAK | CONTINUE | DOWHILE | SWITCH | EXPRSTAT | TRY)
 SWITCH        ::= 'switch' '(' ASSIGN ')' '{' {CASE} '}'
 BREAK         ::= 'break' ';'
