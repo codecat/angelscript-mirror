@@ -4529,8 +4529,13 @@ struct asSVMRegisters
 };
 
 //! \ingroup api_auxiliary_interfaces
-//! \brief
-//! \todo document this
+//! \brief An abstract interface for the JIT compiler
+//! 
+//! The abstract interface is the parent interface for the real JIT compiler interfaces.
+//! The choice of the actual JIT compiler interface to use is up to the application and
+//! should be set with a call to \ref asIScriptEngine::SetEngineProperty with \ref asEP_JIT_INTERFACE_VERSION.
+//!
+//! \see \ref doc_adv_jit
 class asIJITCompilerAbstract 
 { 
 public: 
@@ -4539,7 +4544,7 @@ public:
 
 // JIT Compiler interface version 1
 //! \ingroup api_auxiliary_interfaces
-//! \brief The interface that AS use to interact with the JIT compiler
+//! \brief The interface that AS use to interact with the JIT compiler for version 1
 //!
 //! This is the minimal interface that the JIT compiler must implement for version 1
 //! so that AngelScript can request the compilation of the script functions.
@@ -4569,16 +4574,33 @@ public:
 
 // JIT Compiler interface version 2
 //! \ingroup api_auxiliary_interfaces
-//! \brief
-//! \todo document this
+//! \brief The interface that AS use to interact with the JIT compiler for version 2
+//!
+//! This is the minimal interface that the JIT compiler must implement for version 2
+//! so that AngelScript can request the compilation of the script functions.
+//!
+//! \see \ref doc_adv_jit
 class asIJITCompilerV2 : public asIJITCompilerAbstract
 {
 public:
-	//! \brief
-	//! \todo document this
+	//! \brief Called by AngelScript when a new function is compiled
+	//! \param [in] scriptFunc The script function that was just called
+	//!
+	//! AngelScript will call this function when a new script function is compiled.
+	//!
+	//! The JIT compiler is not required to do the JIT compilation at this moment.
+	//! Depending on the JIT compiler strategy it may be better to defer the JIT compilation
+	//! until the full script has been compiled, so better global optimizations can be done.
+	//!
+	//! When the JIT compilation is done, the JIT compiler must use 
+	//! \ref asIScriptFunction::SetJITFunction to link the JIT function with the script function.
 	virtual void NewFunction(asIScriptFunction* scriptFunc) = 0;
-	//! \brief
-	//! \todo document this
+	//! \brief Called by AngelScript when the JIT function must be cleaned up
+	//! \param [in] scriptFunc The script function related to the JIT function
+	//! \param [in] jitFunc The JIT function that was set by the JIT compiler for the script function
+	//!
+	//! AngelScript will call this either when the script function is being destroyed, or when a new 
+	//! JIT function is set on the script function, in which case the old JIT function must be cleaned up.
 	virtual void CleanFunction(asIScriptFunction *scriptFunc, asJITFunction jitFunc) = 0;
 public:
 	virtual ~asIJITCompilerV2() {}
