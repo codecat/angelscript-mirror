@@ -4229,13 +4229,16 @@ public:
 	//! This function is used by the \ref asIJITCompiler to obtain the byte
 	//! code buffer for building the native machine code representation.
 	virtual asDWORD         *GetByteCode(asUINT *length = 0) = 0;
-	//! \brief
-	//! \return
-	//! \todo document this
+	//! \brief Link the script function with a JIT compiled function
+	//! \return A negative value on error
+	//! \retval asNOT_SUPPORTED The JIT interface used is not version 2
+	//! \retval asERROR The function is not a script function
+	//!
+	//! If a previous JIT function is linked, then AngelScript will call \ref asIJITCompilerV2::CleanFunction 
+	//! to allow the JIT compiler to clean it up before linking the new function.
 	virtual int              SetJITFunction(asJITFunction jitFunc) = 0;
-	//! \brief
-	//! \return
-	//! \todo document this
+	//! \brief Returns the linked JIT compiled function
+	//! \return A pointer to the JIT function, or 0 if there is none.
 	virtual asJITFunction    GetJITFunction() const = 0;
 	//! \}
 
