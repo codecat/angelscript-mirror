@@ -88,21 +88,42 @@ decorator after the constructor.
 One constructor cannot call another constructor. If you wish to share 
 implementations in the constructors you should use a specific method for that.
 
-If a class isn't explicitly declared with any constructor, the compiler will automatically
-provide a default constructor for the class. This automatically generated constructor will
-simply call the default constructor for all object members, and set all handles to null. 
-If a member cannot be initialized with a default constructor, then a compiler error will be
-emitted.
-
 How the members shall be initialized can also be defined directly in the declaration of the 
 members. When this is done the initialization expression will automatically be compiled in the 
 constructor without the need to write the initialization again. 
 
-\todo Describe auto generated constructors
-
-\todo Describe possibility to delete the auto generated constructors
-
 \see \ref doc_script_class_memberinit, \ref doc_script_class_conv
+
+
+
+\section doc_script_class_construct_auto Auto-generated constructors
+
+The compiler will automatically generate a default constructor and copy constructor in some cases.
+
+The default constructor will be generated automatically if no other constructor is explicitly declared. 
+This constructor will simply call the default constructor for all object members and set all handles to null, 
+unless \ref doc_script_class_memberinit "members have explicit initializations" in which case those are executed. 
+Any compilation error in the member initialization will be reported as usual.
+
+The copy constructor will be generated automatically if no copy constructor is explicitly declared. This 
+constructor will attempt to do a copy construct for each member, or if no copy constructor is available it 
+will first do a default construct followed by an assignment. If any compilation error is encountered, e.g. if a 
+member cannot be copied, then the copy constructor will not be generated and the error message surpressed.
+
+If the auto generated constructors are not desired, then they can be explicitly excluded by flagging them as deleted.
+
+<pre>
+  class MyClass
+  {
+	MyClass() delete;
+	MyClass(const MyClass &inout) delete;
+  }
+</pre>
+
+
+
+
+
 
 
 
