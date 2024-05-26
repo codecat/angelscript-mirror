@@ -109,21 +109,25 @@ when the application wish to have full control of what can and cannot be stored 
  
 \ref asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT
 
-If this flag is set to true, the compiler will always provide a default constructor for classes even if it hasn't been implemented
-by the script. Normally this option is not recommended, because if a script class provides a non-default constructor but not the 
-default constructor it is most likely because it is desired that the class should always be initialized with the non-default constructor.
-
-\todo describe Option 2
-
-\todo A default copy constructor is also provided
+This property determines if the compiler will automatically provide a default constructor for classes. When set to 0 (default) 
+it will be as per \ref doc_script_class_construct_auto "language specification". When set to 1 it will always be generated, and 
+when set to 2 it will never be generated.
 
 \ref asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT
 
-\todo Describe this, backwards compatiblity with pre-2.37.0
+This property determines if the compiler will automatically provide a copy constructor for classes. When set to 0 (default) 
+it will be as per \ref doc_script_class_construct_auto "language specification". When set to 1 it will always be generated, and 
+when set to 2 it will never be generated.
+
+In versions before 2.37.0 the copy constructor was not generated automatically, so if backwards compatibility is needed, set this to 0.
 
 \ref asEP_ALWAYS_IMPL_DEFAULT_COPY
 
-\todo Describe this, backwards compatiblity with pre-2.37.0
+This property determines if the compiler will automatically provide a copy operator for classes. When set to 0 (default) 
+it will be as per \ref doc_script_class_assign_ops_auto "language specification". When set to 1 it will always be generated, and 
+when set to 2 it will never be generated.
+
+In versions before 2.37.0 the copy operator was always generated automatically, so if backwards compatibility is needed, set this to 1.
 
 \ref asEP_ALTER_SYNTAX_NAMED_ARGS
 

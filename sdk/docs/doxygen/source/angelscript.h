@@ -253,7 +253,7 @@ enum asEEngineProp
 	asEP_AUTO_GARBAGE_COLLECT               = 16,
 	//! Disallow the use of global variables in the script. Default: false
 	asEP_DISALLOW_GLOBAL_VARS               = 17,
-	//! When true, the compiler will always provide a default constructor for script classes. Default: false
+	//! Determine if the default constructor is provided automatically by compiler. 0 - as per language spec, 1 - always, 2 - never. Default: 0
 	asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT      = 18,
 	//! Set how warnings should be treated: 0 - dismiss, 1 - emit, 2 - treat as error. Default: 1
 	asEP_COMPILER_WARNINGS                  = 19,
@@ -2231,7 +2231,7 @@ protected:
 };
 #endif
 
-//! \ingroup api_auxiliary_functions
+//! \ingroup api_auxiliary_interfaces
 //! \brief The interface for the thread manager
 //!
 //! This interface is used to represent the internal thread manager
