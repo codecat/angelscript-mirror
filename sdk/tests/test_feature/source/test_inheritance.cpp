@@ -20,14 +20,22 @@ class FooScripted
 public:
 	void CallMe()
 	{
+		// Check that the script object is still alive
 		if( !m_isDead->Get() )
 		{
-			asIScriptEngine *engine = m_obj->GetEngine();
-			asIScriptContext *ctx = engine->RequestContext();
-			ctx->Prepare(m_obj->GetObjectType()->GetMethodByDecl("void CallMe()"));
-			ctx->SetObject(m_obj);
-			ctx->Execute();
-			engine->ReturnContext(ctx);
+			// Check that it isn't our script class instance that is makng the call, in which case we do not callback to the script
+			asIScriptContext* ctx = asGetActiveContext();
+			asIScriptFunction* func = ctx ? ctx->GetFunction(0) : 0;
+			if (!func || strcmp(func->GetName(), "CallMe") != 0 || !ctx || ctx->GetThisPointer(0) != m_obj)
+			{
+				// Call the script function CallMe so the script can provide the overloaded behavior
+				asIScriptEngine* engine = m_obj->GetEngine();
+				ctx = engine->RequestContext();
+				ctx->Prepare(m_obj->GetObjectType()->GetMethodByDecl("void CallMe()"));
+				ctx->SetObject(m_obj);
+				ctx->Execute();
+				engine->ReturnContext(ctx);
+			}
 		}
 	}
 	int m_value;
@@ -146,10 +154,10 @@ bool Test()
 			"  } \n"
 			"  FooScripted(const FooScripted &o) { \n"
 			"    @m_obj = FooScripted_t(); \n" // Create a new C++ instance
-			"    m_obj = o.m_obj; \n"          // copy content of C++ instance
+			"    m_obj = o.m_obj; \n"          // copy content of other C++ instance
 			"  } \n"
 			"  FooScripted &opAssign(const FooScripted &o) { \n"
-			"    m_obj = o.m_obj; \n"  // copy content of C++ instance
+			"    m_obj = o.m_obj; \n"  // copy content of other C++ instance
 			"    return this; \n"
 			"  } \n"
 			"  void CallMe() { m_obj.CallMe(); } \n"
@@ -166,6 +174,7 @@ bool Test()
 		mod->AddScriptSection("Foo2",
 			"class FooDerived : FooScripted { \n"
 			"  void CallMe() { \n"
+			"    FooScripted::CallMe(); \n"
 			"    m_value += 1; \n"
 			"  } \n"
 			"} \n"

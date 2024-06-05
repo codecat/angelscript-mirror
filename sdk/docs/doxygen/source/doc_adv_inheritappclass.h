@@ -13,8 +13,6 @@ the script side that the scripts can see and inherit from.
 
 The following is an example implementation of such a proxy class.
 
-\todo Add code in CallMe to detect when the call is coming from the script, so the call is not routed back to the script again in a recursive loop
-
 \code
 // On the C++ side
 class FooScripted
@@ -26,16 +24,24 @@ public:
     // If the script side is still alive, then call the scripted function
     if( !m_isDead->Get() )
     {
-      asIScriptEngine *engine = m_obj->GetEngine();
-      asIScriptContext *ctx = engine->RequestContext();
+      // Check that it isn't our script class instance that is makng the call, in 
+      // which case we do not callback to the script to avoid endless recursiveness
+      asIScriptContext* ctx = asGetActiveContext();
+      asIScriptFunction* func = ctx ? ctx->GetFunction(0) : 0;
+      if (!func || strcmp(func->GetName(), "CallMe") != 0 || !ctx || ctx->GetThisPointer(0) != m_obj)
+      {
+        // Call the script function CallMe so the script can provide the overloaded behavior
+        asIScriptEngine* engine = m_obj->GetEngine();
+        ctx = engine->RequestContext();
 
-      // GetMethodByDecl returns the virtual function on the script class
-      // thus when calling it, the VM will execute the derived method
-      ctx->Prepare(m_obj->GetObjectType()->GetMethodByDecl("void CallMe()"));
-      ctx->SetObject(m_obj);
-      ctx->Execute();
+        // GetMethodByDecl returns the virtual function on the script class
+        // thus when calling it, the VM will execute the derived method
+        ctx->Prepare(m_obj->GetObjectType()->GetMethodByDecl("void CallMe()"));
+        ctx->SetObject(m_obj);
+        ctx->Execute();
 
-      engine->ReturnContext(ctx);
+        engine->ReturnContext(ctx);
+      }
     }
   }
 
