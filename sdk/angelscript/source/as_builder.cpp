@@ -988,16 +988,6 @@ void asCBuilder::CompileFunctions()
 			{
 				asASSERT(func->parameterTypes.GetLength() == 1 && func->parameterTypes[0].GetTypeInfo() == current->objType);
 
-				// Backup the original message stream and error counter
-				bool                       msgCallback = engine->msgCallback;
-				asSSystemFunctionInterface msgCallbackFunc = engine->msgCallbackFunc;
-				void* msgCallbackObj = engine->msgCallbackObj;
-				int                        originalNumErrors = numErrors;
-
-				// Set the new temporary message stream
-				asCOutputBuffer outBuffer;
-				engine->SetMessageCallback(asFUNCTION(asCOutputBuffer::CDeclCallback), &outBuffer, asCALL_CDECL_OBJLAST);
-
 				int r = 0, c = 0;
 				if (node)
 					current->script->ConvertPosToRowCol(node->tokenPos, &r, &c);
@@ -1009,32 +999,6 @@ void asCBuilder::CompileFunctions()
 				// This is the default copy constructor that is generated
 				// automatically if not implemented by the user.
 				r = compiler.CompileDefaultCopyConstructor(this, current->script, node, func, classDecl);
-
-				// If the compilation of the default copy constructor fails, then it is silently removed
-				if (r < 0)
-				{
-					asCObjectType* ot = func->objectType;
-					module->m_scriptFunctions.RemoveValue(func);
-					func->module = 0;
-					func->ReleaseInternal();
-					ot->beh.constructors.RemoveValue(ot->beh.copyconstruct);
-					ot->beh.copyconstruct = 0;
-					func->ReleaseInternal();
-
-					func = engine->scriptFunctions[ot->beh.copyfactory];
-					module->m_scriptFunctions.RemoveValue(func);
-					func->module = 0;
-					func->ReleaseInternal();
-					ot->beh.factories.RemoveValue(ot->beh.copyfactory);
-					ot->beh.copyfactory = 0;
-					func->ReleaseInternal();
-				}
-
-				// Restore message callback and error counter
-				engine->msgCallback = msgCallback;
-				engine->msgCallbackFunc = msgCallbackFunc;
-				engine->msgCallbackObj = msgCallbackObj;
-				numErrors = originalNumErrors;
 			}
 
 			engine->preMessage.isSet = false;
@@ -3803,6 +3767,100 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 	}
 
 	if( numErrors > 0 ) return;
+
+	// Iterate through classes and verify if any automatically generated copy constructor can really be compiled,
+	// i.e. all members and the base class can be copied. If not, then remove the auto generated copy constructor 
+	// so it will not be compiled. This is done here when it is known the order of class inheritance, and all classes
+	// have received their members from mixins, etc.
+	for (n = 0; n < classDeclarations.GetLength(); n++)
+	{
+		sClassDeclaration* decl = classDeclarations[n];
+		if (decl->isExistingShared)
+			continue;
+
+		asCObjectType* ot = CastToObjectType(decl->typeInfo);
+		if (ot == 0 || ot->beh.copyconstruct == 0)
+			continue;
+
+		// Find the sFunctionDescriptor to determine if the copy constructor is auto generated or not
+		asUINT funcDesc = asUINT(-1);
+		for (asUINT d = 0; d < functions.GetLength(); d++)
+			if (functions[d] && functions[d]->funcId == ot->beh.copyconstruct)
+			{
+				funcDesc = d;
+				break;
+			}
+
+		if (funcDesc != asUINT(-1) && functions[funcDesc]->node == 0)
+		{
+			// The copy constructor is auto generated. Check if all members and base class can be copied
+			bool canBeCopied = true;
+			asCScriptFunction *func = engine->scriptFunctions[ot->beh.copyconstruct];
+			asCObjectType* objType = func->objectType;
+			if (objType->derivedFrom)
+			{
+				if (objType->derivedFrom->beh.copyconstruct == 0 &&
+					(objType->derivedFrom->beh.construct == 0 || objType->derivedFrom->beh.copy == 0))
+					canBeCopied = false;
+			}
+
+			for (asUINT m = 0; canBeCopied && m < objType->properties.GetLength(); m++)
+			{
+				asCObjectProperty* prop = objType->properties[m];
+
+				// Check if the property is inherited
+				asCScriptNode* declNode = 0;
+				for (asUINT p = 0; p < decl->propInits.GetLength(); p++)
+				{
+					if (decl->propInits[p].name == prop->name)
+					{
+						declNode = decl->propInits[p].declNode;
+						break;
+					}
+				}
+
+				// If declNode is null then the property was inherited
+				if (declNode == 0)
+					continue;
+
+				// Check if the property can be copied
+				asCObjectType* propObjType = CastToObjectType(prop->type.GetTypeInfo());
+				if (propObjType && !prop->type.IsObjectHandle() && propObjType->beh.copyconstruct == 0 &&
+					(propObjType->beh.construct == 0 || propObjType->beh.copy == 0))
+					canBeCopied = false;
+			}
+
+			if (!canBeCopied)
+			{
+				// Remove the function descriptor and the script function that was prepared for compilation
+				asDELETE(functions[funcDesc], sFunctionDescription);
+				functions.RemoveIndex(funcDesc);
+
+				module->m_scriptFunctions.RemoveValue(func);
+				func->module = 0;
+				func->ReleaseInternal();
+				ot->beh.constructors.RemoveValue(ot->beh.copyconstruct);
+				ot->beh.copyconstruct = 0;
+				func->ReleaseInternal();
+
+				// Do the same for the copyfactory
+				for (asUINT d = 0; d < functions.GetLength(); d++)
+					if (functions[d] && functions[d]->funcId == ot->beh.copyfactory)
+					{
+						asDELETE(functions[d], sFunctionDescription);
+						functions.RemoveIndex(d);
+						break;
+					}
+				func = engine->scriptFunctions[ot->beh.copyfactory];
+				module->m_scriptFunctions.RemoveValue(func);
+				func->module = 0;
+				func->ReleaseInternal();
+				ot->beh.factories.RemoveValue(ot->beh.copyfactory);
+				ot->beh.copyfactory = 0;
+				func->ReleaseInternal();
+			}
+		}
+	}
 
 	// Verify which script classes can really form circular references, and mark only those as garbage collected.
 	// This must be done in the correct order, so that a class that contains another class isn't needlessly marked

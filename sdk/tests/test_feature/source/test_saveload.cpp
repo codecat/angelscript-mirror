@@ -9,6 +9,7 @@
 #include "utils.h"
 #include "../../../add_on/scriptarray/scriptarray.h"
 #include "../../../add_on/scripthandle/scripthandle.h"
+#include "../../../add_on/scriptfile/scriptfile.h"
 
 
 namespace TestSaveLoad
@@ -395,6 +396,56 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
+
+	// Test saving / loading bytecode with class that cannot generate copy constructor containing other class that cannot generate copy constructor
+	// Problem reported by Sam Tupy
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptFile(engine);
+
+		CBytecodeStream stream((string("AS_DEBUG/bc_") + (sizeof(void*) == 4 ? "32" : "64")).c_str());
+
+		// The order was important for this test. If they had been declared in the other order the test would have succeeded
+		const char* script =
+			"class message_history { \n"
+			"  reader rd; \n"  // auto generated copy constructor is not generated, because reader is not copyable
+			"} \n"
+			"class reader { \n"
+			"  file f; \n"  // auto generated copy constructor is not generated, because file is not copyable
+			"} \n";
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+		r = mod->AddScriptSection("main", script); assert(r >= 0);
+		r = mod->Build(); assert(r >= 0);
+		r = mod->SaveByteCode(&stream); assert(r >= 0);
+		mod->Discard();
+
+		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
+		if (crc32 != 0x9D71B577)
+		{
+			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
+			TEST_FAILED;
+		}
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+
+		r = mod->LoadByteCode(&stream);
+		if (r < 0)
+			TEST_FAILED;
+		mod->Discard();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = engine->ShutDownAndRelease(); assert(r >= 0);
+	}
 
 	// Test saving / loading byte code when there are multiple variables in different scope occupying the same stack position
 	// Problem reported by Sam Tupy
