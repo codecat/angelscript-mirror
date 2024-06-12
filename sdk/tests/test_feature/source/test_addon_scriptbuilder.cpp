@@ -78,6 +78,34 @@ bool Test()
 
 	// TODO: Preprocessor directives should be alone on the line
 
+	// Test #include with international characters in file name
+	// Reported by Rémy Stivani
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		CScriptBuilder builder;
+		builder.StartNewModule(engine, "test");
+		builder.AddSectionFromMemory("test", "#include \"scripts/j\xc3\xb6nsson.as\"  \n"); // \xc3\xb6 is utf-8 for ö
+		r = builder.BuildModule();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asIScriptModule* mod = engine->GetModule("test");
+		int* var = (int*)mod->GetAddressOfGlobalVar(mod->GetGlobalVarIndexByName("jonsson"));
+		if (var == 0 || *var != 48)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test #include with a non-terminated string
 	{
 		asIScriptEngine* engine = asCreateScriptEngine();

@@ -1,6 +1,9 @@
 #include "scriptbuilder.h"
 #include <vector>
 #include <assert.h>
+#ifdef _WIN32
+#include <windows.h> // MultiByteToWideChar()
+#endif
 using namespace std;
 
 #include <stdio.h>
@@ -170,13 +173,24 @@ bool CScriptBuilder::IncludeIfNotAlreadyIncluded(const char *filename)
 	return true;
 }
 
-int CScriptBuilder::LoadScriptSection(const char *filename)
+int CScriptBuilder::LoadScriptSection(const char* filename)
 {
 	// Open the script file
 	string scriptFile = filename;
 #if _MSC_VER >= 1500 && !defined(__S3E__)
+  #ifdef _WIN32
+	// Convert the filename from UTF8 to UTF16
+	wchar_t bufUTF16_name[10000] = {0};
+	wchar_t bufUTF16_mode[10] = {0};
+	MultiByteToWideChar(CP_UTF8, 0, filename, -1, bufUTF16_name, 10000);
+	MultiByteToWideChar(CP_UTF8, 0, "rb", -1, bufUTF16_mode, 10);
+
 	FILE *f = 0;
+	_wfopen_s(&f, bufUTF16_name, bufUTF16_mode);
+  #else
+	FILE* f = 0;
 	fopen_s(&f, scriptFile.c_str(), "rb");
+  #endif
 #else
 	FILE *f = fopen(scriptFile.c_str(), "rb");
 #endif

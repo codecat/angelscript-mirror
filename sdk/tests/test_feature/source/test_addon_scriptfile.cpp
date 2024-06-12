@@ -94,7 +94,7 @@ bool Test()
 			"  assert( dirs.find('scripts') >= 0 ); \n"
 			"  fs.changeCurrentPath('scripts'); \n"						// move to the sub directory
 			"  array<string> files = fs.getFiles(); \n"					// get the script files in the directory
-			"  assert( files.length() == 2 ); \n"
+			"  assert( files.length() == 3 ); \n"
 			"  file f; \n"
 			"  f.open('scripts/include.as', 'r'); \n"
 			"  string str = f.readLine(); \n"
