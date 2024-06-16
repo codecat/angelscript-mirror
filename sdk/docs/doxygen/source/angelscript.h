@@ -541,6 +541,7 @@ enum asETokenClass
 
 // Type id flags
 //! \brief Type id flags
+//! \see \ref doc_typeid
 enum asETypeIdFlags
 {
 	//! The type id for void
