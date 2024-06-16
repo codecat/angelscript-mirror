@@ -68,7 +68,13 @@ To deserialize a context follow these steps:
  - Call \ref asIScriptContext::SetStateRegisters "SetStateRegisters" to restore additional context registers
  - Call \ref asIScriptContext::FinishDeserialization "FinishDeserialization" to conclude the serialization and allow the execution to resume
 
-\todo Add information on known restrictions, e.g. serialized contexts can only be restored on same cpu architecture, etc
+\subsection Limitations
+
+The following are some limitations with serialization of contexts:
+
+ - The serialization is platform dependent, i.e. it is not possible to serialize a context on a 32bit platform and then deserialize it on a 64bit platform or vice versa
+ - Attempting to deserialize a context after \ref doc_adv_dynamic_build_hot "hot reloading" modified scripts has undefined behavior, and will most likely cause crashes
+
 
 
 

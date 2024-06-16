@@ -118,6 +118,8 @@ void nullPtr(asIScriptGeneric *gen)
 
 	assert(gen->GetArgCount() == 1);
 
+	void **ptr = (void**)gen->GetAddressOfReturnLocation();
+	assert(*ptr == 0); // The address of the return location will always be null
 	*(asIScriptObject **)gen->GetAddressOfReturnLocation() = *intf;
 
 	assert(gen->GetReturnTypeId() == gen->GetEngine()->GetTypeIdByDecl("intf@"));
