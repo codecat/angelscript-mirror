@@ -111,6 +111,7 @@ bool Test()
 
 	// Test returning a newly registered function 
 	// https://www.gamedev.net/forums/topic/715598-calling-a-dll-function/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine();
 		RegisterScriptHandle(engine);

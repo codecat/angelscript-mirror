@@ -110,6 +110,7 @@ bool Test()
 	// Test crash due to exception, with object variable declared just after the end of a block. 
 	// The asIScriptContext::IsVarInScope didn't work properly, leading to the crash in the DetermineLiveObjects
 	// https://www.gamedev.net/forums/topic/715075-context-crash-during-exception-handling-in-determineliveobjects/
+	SKIP_ON_MAX_PORT
 	{
 		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 

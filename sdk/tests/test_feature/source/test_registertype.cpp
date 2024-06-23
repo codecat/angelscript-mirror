@@ -434,6 +434,7 @@ bool Test()
 
 	// Test factory functions with auxiliary pointers using asOBJ_CDECL_OBJLAST and asOBJ_CDECL_OBJFIRST
 	// https://www.gamedev.net/forums/topic/711801-why-are-the-ascall_cdecl_objlastfirst-calling-conventions-only-supported-in-methods/5445516/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);

@@ -97,6 +97,7 @@ bool Test()
 	}
 
 	// Test basic function overload
+	SKIP_ON_MAX_PORT
 	{
 		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
