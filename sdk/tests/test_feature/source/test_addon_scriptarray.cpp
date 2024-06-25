@@ -256,7 +256,7 @@ void doCalculations(const std::string& /* geom_id */, const int& /* surf_indx */
 		ka_out_vec.resize(us.size());
 		kg_out_vec.resize(us.size());
 
-		for (int i = 0; i < us.size(); i++)
+		for (unsigned int i = 0; i < us.size(); i++)
 		{
 			k1_out_vec[i] = us[i];
 			k2_out_vec[i] = ws[i];
