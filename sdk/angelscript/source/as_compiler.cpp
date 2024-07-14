@@ -157,12 +157,32 @@ int asCCompiler::CompileDefaultCopyConstructor(asCBuilder* in_builder, asCScript
 		if (outFunc->objectType->derivedFrom->beh.copyconstruct)
 		{
 			asCExprContext ctx(engine);
-			CompileVariableAccess("other", "", &ctx, 0);
-			ctx.bc.Instr(asBC_RDSPtr);
-			CompileVariableAccess("this", "", &ctx, 0);
-			ctx.bc.Instr(asBC_RDSPtr);
-			ctx.bc.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.copyconstruct, 2*AS_PTR_SIZE);
-			ctx.bc.OptimizeLocally(tempVariableOffsets);
+
+			asCScriptFunction* copyfunc = engine->scriptFunctions[outFunc->objectType->derivedFrom->beh.copyconstruct];
+			if (copyfunc->parameterTypes[0].IsObjectHandle())
+			{
+				int varOffset = AllocateVariable(copyfunc->parameterTypes[0], true);
+				CompileVariableAccess("other", "", &ctx, 0);
+				ctx.bc.Instr(asBC_RDSPtr);
+				ctx.bc.InstrWORD(asBC_PSF, (short)varOffset);
+				ctx.bc.InstrPTR(asBC_REFCPY, copyfunc->parameterTypes[0].GetTypeInfo());
+				ctx.bc.Instr(asBC_PopPtr);
+				ctx.bc.InstrWORD(asBC_VAR, (short)varOffset);
+				CompileVariableAccess("this", "", &ctx, 0);
+				ctx.bc.Instr(asBC_RDSPtr);
+				ctx.bc.InstrWORD(asBC_GETOBJ, AS_PTR_SIZE);
+				ctx.bc.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.copyconstruct, 2 * AS_PTR_SIZE);
+				ctx.bc.OptimizeLocally(tempVariableOffsets);
+			}
+			else
+			{
+				CompileVariableAccess("other", "", &ctx, 0);
+				ctx.bc.Instr(asBC_RDSPtr);
+				CompileVariableAccess("this", "", &ctx, 0);
+				ctx.bc.Instr(asBC_RDSPtr);
+				ctx.bc.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.copyconstruct, 2 * AS_PTR_SIZE);
+				ctx.bc.OptimizeLocally(tempVariableOffsets);
+			}
 			byteCode.AddCode(&ctx.bc);
 			byteCode.InstrPTR(asBC_JitEntry, 0);
 		}

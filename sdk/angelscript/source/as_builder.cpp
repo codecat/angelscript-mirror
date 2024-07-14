@@ -3802,6 +3802,20 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 				if (objType->derivedFrom->beh.copyconstruct == 0 &&
 					(objType->derivedFrom->beh.construct == 0 || objType->derivedFrom->beh.copy == 0))
 					canBeCopied = false;
+				else
+				{
+					// The base class can be copied. Check if it can be done from a const object
+					// TODO: Should allow it anyway, but the copy constructor should be generated as taking a non-const reference
+					asCScriptFunction* baseFunc = engine->scriptFunctions[objType->derivedFrom->beh.copyconstruct];
+					if (baseFunc && !baseFunc->parameterTypes[0].IsObjectConst())
+						canBeCopied = false;
+					else if (!baseFunc)
+					{
+						baseFunc = engine->scriptFunctions[objType->derivedFrom->beh.copy];
+						if (baseFunc && !baseFunc->parameterTypes[0].IsObjectConst())
+							canBeCopied = false;
+					}
+				}
 			}
 
 			for (asUINT m = 0; canBeCopied && m < objType->properties.GetLength(); m++)
@@ -3828,6 +3842,20 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 				if (propObjType && !prop->type.IsObjectHandle() && propObjType->beh.copyconstruct == 0 &&
 					(propObjType->beh.construct == 0 || propObjType->beh.copy == 0))
 					canBeCopied = false;
+				else if(propObjType && !prop->type.IsObjectHandle())
+				{
+					// The property can be copied. Check if it can be done from a const object
+					// TODO: Should allow it anyway, but the copy constructor should be generated as taking a non-const reference
+					asCScriptFunction* baseFunc = engine->scriptFunctions[propObjType->beh.copyconstruct];
+					if (baseFunc && !baseFunc->parameterTypes[0].IsObjectConst())
+						canBeCopied = false;
+					else if (!baseFunc)
+					{
+						baseFunc = engine->scriptFunctions[propObjType->beh.copy];
+						if (baseFunc && !baseFunc->parameterTypes[0].IsObjectConst())
+							canBeCopied = false;
+					}
+				}
 			}
 
 			if (!canBeCopied)
