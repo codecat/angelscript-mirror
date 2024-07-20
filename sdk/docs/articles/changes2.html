@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.37.0 WIP - 2024/06/11</h2>
+<h2>Version 2.37.0 WIP - 2024/07/19</h2>
 
 <ul>
 <li>Bug fixes
@@ -38,6 +38,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Registered copy factories were not properly identified as copy factories if the parameter used &amp;inout instead of &amp;in
 <li>Fixed GetLineNumber that could randomly return the last line number of a function if called between Prepare and Execute (Thanks Sam Tupy)
 <li>Fixed support for returning structs with 2 doubles in native calling conventions on arm64 (Thanks Sam Tupy)
+<li>Fixed a bug in bytecode serializer that could cause errors if composite properties where used (Thanks tomek0055)
 </ul>
 <li>Library
 <ul>

@@ -49,10 +49,8 @@ BEGIN_AS_NAMESPACE
 #define LOAD_FROM_BIT(dst, val, bit) ((dst) = ((val) >> (bit)) & 1)
 
 asCReader::asCReader(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine)
- : module(_module), stream(_stream), engine(_engine)
+	: module(_module), stream(_stream), engine(_engine), lastCompositeProp(0), error(false), bytesRead(0)
 {
-	error = false;
-	bytesRead = 0;
 }
 
 int asCReader::ReadData(void *data, asUINT size)
@@ -2778,7 +2776,6 @@ void asCReader::ReadUsedObjectProps()
 
 short asCReader::FindObjectPropOffset(asWORD index)
 {
-	static asCObjectProperty *lastCompositeProp = 0;
 	if (lastCompositeProp)
 	{
 		if (index != 0)
@@ -3814,7 +3811,7 @@ asCTypeInfo *asCReader::FindType(int idx)
 #ifndef AS_NO_COMPILER
 
 asCWriter::asCWriter(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine, bool _stripDebug)
-	: module(_module), stream(_stream), engine(_engine), stripDebugInfo(_stripDebug), error(false), bytesWritten(0)
+	: module(_module), stream(_stream), engine(_engine), stripDebugInfo(_stripDebug), error(false), bytesWritten(0), lastWasComposite(false)
 {
 }
 
@@ -5685,7 +5682,6 @@ void asCWriter::WriteUsedObjectProps()
 int asCWriter::FindObjectPropIndex(short offset, int typeId, asDWORD *bc)
 {
 	// If the last property was a composite property, then just return 0, because it won't be translated
-	static bool lastWasComposite = false;
 	if (lastWasComposite)
 	{
 		lastWasComposite = false;
