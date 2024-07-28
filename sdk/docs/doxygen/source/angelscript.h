@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.37.0
-#define ANGELSCRIPT_VERSION        23700
-#define ANGELSCRIPT_VERSION_STRING "2.37.0"
+//! Version 2.38.0
+#define ANGELSCRIPT_VERSION        23800
+#define ANGELSCRIPT_VERSION_STRING "2.38.0 WIP"
 
 // Data types
 
@@ -1515,11 +1515,21 @@ public:
 	//!
 	//! \see \ref doc_strings
 	virtual int RegisterStringFactory(const char *datatype, asIStringFactory *factory) = 0;
+	//! \brief Returns the type id of the type that the string factory returns, and optionally the actual string factory.
+	//! \param[out] typeModifiers The \ref asETypeModifiers "type modifiers" for the return type
+	//! \param[out] factory The pointer to the string factory that is currently registered
+	//! \return The type id of the type that the string type returns, or a negative value on error.
+	//! \retval asNO_FUNCTION The string factory has not been registered.
+	virtual int GetStringFactory(asDWORD* typeModifiers = 0, asIStringFactory** factory = 0) const = 0;
+#ifdef AS_DEPRECATED
+	// deprecated since 2024-07-27, 2.38.0
 	//! \brief Returns the type id of the type that the string factory returns.
 	//! \return The type id of the type that the string type returns, or a negative value on error.
 	//! \param[out] flags The \ref asETypeModifiers "type modifiers" for the return type
 	//! \retval asNO_FUNCTION The string factory has not been registered.
+	//! \deprecated Since 2.38.0. Use \ref asIScriptEngine::GetStringFactory instead
 	virtual int GetStringFactoryReturnTypeId(asDWORD *flags = 0) const = 0;
+#endif
 	//! \}
 
 	// Default array type

@@ -543,7 +543,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 	}
 
 	asDWORD flags = 0;
-	int typeId = engine->GetStringFactoryReturnTypeId(&flags);
+	int typeId = engine->GetStringFactory(&flags);
 	if( typeId > 0 )
 		strm << "strfactory \"" << ((flags & asTM_CONST) ? "const " : "") << engine->GetTypeDeclaration(typeId) << ((flags & asTM_INOUTREF) ? "&" : "") << "\"\n";
 

@@ -110,7 +110,11 @@ public:
 
 	// String factory
 	virtual int RegisterStringFactory(const char *datatype, asIStringFactory *factory);
+	virtual int GetStringFactory(asDWORD* typeModifiers, asIStringFactory** factory) const;
+#ifdef AS_DEPRECATED
+	// deprecated since 2024-07-27, 2.38.0
 	virtual int GetStringFactoryReturnTypeId(asDWORD *flags) const;
+#endif
 
 	// Default array type
 	virtual int RegisterDefaultArrayType(const char *type);

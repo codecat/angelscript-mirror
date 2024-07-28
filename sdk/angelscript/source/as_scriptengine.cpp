@@ -3314,6 +3314,10 @@ int asCScriptEngine::GetDefaultArrayTypeId() const
 // interface
 int asCScriptEngine::RegisterStringFactory(const char *datatype, asIStringFactory *factory)
 {
+	// TODO: Add check to prohibit registering a new factory if one already is registered
+	//       This is because the engine keeps references to strings in the factory, and 
+	//       won't be able to handle it if the string factory is replaced
+
 	if (factory == 0)
 		return ConfigError(asINVALID_ARG, "RegisterStringFactory", datatype, 0);
 
@@ -3338,6 +3342,22 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, asIStringFactor
 }
 
 // interface
+int asCScriptEngine::GetStringFactory(asDWORD* flags, asIStringFactory **factory) const
+{
+	if (factory) 
+		*factory = stringFactory;
+
+	if (stringFactory == 0)
+		return asNO_FUNCTION;
+
+	if (flags)
+		*flags = 0;
+	return GetTypeIdFromDataType(stringType);
+}
+
+#ifdef AS_DEPRECATED
+// deprecated since 2024-07-27, 2.38.0
+// interface
 int asCScriptEngine::GetStringFactoryReturnTypeId(asDWORD *flags) const
 {
 	if( stringFactory == 0 )
@@ -3347,6 +3367,7 @@ int asCScriptEngine::GetStringFactoryReturnTypeId(asDWORD *flags) const
 		*flags = 0;
 	return GetTypeIdFromDataType(stringType);
 }
+#endif
 
 // internal
 asCModule *asCScriptEngine::GetModule(const char *name, bool create)

@@ -271,7 +271,7 @@ void DumpModule(asIScriptModule *mod)
 	}
 
 	// Get the string factory return type
-	int typeId = engine->GetStringFactoryReturnTypeId();
+	int typeId = engine->GetStringFactory();
 	s << "string factory: " << engine->GetTypeDeclaration(typeId) << endl;
 
 	// Enumerate registered types

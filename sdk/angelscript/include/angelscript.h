@@ -58,8 +58,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        23700
-#define ANGELSCRIPT_VERSION_STRING "2.37.0"
+#define ANGELSCRIPT_VERSION        23800
+#define ANGELSCRIPT_VERSION_STRING "2.38.0 WIP"
 
 // Data types
 
@@ -705,7 +705,11 @@ public:
 
 	// String factory
 	virtual int RegisterStringFactory(const char *datatype, asIStringFactory *factory) = 0;
+	virtual int GetStringFactory(asDWORD* typeModifiers = 0, asIStringFactory** factory = 0) const = 0;
+#ifdef AS_DEPRECATED
+	// deprecated since 2024-07-27, 2.38.0
 	virtual int GetStringFactoryReturnTypeId(asDWORD *flags = 0) const = 0;
+#endif
 
 	// Default array type
 	virtual int RegisterDefaultArrayType(const char *type) = 0;
