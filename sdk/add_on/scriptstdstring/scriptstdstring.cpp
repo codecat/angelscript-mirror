@@ -7,6 +7,10 @@
 #ifndef __psp2__
 	#include <locale.h> // setlocale()
 #endif
+#ifndef _WIN32
+// threadsafe uselocale for Linux and similar systems
+#include <xlocale.h> // uselocale()
+#endif
 
 using namespace std;
 
@@ -697,21 +701,41 @@ double parseFloat(const string &val, asUINT *byteCount)
 {
 	char *end;
 
+	// Set the locale to C so that we are guaranteed to parse the float value correctly
+#if defined(_WIN32)
 	// WinCE doesn't have setlocale. Some quick testing on my current platform
 	// still manages to parse the numbers such as "3.14" even if the decimal for the
 	// locale is ",".
-#if !defined(_WIN32_WCE) && !defined(ANDROID) && !defined(__psp2__)
-	// Set the locale to C so that we are guaranteed to parse the float value correctly
-	char *tmp = setlocale(LC_NUMERIC, 0);
+#if !defined(_WIN32_WCE)
+	// On Windows setlocale is made threadsafe by turning on thread local setlocale
+	// ref: https://learn.microsoft.com/en-us/cpp/parallel/multithreading-and-locales?view=msvc-170&redirectedfrom=MSDN
+	int oldConfig = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+	char* tmp = setlocale(LC_NUMERIC, 0);
 	string orig = tmp ? tmp : "C";
 	setlocale(LC_NUMERIC, "C");
+#endif
+#else
+#if !defined(ANDROID) && !defined(__psp2__)
+	// On Linux and other similar systems the threadsafe option is uselocale
+	// ref: https://stackoverflow.com/questions/4057319/is-setlocale-thread-safe-function
+	locale_t locale = newlocale(LC_NUMERIC_MASK, "C", NULL);
+	locale_t orig_locale = uselocale(locale);
+#endif
 #endif
 
 	double res = strtod(val.c_str(), &end);
 
-#if !defined(_WIN32_WCE) && !defined(ANDROID) && !defined(__psp2__)
-	// Restore the locale
+	// Restore the original locale
+#if defined(_WIN32)
+#if !defined(_WIN32_WCE)
 	setlocale(LC_NUMERIC, orig.c_str());
+	_configthreadlocale(oldConfig);
+#endif
+#else
+#if !defined(ANDROID) && !defined(__psp2__)
+#endif
+	uselocale(orig_locale);
+	freelocale(locale);
 #endif
 
 	if( byteCount )
