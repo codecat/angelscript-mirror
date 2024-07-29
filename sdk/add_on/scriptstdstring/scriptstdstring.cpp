@@ -7,10 +7,7 @@
 #ifndef __psp2__
 	#include <locale.h> // setlocale()
 #endif
-#ifndef _WIN32
-// threadsafe uselocale for Linux and similar systems
-#include <xlocale.h> // uselocale()
-#endif
+
 
 using namespace std;
 
