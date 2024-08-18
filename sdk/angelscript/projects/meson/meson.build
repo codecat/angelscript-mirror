@@ -65,6 +65,7 @@ angelscript_lib = library(
   dependencies : threads,
   version : angelscript_version_num,
   install : true,
+  cpp_args:'-Wfatal-errors'
 )
 angelscript_inc = include_directories('../../include')
 angelscript_dep  = declare_dependency(

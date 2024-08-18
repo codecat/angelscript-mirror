@@ -3,6 +3,8 @@
 
 \page doc_script_bnf Script language grammar
 
+\todo Update BNF with function templates
+
 This is language grammar in Backus-Naur Form (BNF).
 
 The following convention is used:

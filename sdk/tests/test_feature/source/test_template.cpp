@@ -224,6 +224,27 @@ void f2(const C*)
 {
 }
 
+// Global template function, registered as "T get<class T, class K>(K lmao)"
+bool get_called_correctly = false;
+void get(asIScriptGeneric* gen)
+{
+	float arg = gen->GetArgFloat(0);
+	get_called_correctly = gen->GetReturnTypeId() == asTYPEID_INT32 && gen->GetArgTypeId(0) == asTYPEID_FLOAT && arg == 1.25f;
+}
+std::string* make()
+{
+	static std::string singleton("Success");
+	return &singleton;
+}
+// Template method, registered as "void do_smth<class T>(T param)"
+bool do_smth_called_correctly = false;
+void do_smth(asIScriptGeneric* gen)
+{
+	std::string* obj = (std::string*)gen->GetObject();
+	int arg = gen->GetArgDWord(0);
+	do_smth_called_correctly = gen->GetArgTypeId(0) == asTYPEID_INT32 && arg == 100 && (*obj) == "Success";
+}
+
 bool Test()
 {
 	RET_ON_MAX_PORT
@@ -232,6 +253,60 @@ bool Test()
 	int r;
 	COutStream out;
 	CBufferedOutStream bout;
+
+	// Test template methods and functions
+	// Initial implementation provided by MindOfTony
+	{
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterObjectType("lmao", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectBehaviour("lmao", asBEHAVE_FACTORY, "lmao@ f()", asFUNCTION(make), asCALL_CDECL);
+
+		// Register a template method on the object type
+		r = engine->RegisterObjectMethod("lmao", "void do_smth<class T>(T param)", asFUNCTION(do_smth), asCALL_GENERIC);
+		if (r < 0)
+			TEST_FAILED;
+		// TODO: Retrieve the script function and check that it is a template function and that it has template sub types
+
+		// Register a global template function
+		r = engine->RegisterGlobalFunction("T get<class T, class K>(K lmao)", asFUNCTION(get), asCALL_GENERIC, 0);
+		if (r < 0)
+			TEST_FAILED;
+		// TODO: Retrieve the script function and check that it is a template function and that it has template sub types
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", R"(
+				void main()
+				{
+					lmao lol;
+					lol.do_smth<int>(100);
+					get<int, float>(1.25);
+				}
+			)");
+		r = mod->Build();
+
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (!get_called_correctly)
+			TEST_FAILED;
+		if (!do_smth_called_correctly)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Template specialization with multiple subtypes
 	// Reported by Stefan Blumer
@@ -270,7 +345,7 @@ bool Test()
 		if (type->GetSubTypeId(0) != asTYPEID_INT32 || type->GetSubTypeId(1) != asTYPEID_FLOAT)
 			TEST_FAILED;
 
-		engine->Release();
+		engine->ShutDownAndRelease();
 	}
 
 	// Test template returning another template

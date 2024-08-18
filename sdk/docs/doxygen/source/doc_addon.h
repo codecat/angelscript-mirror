@@ -969,10 +969,10 @@ In the script the this would be used in the following way:
   void main()
   {
     // Get the function pointer as a generic ref
-    ref @r = getDynamicFunction();
+    ref \@r = getDynamicFunction();
 
     // Cast the ref to the expected function pointer
-    func @f = cast<func>(r);
+    func \@f = cast<func>(r);
 
     // Call the function
     f();

@@ -285,6 +285,9 @@ public:
 	void EnumReferences(asIScriptEngine *engine);
 	void ReleaseAllHandles(asIScriptEngine *engine);
 
+	// Don't allow the script function to be copied
+	asCScriptFunction(const asCScriptFunction&) = delete;
+
 public:
 	//-----------------------------------
 	// Properties
@@ -301,6 +304,7 @@ public:
 	asCString                    name;
 	asCDataType                  returnType;
 	asCArray<asCDataType>        parameterTypes;
+	asCArray<asCDataType>        templateSubTypes; // Increase ref of template subtypes
 	asCArray<asCString>          parameterNames;
 	asCArray<asETypeModifiers>   inOutFlags;
 	asCArray<asCString *>        defaultArgs;

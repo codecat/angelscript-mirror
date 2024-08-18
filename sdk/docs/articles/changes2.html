@@ -15,12 +15,20 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.38.0 WIP - 2024/07/28</h2>
+<h2>Version 2.38.0 WIP - 2024/08/17</h2>
 
 <ul>
+<li>Library
+<ul>
+<li>Implemented support for registering template functions with RegisterGlobalFunction and RegisterObjectMethod using generic calling convention (Thanks MindOfTony)
+</ul>
 <li>Library interface
 <ul>
 <li>Deprecated GetStringFactoryReturnTypeId, and implemented GetStringFactory instead (Thanks HenryAWE)
+</ul>
+<li>Script language
+<ul>
+<li>It is now possible to instantiate registered template functions and call them (Thanks MindOfTony)
 </ul>
 <li>Add-ons
 <ul>

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2023 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -91,6 +91,7 @@ protected:
 	asCScriptNode *ParseDataType(bool allowVariableType = false, bool allowAuto = false);
 	asCScriptNode *ParseIdentifier();
 	bool           ParseTemplTypeList(asCScriptNode *node, bool required = true);
+	bool           ParseTemplateDeclTypeList(asCScriptNode* node, bool required);
 	void           ParseMethodAttributes(asCScriptNode *funcNode);
 
 	asCScriptNode *ParseListPattern();
@@ -136,7 +137,8 @@ protected:
 	bool IsVirtualPropertyDecl();
 	bool IsFuncDecl(bool isMethod);
 	bool IsLambda();
-	bool IsFunctionCall();
+	bool IsFunctionCall(bool isTemplate);
+	bool IsTemplateTypeList(sToken startFrom, sToken *after = 0);
 
 	// Expressions
 	asCScriptNode *ParseAssignment();

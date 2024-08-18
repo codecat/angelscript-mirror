@@ -183,8 +183,7 @@ int asCParser::ParseDataType(asCScriptCode *in_script, bool in_isReturnType)
 	return 0;
 }
 
-
-// Parse a template declaration: IDENTIFIER '<' 'class'? IDENTIFIER '>'
+// Parse a template declaration: IDENTIFIER '<' 'class'? IDENTIFIER {, 'class'? IDENTIFIER} '>'
 int asCParser::ParseTemplateDecl(asCScriptCode *in_script)
 {
 	Reset();
@@ -196,45 +195,10 @@ int asCParser::ParseTemplateDecl(asCScriptCode *in_script)
 	scriptNode->AddChildLast(ParseIdentifier());
 	if( isSyntaxError ) return -1;
 
+	ParseTemplateDeclTypeList(scriptNode, true);
+	if (isSyntaxError) return -1;
+
 	sToken t;
-	GetToken(&t);
-	if( t.type != ttLessThan )
-	{
-		Error(ExpectedToken(asCTokenizer::GetDefinition(ttLessThan)), &t);
-		Error(InsteadFound(t), &t);
-		return -1;
-	}
-
-	// The class token is optional
-	GetToken(&t);
-	if( t.type != ttClass )
-		RewindTo(&t);
-
-	scriptNode->AddChildLast(ParseIdentifier());
-	if( isSyntaxError ) return -1;
-
-	// There can be multiple sub types
-	GetToken(&t);
-
-	// Parse template types by list separator
-	while(t.type == ttListSeparator)
-	{
-		GetToken(&t);
-		if( t.type != ttClass )
-			RewindTo(&t);
-		scriptNode->AddChildLast(ParseIdentifier());
-
-		if( isSyntaxError ) return -1;
-		GetToken(&t);
-	}
-
-	if( t.type != ttGreaterThan )
-	{
-		Error(ExpectedToken(asCTokenizer::GetDefinition(ttGreaterThan)), &t);
-		Error(InsteadFound(t), &t);
-		return -1;
-	}
-
 	GetToken(&t);
 	if( t.type != ttEnd )
 	{
@@ -287,7 +251,7 @@ int asCParser::ParsePropertyDeclaration(asCScriptCode *in_script)
 	return 0;
 }
 
-// BNF:5: SCOPE         ::= ['::'] {IDENTIFIER '::'} [IDENTIFIER ['<' TYPE {',' TYPE} '>'] '::']
+// BNF:5: SCOPE         ::= ['::'] {IDENTIFIER '::'} [IDENTIFIER [TEMPLTYPELIST] '::']
 void asCParser::ParseOptionalScope(asCScriptNode *node)
 {
 	asCScriptNode *scope = CreateNode(snScope);
@@ -362,6 +326,87 @@ void asCParser::ParseOptionalScope(asCScriptNode *node)
 		scope->Destroy(engine);
 }
 
+// Parse '<' 'class'? IDENTIFIER {',' 'class'? IDENTIFIER} '>'
+bool asCParser::ParseTemplateDeclTypeList(asCScriptNode* node, bool required)
+{
+	// Backup initial position
+	sToken init;
+	GetToken(&init);
+	RewindTo(&init);
+
+	sToken t;
+	bool isValid = true;
+
+	// Remember the last child, so we can restore the state if needed
+	asCScriptNode *last = node->lastChild;
+
+	// Starts with '<'
+	GetToken(&t);
+	if (t.type != ttLessThan)
+	{
+		if (required)
+		{
+			Error(ExpectedToken(asCTokenizer::GetDefinition(ttLessThan)), &t);
+			Error(InsteadFound(t), &t);
+		}
+		RewindTo(&init);
+		return false;
+	}
+	GetToken(&t);
+	if(t.type != ttClass) 
+		RewindTo(&t);
+	node->AddChildLast(ParseIdentifier());
+	if (isSyntaxError) return false;
+
+	GetToken(&t);
+
+	while (t.type == ttListSeparator)
+	{
+		GetToken(&t);
+		if(t.type != ttClass) 
+			RewindTo(&t);
+		node->AddChildLast(ParseIdentifier());
+		if (isSyntaxError) return false;
+		GetToken(&t);
+	}
+
+	// End with '>'
+	// Accept >> and >>> tokens too. But then force the tokenizer to move
+	// only 1 character ahead (thus splitting the token in two).
+	if (script->code[t.pos] != '>')
+	{
+		if (required)
+		{
+			Error(ExpectedToken(asCTokenizer::GetDefinition(ttGreaterThan)), &t);
+			Error(InsteadFound(t), &t);
+		}
+		else
+			isValid = false;
+	}
+	else
+	{
+		// Break the token so that only the first > is parsed
+		SetPos(t.pos + 1);
+	}
+
+	if (!required && !isValid)
+	{
+		// Restore the original state before returning
+		while (node->lastChild != last)
+		{
+			asCScriptNode *n = node->lastChild;
+			n->DisconnectParent();
+			n->Destroy(engine);
+		}
+
+		RewindTo(&init);
+		return false;
+	}
+
+	// The template type list was parsed OK
+	return true;
+}
+
 asCScriptNode *asCParser::ParseFunctionDefinition()
 {
 	asCScriptNode *node = CreateNode(snFunction);
@@ -377,6 +422,9 @@ asCScriptNode *asCParser::ParseFunctionDefinition()
 
 	node->AddChildLast(ParseIdentifier());
 	if( isSyntaxError ) return node;
+	
+	// Parse optional template sub types
+	ParseTemplateDeclTypeList(node, false);
 
 	node->AddChildLast(ParseParameterList());
 	if( isSyntaxError ) return node;
@@ -444,7 +492,7 @@ asCScriptNode *asCParser::ParseTypeMod(bool isParam)
 	return node;
 }
 
-// BNF:4: TYPE          ::= ['const'] SCOPE DATATYPE ['<' TYPE {',' TYPE} '>'] { ('[' ']') | ('@' ['const']) }
+// BNF:4: TYPE          ::= ['const'] SCOPE DATATYPE [TEMPLTYPELIST] { ('[' ']') | ('@' ['const']) }
 asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType, bool allowAuto)
 {
 	asCScriptNode *node = CreateNode(snDataType);
@@ -524,8 +572,14 @@ asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType, boo
 // If 'required' is false, and the template type list is not valid,
 // then no change will be done and the function returns false. This
 // can be used as do an optional parsing
+// BNF:4: TEMPLTYPELIST ::= '<' TYPE {',' TYPE} '>'
 bool asCParser::ParseTemplTypeList(asCScriptNode *node, bool required)
 {
+	// Backup original position
+	sToken init;
+	GetToken(&init);
+	RewindTo(&init); 
+
 	sToken t;
 	bool isValid = true;
 
@@ -541,6 +595,7 @@ bool asCParser::ParseTemplTypeList(asCScriptNode *node, bool required)
 			Error(ExpectedToken(asCTokenizer::GetDefinition(ttLessThan)), &t);
 			Error(InsteadFound(t), &t);
 		}
+		RewindTo(&init);
 		return false;
 	}
 
@@ -589,6 +644,7 @@ bool asCParser::ParseTemplTypeList(asCScriptNode *node, bool required)
 			n->Destroy(engine);
 		}
 
+		RewindTo(&init);
 		return false;
 	}
 
@@ -1356,6 +1412,96 @@ bool asCParser::FindTokenAfterType(sToken &nextToken)
 	return true;
 }
 
+// Returns true if the following tokens form a template type list, e.g.  <int, nm::type<float>>
+// The function doesn't move the position
+bool asCParser::IsTemplateTypeList(sToken start, sToken *after)
+{
+	sToken restore;
+	GetToken(&restore);
+
+	RewindTo(&start);
+	bool isTemplateTypeList = true;
+	sToken t1;
+	GetToken(&t1);
+	if (t1.type != ttLessThan)
+		isTemplateTypeList = false;
+
+	for (; isTemplateTypeList;)
+	{
+		// There might optionally be a 'const'
+		GetToken(&t1);
+		if (t1.type == ttConst)
+			GetToken(&t1);
+
+		// The type may be initiated with the scope operator
+		if (t1.type == ttScope)
+			GetToken(&t1);
+
+		// There may be multiple levels of scope operators
+		sToken t2;
+		GetToken(&t2);
+		while (t1.type == ttIdentifier && t2.type == ttScope)
+		{
+			GetToken(&t1);
+			GetToken(&t2);
+		}
+		RewindTo(&t2);
+
+		// Now there must be a data type
+		if (!IsDataType(t1))
+			isTemplateTypeList = false;
+
+		if (!CheckTemplateType(t1))
+			isTemplateTypeList = false;
+
+		GetToken(&t1);
+
+		// Is it a handle or array?
+		while (t1.type == ttHandle || t1.type == ttOpenBracket)
+		{
+			if (t1.type == ttOpenBracket)
+			{
+				GetToken(&t1);
+				if (t1.type != ttCloseBracket)
+					isTemplateTypeList = false;
+			}
+			else if (t1.type == ttHandle)
+			{
+				// after @ there can be a const
+				GetToken(&t1);
+				if (t1.type != ttConst)
+					RewindTo(&t1);
+			}
+
+			GetToken(&t1);
+		}
+
+		// Was this the last template subtype?
+		if (t1.type != ttListSeparator)
+			break;
+	}
+
+	// Accept >> and >>> tokens too. But then force the tokenizer to move
+	// only 1 character ahead (thus splitting the token in two).
+	if (script->code[t1.pos] != '>')
+		isTemplateTypeList = false;
+
+	if (after)
+	{
+		// Set the after position to after the first >
+		if (t1.length > 1)
+			SetPos(t1.pos + 1);
+
+		GetToken(after);
+
+		if (!isTemplateTypeList)
+			*after = start;
+	}
+
+	RewindTo(&restore);
+	return isTemplateTypeList;
+}
+
 // This function will return true if the current token is not a template, or if it is and
 // the following has a valid syntax for a template type. The source position will be left
 // at the first token after the type in case of success
@@ -1365,78 +1511,19 @@ bool asCParser::CheckTemplateType(const sToken &t)
 	tempString.Assign(&script->code[t.pos], t.length);
 	if( engine->IsTemplateType(tempString.AddressOf()) )
 	{
-		// If the next token is a < then parse the sub-type too
 		sToken t1;
 		GetToken(&t1);
-		if( t1.type != ttLessThan )
+		if (t1.type != ttLessThan)
 		{
 			RewindTo(&t1);
 			return true;
 		}
 
-		for(;;)
+		sToken after;
+		if (IsTemplateTypeList(t1, &after))
 		{
-			// There might optionally be a 'const'
-			GetToken(&t1);
-			if( t1.type == ttConst )
-				GetToken(&t1);
-
-			// The type may be initiated with the scope operator
-			if( t1.type == ttScope )
-				GetToken(&t1);
-
-			// There may be multiple levels of scope operators
-			sToken t2;
-			GetToken(&t2);
-			while( t1.type == ttIdentifier && t2.type == ttScope )
-			{
-				GetToken(&t1);
-				GetToken(&t2);
-			}
-			RewindTo(&t2);
-
-			// Now there must be a data type
-			if( !IsDataType(t1) )
-				return false;
-
-			if( !CheckTemplateType(t1) )
-				return false;
-
-			GetToken(&t1);
-
-			// Is it a handle or array?
-			while( t1.type == ttHandle || t1.type == ttOpenBracket )
-			{
-				if( t1.type == ttOpenBracket )
-				{
-					GetToken(&t1);
-					if( t1.type != ttCloseBracket )
-						return false;
-				}
-				else if (t1.type == ttHandle)
-				{
-					// after @ there can be a const
-					GetToken(&t1);
-					if (t1.type != ttConst)
-						RewindTo(&t1);
-				}
-
-				GetToken(&t1);
-			}
-
-			// Was this the last template subtype?
-			if( t1.type != ttListSeparator )
-				break;
-		}
-
-		// Accept >> and >>> tokens too. But then force the tokenizer to move
-		// only 1 character ahead (thus splitting the token in two).
-		if( script->code[t1.pos] != '>' )
-			return false;
-		else if( t1.length != 1 )
-		{
-			// We need to break the token, so that only the first character is parsed
-			SetPos(t1.pos + 1);
+			RewindTo(&after);
+			return true;
 		}
 	}
 
@@ -1540,6 +1627,7 @@ asCScriptNode *asCParser::ParseExprValue()
 
 			bool isDataType = IsDataType(t2);
 			bool isTemplateType = false;
+			bool isTemplateFn = false;
 			if( isDataType )
 			{
 				// Is this a template type?
@@ -1547,7 +1635,12 @@ asCScriptNode *asCParser::ParseExprValue()
 				if( engine->IsTemplateType(tempString.AddressOf()) )
 					isTemplateType = true;
 			}
-
+			else 
+			{
+				tempString.Assign(&script->code[t2.pos], t2.length);
+				if( engine->IsTemplateFn(tempString.AddressOf()) )
+					isTemplateFn = true;
+			}
 			GetToken(&t2);
 
 			// Rewind so the real parsing can be done, after deciding what to parse
@@ -1560,7 +1653,7 @@ asCScriptNode *asCParser::ParseExprValue()
 				node->AddChildLast(ParseConstructCall());
 			else if( isTemplateType && t.type == ttLessThan )  // type<t>()
 				node->AddChildLast(ParseConstructCall());
-			else if( IsFunctionCall() )
+			else if( IsFunctionCall(isTemplateFn) )
 				node->AddChildLast(ParseFunctionCall());
 			else
 				node->AddChildLast(ParseVariableAccess());
@@ -1799,7 +1892,7 @@ asCScriptNode *asCParser::ParseStringConstant()
 	return node;
 }
 
-// BNF:12: FUNCCALL      ::= SCOPE IDENTIFIER ARGLIST
+// BNF:12: FUNCCALL      ::= SCOPE IDENTIFIER [TEMPLTYPELIST] ARGLIST
 asCScriptNode *asCParser::ParseFunctionCall()
 {
 	asCScriptNode *node = CreateNode(snFunctionCall);
@@ -1811,6 +1904,9 @@ asCScriptNode *asCParser::ParseFunctionCall()
 	// Parse the function name followed by the argument list
 	node->AddChildLast(ParseIdentifier());
 	if( isSyntaxError ) return node;
+
+	// Parse optional template type list
+	ParseTemplTypeList(node, false);
 
 	node->AddChildLast(ParseArgList());
 
@@ -1948,7 +2044,7 @@ asCScriptNode *asCParser::ParseArgList(bool withParenthesis)
 	}
 }
 
-bool asCParser::IsFunctionCall()
+bool asCParser::IsFunctionCall(bool isTemplate)
 {
 	sToken s;
 	sToken t1, t2;
@@ -1977,7 +2073,11 @@ bool asCParser::IsFunctionCall()
 		RewindTo(&s);
 		return false;
 	}
-
+	if( isTemplate && t2.type == ttLessThan)
+	{
+		RewindTo(&s);
+		return true;
+	}
 	if( t2.type == ttOpenParenthesis)
 	{
 		RewindTo(&s);
@@ -2186,7 +2286,7 @@ asCScriptNode *asCParser::ParseExprPostOp()
 		GetToken(&t1);
 		GetToken(&t2);
 		RewindTo(&t1);
-		if( t2.type == ttOpenParenthesis)
+		if (t2.type == ttOpenParenthesis || IsTemplateTypeList(t2))
 			node->AddChildLast(ParseFunctionCall());
 		else
 			node->AddChildLast(ParseIdentifier());

@@ -333,6 +333,7 @@ protected:
 	void DestroyVariables(asCByteCode *bc);
 	asSNameSpace *DetermineNameSpace(const asCString &scope);
 	int  SetupParametersAndReturnVariable(asCArray<asCString> &parameterNames, asCScriptNode *func);
+	int  InstantiateTemplateFunctions(asCArray<int>& funcs, asCScriptNode* node);
 
 	enum SYMBOLTYPE
 	{

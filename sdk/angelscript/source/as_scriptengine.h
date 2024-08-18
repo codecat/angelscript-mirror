@@ -52,6 +52,7 @@
 #include "as_memory.h"
 #include "as_gc.h"
 #include "as_tokenizer.h"
+#include "as_map.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -297,13 +298,14 @@ public:
 	void               RemoveFromTypeIdMap(asCTypeInfo *type);
 
 	bool               IsTemplateType(const char *name) const;
+	bool               IsTemplateFn(const char *name) const;
+	int                GetTemplateFunctionInstance(asCScriptFunction* templateFunction, const asCArray<asCDataType>& subTypes);
 	int                SetTemplateRestrictions(asCObjectType *templateType, asCScriptFunction *func, const char *caller, const char *decl);
 	asCObjectType     *GetTemplateInstanceType(asCObjectType *templateType, asCArray<asCDataType> &subTypes, asCModule *requestingModule);
-	asCScriptFunction *GenerateTemplateFactoryStub(asCObjectType *templateType, asCObjectType *templateInstanceType, int origFactoryId);
-	bool               GenerateNewTemplateFunction(asCObjectType *templateType, asCObjectType *templateInstanceType, asCScriptFunction *templateFunc, asCScriptFunction **newFunc);
-	asCFuncdefType    *GenerateNewTemplateFuncdef(asCObjectType *templateType, asCObjectType *templateInstanceType, asCFuncdefType *templateFuncdef);
-	asCDataType        DetermineTypeForTemplate(const asCDataType &orig, asCObjectType *tmpl, asCObjectType *ot);
-	bool               RequireTypeReplacement(asCDataType &type, asCObjectType *templateType);
+	asCScriptFunction *GenerateFactoryStubForTemplateObjectInstance(asCObjectType *templateType, asCObjectType *templateInstanceType, int origFactoryId);
+	bool               GenerateFunctionForTemplateObjectInstance(asCObjectType *templateType, asCObjectType *templateInstanceType, asCScriptFunction *templateFunc, asCScriptFunction **newFunc);
+	asCFuncdefType    *GenerateFuncdefForTemplateObjectInstance(asCObjectType *templateType, asCObjectType *templateInstanceType, asCFuncdefType *templateFuncdef);
+	asCDataType        DetermineTypeForTemplate(const asCDataType &orig, const asCArray<asCDataType>& templateSubTypes, const asCArray<asCDataType>& targetSubTypes, asCModule *mod, asCObjectType* tmpl, asCObjectType* ot);
 
 	asCModule         *FindNewOwnerForSharedType(asCTypeInfo *type, asCModule *mod);
 	asCModule         *FindNewOwnerForSharedFunc(asCScriptFunction *func, asCModule *mod);
@@ -311,6 +313,7 @@ public:
 	asCFuncdefType    *FindMatchingFuncdef(asCScriptFunction *func, asCModule *mod);
 
 	int                DetermineNameAndNamespace(const char *in_name, asSNameSpace *implicitNs, asCString &out_name, asSNameSpace *&out_ns) const;
+	asCTypeInfo       *GetTemplateSubTypeByName(const asCString &name);
 	
 	// Global property management
 	asCGlobalProperty *AllocateGlobalProperty();
@@ -339,6 +342,10 @@ public:
 	// TODO: memory savings: Since there can be only one property with the same name a simpler symbol table should be used for global props
 	asCSymbolTable<asCGlobalProperty> registeredGlobalProps;   // increases ref count
 	asCSymbolTable<asCScriptFunction> registeredGlobalFuncs;
+	// The template global function instances will be stored in this array
+	asCArray<asCScriptFunction*>      generatedTemplateFunctionInstances;  // increases ref count
+	// This array contains a list of registered template global functions
+	asCArray<asCScriptFunction*>      registeredTemplateGlobalFuncs;
 	asCArray<asCFuncdefType *>        registeredFuncDefs;      // doesn't increase ref count
 	asCArray<asCObjectType *>         registeredTemplateTypes; // doesn't increase ref count
 	asIStringFactory                 *stringFactory;
@@ -349,7 +356,7 @@ public:
 	asCMap<asSNameSpaceNamePair, asCTypeInfo*> allRegisteredTypes; // increases ref count
 
 	// Dummy types used to name the subtypes in the template objects
-	asCArray<asCTypeInfo *>        templateSubTypes;
+	asCArray<asCTypeInfo *>        registeredTemplateSubTypes;
 
 	// Store information about template types
 	// This list will contain all instances of templates, both registered specialized

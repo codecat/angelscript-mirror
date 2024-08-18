@@ -493,6 +493,10 @@ void asCScriptFunction::DestroyInternal()
 		asDELETE(listPattern, asSListPatternNode);
 		listPattern = n;
 	}
+
+	// Release template sub types
+	for (asUINT n = 0; n < templateSubTypes.GetLength(); n++)
+		templateSubTypes[n].GetTypeInfo()->Release();
 }
 
 // interface

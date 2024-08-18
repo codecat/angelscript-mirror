@@ -856,15 +856,15 @@ asCScriptEngine::~asCScriptEngine()
 	}
 	registeredGlobalProps.Clear();
 
-	for( asUINT n = 0; n < templateSubTypes.GetLength(); n++ )
+	for( asUINT n = 0; n < registeredTemplateSubTypes.GetLength(); n++ )
 	{
-		if( templateSubTypes[n] )
+		if( registeredTemplateSubTypes[n] )
 		{
-			templateSubTypes[n]->DestroyInternal();
-			templateSubTypes[n]->ReleaseInternal();
+			registeredTemplateSubTypes[n]->DestroyInternal();
+			registeredTemplateSubTypes[n]->ReleaseInternal();
 		}
 	}
-	templateSubTypes.SetLength(0);
+	registeredTemplateSubTypes.SetLength(0);
 	registeredTypeDefs.SetLength(0);
 	registeredEnums.SetLength(0);
 	registeredObjTypes.SetLength(0);
@@ -876,6 +876,12 @@ asCScriptEngine::~asCScriptEngine()
 
 	scriptTypeBehaviours.ReleaseAllFunctions();
 	functionBehaviours.ReleaseAllFunctions();
+
+	// Release all instances of template functions
+	for (asUINT n = 0; n < generatedTemplateFunctionInstances.GetLength(); n++)
+		if (generatedTemplateFunctionInstances[n])
+			generatedTemplateFunctionInstances[n]->ReleaseInternal();
+	generatedTemplateFunctionInstances.SetLength(0);
 
 	for( asUINT n = 0; n < scriptFunctions.GetLength(); n++ )
 		if( scriptFunctions[n] )
@@ -1717,6 +1723,32 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 	return func->id;
 }
 
+asCTypeInfo* asCScriptEngine::GetTemplateSubTypeByName(const asCString &name)
+{
+	asCTypeInfo* subtype = 0;
+	for (asUINT n = 0; n < registeredTemplateSubTypes.GetLength(); n++)
+	{
+		if (registeredTemplateSubTypes[n]->name == name)
+		{
+			subtype = registeredTemplateSubTypes[n];
+			break;
+		}
+	}
+	if (subtype == 0)
+	{
+		// Create the new subtype if not already existing
+		subtype = asNEW(asCTypeInfo)(this);
+		if (subtype == 0)
+			return 0;
+
+		subtype->name = name;
+		subtype->size = 0;
+		subtype->flags = asOBJ_TEMPLATE_SUBTYPE;
+		registeredTemplateSubTypes.PushLast(subtype);
+	}
+	return subtype;
+}
+
 int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asQWORD flags)
 {
 	int r;
@@ -1858,27 +1890,10 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asQWORD 
 		// Define the template subtypes
 		for( asUINT subTypeIdx = 0; subTypeIdx < subtypeNames.GetLength(); subTypeIdx++ )
 		{
-			asCTypeInfo *subtype = 0;
-			for( asUINT n = 0; n < templateSubTypes.GetLength(); n++ )
-			{
-				if( templateSubTypes[n]->name == subtypeNames[subTypeIdx] )
-				{
-					subtype = templateSubTypes[n];
-					break;
-				}
-			}
+			asCTypeInfo *subtype = GetTemplateSubTypeByName(subtypeNames[subTypeIdx]);
 			if( subtype == 0 )
-			{
-				// Create the new subtype if not already existing
-				subtype = asNEW(asCTypeInfo)(this);
-				if( subtype == 0 )
-					return ConfigError(asOUT_OF_MEMORY, "RegisterObjectType", name, 0);
+				return ConfigError(asOUT_OF_MEMORY, "RegisterObjectType", name, 0);
 
-				subtype->name      = subtypeNames[subTypeIdx];
-				subtype->size      = 0;
-				subtype->flags     = asOBJ_TEMPLATE_SUBTYPE;
-				templateSubTypes.PushLast(subtype);
-			}
 			type->templateSubTypes.PushLast(asCDataType::CreateType(subtype, false));
 			subtype->AddRefInternal();
 		}
@@ -3018,6 +3033,10 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 		return ConfigError(asINVALID_DECLARATION, "RegisterGlobalFunction", declaration, 0);
 	}
 
+	// Template functions are only supported for generic calling convention
+	if (func->templateSubTypes.GetLength() && callConv != asCALL_GENERIC) 
+		return ConfigError(asNOT_SUPPORTED, "RegisterGlobalFunctoin", declaration, 0);
+
 	// TODO: namespace: What if the declaration defined an explicit namespace?
 	func->nameSpace = defaultNamespace;
 
@@ -3063,12 +3082,71 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 	currentGroup->scriptFunctions.PushLast(func);
 	func->accessMask = defaultAccessMask;
 	registeredGlobalFuncs.Put(func);
+	if(func->templateSubTypes.GetLength()) registeredTemplateGlobalFuncs.PushLast(func);
+	
 
 	// If parameter type from other groups are used, add references
 	currentGroup->AddReferencesForFunc(this, func);
 
 	// Return the function id as success
 	return func->id;
+}
+
+int asCScriptEngine::GetTemplateFunctionInstance(asCScriptFunction* baseFunc, const asCArray<asCDataType>& types)
+{
+	// Check if the template function instance already exists
+	// TODO: optimize look up. Build a hash of the baseFunc pointer and types, then store the lookup in a asCMap
+	for (asUINT n = 0; n < generatedTemplateFunctionInstances.GetLength(); n++)
+	{
+		asCScriptFunction* func = generatedTemplateFunctionInstances[n];
+		if (func == 0) continue;
+
+		if (func->name == baseFunc->name &&
+			func->nameSpace == baseFunc->nameSpace &&
+			func->objectType == baseFunc->objectType &&
+			func->templateSubTypes == types)
+			return func->id;
+	}
+
+	// Generate the new template function instance
+	asCScriptFunction* newFunc = asNEW(asCScriptFunction)(this, 0, baseFunc->funcType);
+	if (newFunc == 0)
+		return asOUT_OF_MEMORY;
+
+	newFunc->name = baseFunc->name;
+	for (asUINT n = 0; n < baseFunc->defaultArgs.GetLength(); n++)
+		if (baseFunc->defaultArgs[n])
+			newFunc->defaultArgs.PushLast(asNEW(asCString)(*baseFunc->defaultArgs[n]));
+		else
+			newFunc->defaultArgs.PushLast(0);
+	newFunc->parameterNames = baseFunc->parameterNames;
+	newFunc->inOutFlags = baseFunc->inOutFlags;
+	newFunc->traits = baseFunc->traits;
+	newFunc->SetReadOnly(baseFunc->IsReadOnly());
+	newFunc->objectType = baseFunc->objectType;
+	if( newFunc->objectType ) newFunc->objectType->AddRefInternal();
+	newFunc->sysFuncIntf = asNEW(asSSystemFunctionInterface)(*baseFunc->sysFuncIntf);
+
+	// Adjust the clean up instructions
+	if (newFunc->sysFuncIntf->callConv == ICC_GENERIC_FUNC ||
+		newFunc->sysFuncIntf->callConv == ICC_GENERIC_METHOD)
+		PrepareSystemFunctionGeneric(newFunc, newFunc->sysFuncIntf, this);
+	else
+		PrepareSystemFunction(newFunc, newFunc->sysFuncIntf, this);
+
+	// TODO: Need to know the module if it is a script that instantiates the template function
+	newFunc->returnType = DetermineTypeForTemplate(baseFunc->returnType, baseFunc->templateSubTypes, types, 0, 0, 0);
+	newFunc->parameterTypes.SetLength(baseFunc->parameterTypes.GetLength());
+	for (asUINT p = 0; p < baseFunc->parameterTypes.GetLength(); p++)
+		newFunc->parameterTypes[p] = DetermineTypeForTemplate(baseFunc->parameterTypes[p], baseFunc->templateSubTypes, types, 0, 0, 0);
+
+	newFunc->id = GetNextScriptFunctionId();
+	AddScriptFunction(newFunc);
+
+	// Keep track of template function instances
+	generatedTemplateFunctionInstances.PushLast(newFunc); // This holds a reference (constructor already set it to 1)
+
+	return newFunc->id;
 }
 
 // interface
@@ -3633,7 +3711,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	// templated funcdef will resolve to the new funcdef
 	for (n = 0; n < templateType->childFuncDefs.GetLength(); n++)
 	{
-		asCFuncdefType *funcdef = GenerateNewTemplateFuncdef(templateType, ot, templateType->childFuncDefs[n]);
+		asCFuncdefType *funcdef = GenerateFuncdefForTemplateObjectInstance(templateType, ot, templateType->childFuncDefs[n]);
 		funcdef->parentClass = ot;
 		ot->childFuncDefs.PushLast(funcdef);
 	}
@@ -3645,7 +3723,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		int funcId = ot->beh.constructors[n];
 		asCScriptFunction *func = scriptFunctions[funcId];
 
-		if( GenerateNewTemplateFunction(templateType, ot, func, &func) )
+		if( GenerateFunctionForTemplateObjectInstance(templateType, ot, func, &func) )
 		{
 			// Release the old function, the new one already has its ref count set to 1
 			scriptFunctions[funcId]->ReleaseInternal();
@@ -3663,7 +3741,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		// Generate factory stubs for each of the factories
 		for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
 		{
-			asCScriptFunction *func = GenerateTemplateFactoryStub(templateType, ot, ot->beh.constructors[n]);
+			asCScriptFunction *func = GenerateFactoryStubForTemplateObjectInstance(templateType, ot, ot->beh.constructors[n]);
 
 			ot->beh.factories.PushLast(func->id);
 
@@ -3677,7 +3755,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		// Generate factory stubs for each of the constructors
 		for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
 		{
-			asCScriptFunction *func = GenerateTemplateFactoryStub(templateType, ot, ot->beh.constructors[n]);
+			asCScriptFunction *func = GenerateFactoryStubForTemplateObjectInstance(templateType, ot, ot->beh.constructors[n]);
 
 			if( ot->beh.constructors[n] == ot->beh.construct )
 				ot->beh.construct = func->id;
@@ -3692,7 +3770,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	// Generate stub for the list factory as well
 	if( templateType->beh.listFactory )
 	{
-		asCScriptFunction *func = GenerateTemplateFactoryStub(templateType, ot, templateType->beh.listFactory);
+		asCScriptFunction *func = GenerateFactoryStubForTemplateObjectInstance(templateType, ot, templateType->beh.listFactory);
 
 		// Rename the function to easily identify it in LoadByteCode
 		func->name = "$list";
@@ -3703,7 +3781,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	// Create new template functions for behaviours that may need to know the new object type id
 	int funcId = templateType->beh.destruct;
 	asCScriptFunction* func = scriptFunctions[funcId];
-	if (func && GenerateNewTemplateFunction(templateType, ot, func, &func))
+	if (func && GenerateFunctionForTemplateObjectInstance(templateType, ot, func, &func))
 		ot->beh.destruct = func->id;
 	else
 	{
@@ -3713,7 +3791,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 
 	funcId = templateType->beh.copy;
 	func = scriptFunctions[funcId];
-	if (func && GenerateNewTemplateFunction(templateType, ot, func, &func))
+	if (func && GenerateFunctionForTemplateObjectInstance(templateType, ot, func, &func))
 		ot->beh.copy = func->id;
 	else
 	{
@@ -3723,7 +3801,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 
 	funcId = templateType->beh.gcEnumReferences;
 	func = scriptFunctions[funcId];
-	if (func && GenerateNewTemplateFunction(templateType, ot, func, &func))
+	if (func && GenerateFunctionForTemplateObjectInstance(templateType, ot, func, &func))
 		ot->beh.gcEnumReferences = func->id;
 	else
 	{
@@ -3733,7 +3811,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 
 	funcId = templateType->beh.gcReleaseAllReferences;
 	func = scriptFunctions[funcId];
-	if (func && GenerateNewTemplateFunction(templateType, ot, func, &func))
+	if (func && GenerateFunctionForTemplateObjectInstance(templateType, ot, func, &func))
 		ot->beh.gcReleaseAllReferences = func->id;
 	else
 	{
@@ -3763,7 +3841,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		funcId = ot->methods[n];
 		func = scriptFunctions[funcId];
 
-		if( GenerateNewTemplateFunction(templateType, ot, func, &func) )
+		if( GenerateFunctionForTemplateObjectInstance(templateType, ot, func, &func) )
 		{
 			// Release the old function, the new one already has its ref count set to 1
 			scriptFunctions[funcId]->ReleaseInternal();
@@ -3806,21 +3884,26 @@ asILockableSharedBool *asCScriptEngine::GetWeakRefFlagOfScriptObject(void *obj, 
 
 // internal
 // orig is the parameter type that is to be replaced
-// tmpl is the registered template. Used to find which subtype is being replaced
-// ot is the new template instance that is being created. Used to find the target type
-asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, asCObjectType *tmpl, asCObjectType *ot)
+// templateSubTypes is the list of template subtypes in the original declaration, used to find the index into the target type list for replacement
+// targetSubTypes is the list of target subtypes in the instance
+// (optional) mod is the module that should be used if a new template instance is needed
+// (optional) tmpl is the registered template object. Used to find which subtype is being replaced 
+// (optional) ot is the new template object instance that is being created. Used to find the target type 
+asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, const asCArray<asCDataType>& templateSubTypes, const asCArray<asCDataType>& targetSubTypes, asCModule *mod, asCObjectType *tmpl, asCObjectType *ot)
 {
+	asASSERT( (!tmpl && !ot) || (tmpl && ot));
+
 	asCDataType dt;
 	if( orig.GetTypeInfo() && (orig.GetTypeInfo()->flags & asOBJ_TEMPLATE_SUBTYPE) )
 	{
 		bool found = false;
-		for( asUINT n = 0; n < tmpl->templateSubTypes.GetLength(); n++ )
+		for( asUINT n = 0; n < templateSubTypes.GetLength(); n++ )
 		{
-			if( orig.GetTypeInfo() == tmpl->templateSubTypes[n].GetTypeInfo() )
+			if( orig.GetTypeInfo() == templateSubTypes[n].GetTypeInfo() )
 			{
 				found = true;
-				dt = ot->templateSubTypes[n];
-				if( orig.IsObjectHandle() && !ot->templateSubTypes[n].IsObjectHandle() )
+				dt = targetSubTypes[n];
+				if( orig.IsObjectHandle() && !dt.IsObjectHandle() )
 				{
 					dt.MakeHandle(true, true);
 					asASSERT(dt.IsObjectHandle());
@@ -3838,7 +3921,7 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 						dt.MakeHandleToConst(true);
 
 					dt.MakeReference(orig.IsReference());
-					dt.MakeReadOnly(ot->templateSubTypes[n].IsReadOnly() || orig.IsReadOnly());
+					dt.MakeReadOnly(targetSubTypes[n].IsReadOnly() || orig.IsReadOnly());
 				}
 				break;
 			}
@@ -3846,7 +3929,7 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 		asASSERT( found );
 		UNUSED_VAR( found );
 	}
-	else if( orig.GetTypeInfo() == tmpl )
+	else if( tmpl && orig.GetTypeInfo() == tmpl )
 	{
 		if( orig.IsObjectHandle() )
 			dt = asCDataType::CreateObjectHandle(ot, false);
@@ -3874,9 +3957,9 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 				break;
 			}
 
-			for( asUINT m = 0; m < tmpl->templateSubTypes.GetLength(); m++ )
-				if( origType->templateSubTypes[n].GetTypeInfo() == tmpl->templateSubTypes[m].GetTypeInfo() )
-					tmplSubTypes.PushLast(ot->templateSubTypes[m]);
+			for( asUINT m = 0; m < templateSubTypes.GetLength(); m++ )
+				if( origType->templateSubTypes[n].GetTypeInfo() == templateSubTypes[m].GetTypeInfo() )
+					tmplSubTypes.PushLast(targetSubTypes[m]);
 
 			if( tmplSubTypes.GetLength() != n+1 )
 			{
@@ -3898,7 +3981,7 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 					break;
 				}
 
-			ntype = GetTemplateInstanceType(origType, tmplSubTypes, ot->module);
+			ntype = GetTemplateInstanceType(origType, tmplSubTypes, mod);
 			if( ntype == 0 )
 			{
 				// It not possible to instantiate the subtype
@@ -3915,7 +3998,7 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 		dt.MakeReference(orig.IsReference());
 		dt.MakeReadOnly(orig.IsReadOnly());
 	}
-	else if (orig.GetTypeInfo() && (orig.GetTypeInfo()->flags & asOBJ_FUNCDEF) && CastToFuncdefType(orig.GetTypeInfo())->parentClass == tmpl)
+	else if (tmpl && orig.GetTypeInfo() && (orig.GetTypeInfo()->flags & asOBJ_FUNCDEF) && CastToFuncdefType(orig.GetTypeInfo())->parentClass == tmpl)
 	{
 		// The type is a child funcdef. Find the corresponding child funcdef in the template instance
 		for (asUINT n = 0; n < ot->childFuncDefs.GetLength(); n++)
@@ -3934,7 +4017,7 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 }
 
 // internal
-asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *templateType, asCObjectType *ot, int factoryId)
+asCScriptFunction *asCScriptEngine::GenerateFactoryStubForTemplateObjectInstance(asCObjectType *templateType, asCObjectType *ot, int factoryId)
 {
 	asCScriptFunction *factory = scriptFunctions[factoryId];
 
@@ -4036,7 +4119,7 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 			if( newNode->type == asLPT_TYPE )
 			{
 				asSListPatternDataTypeNode *typeNode = reinterpret_cast<asSListPatternDataTypeNode*>(newNode);
-				typeNode->dataType = DetermineTypeForTemplate(typeNode->dataType, templateType, ot);
+				typeNode->dataType = DetermineTypeForTemplate(typeNode->dataType, templateType->templateSubTypes, ot->templateSubTypes, ot->module, templateType, ot);
 			}
 
 			if( last )
@@ -4053,25 +4136,7 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 	return func;
 }
 
-bool asCScriptEngine::RequireTypeReplacement(asCDataType &type, asCObjectType *templateType)
-{
-	if( type.GetTypeInfo() == templateType ) return true;
-	if( type.GetTypeInfo() && (type.GetTypeInfo()->flags & asOBJ_TEMPLATE_SUBTYPE) ) return true;
-	if( type.GetTypeInfo() && (type.GetTypeInfo()->flags & asOBJ_TEMPLATE) )
-	{
-		asCObjectType *ot = CastToObjectType(type.GetTypeInfo());
-		for( asUINT n = 0; n < ot->templateSubTypes.GetLength(); n++ )
-			if( ot->templateSubTypes[n].GetTypeInfo() &&
-				ot->templateSubTypes[n].GetTypeInfo()->flags & asOBJ_TEMPLATE_SUBTYPE )
-				return true;
-	}
-	if (type.GetTypeInfo() && (type.GetTypeInfo()->flags & asOBJ_FUNCDEF) && CastToFuncdefType(type.GetTypeInfo())->parentClass == templateType)
-		return true;
-
-	return false;
-}
-
-bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, asCObjectType *ot, asCScriptFunction *func, asCScriptFunction **newFunc)
+bool asCScriptEngine::GenerateFunctionForTemplateObjectInstance(asCObjectType *templateType, asCObjectType *ot, asCScriptFunction *func, asCScriptFunction **newFunc)
 {
 	// Due to the objectType it is always required to generate a new function, 
 	// even if none of the function arguments needs to be changed.
@@ -4107,10 +4172,10 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 
 	func2->name     = func->name;
 
-	func2->returnType = DetermineTypeForTemplate(func->returnType, templateType, ot);
+	func2->returnType = DetermineTypeForTemplate(func->returnType, templateType->templateSubTypes, ot->templateSubTypes, ot->module, templateType, ot);
 	func2->parameterTypes.SetLength(func->parameterTypes.GetLength());
 	for (asUINT p = 0; p < func->parameterTypes.GetLength(); p++)
-		func2->parameterTypes[p] = DetermineTypeForTemplate(func->parameterTypes[p], templateType, ot);
+		func2->parameterTypes[p] = DetermineTypeForTemplate(func->parameterTypes[p], templateType->templateSubTypes, ot->templateSubTypes, ot->module, templateType, ot);
 
 	for (asUINT n = 0; n < func->defaultArgs.GetLength(); n++)
 		if (func->defaultArgs[n])
@@ -4147,7 +4212,7 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 	return true;
 }
 
-asCFuncdefType *asCScriptEngine::GenerateNewTemplateFuncdef(asCObjectType *templateType, asCObjectType *ot, asCFuncdefType *func)
+asCFuncdefType *asCScriptEngine::GenerateFuncdefForTemplateObjectInstance(asCObjectType *templateType, asCObjectType *ot, asCFuncdefType *func)
 {
 	// TODO: Only generate the new funcdef if it used the template subtypes.
 	//       Remember to also update the clean up in asCObjectType::DestroyInternal so it doesn't delete
@@ -4164,10 +4229,10 @@ asCFuncdefType *asCScriptEngine::GenerateNewTemplateFuncdef(asCObjectType *templ
 
 	func2->name = func->name;
 
-	func2->returnType = DetermineTypeForTemplate(func->funcdef->returnType, templateType, ot);
+	func2->returnType = DetermineTypeForTemplate(func->funcdef->returnType, templateType->templateSubTypes, ot->templateSubTypes, ot->module, templateType, ot);
 	func2->parameterTypes.SetLength(func->funcdef->parameterTypes.GetLength());
 	for (asUINT p = 0; p < func->funcdef->parameterTypes.GetLength(); p++)
-		func2->parameterTypes[p] = DetermineTypeForTemplate(func->funcdef->parameterTypes[p], templateType, ot);
+		func2->parameterTypes[p] = DetermineTypeForTemplate(func->funcdef->parameterTypes[p], templateType->templateSubTypes, ot->templateSubTypes, ot->module, templateType, ot);
 
 	// TODO: template: Must be careful when instantiating templates for garbage collected types
 	//                 If the template hasn't been registered with the behaviours, it shouldn't
@@ -6333,6 +6398,18 @@ bool asCScriptEngine::IsTemplateType(const char *name) const
 			return true;
 	}
 
+	return false;
+}
+
+// internal
+bool asCScriptEngine::IsTemplateFn(const char* name) const
+{
+	for(unsigned int n = 0; n < registeredTemplateGlobalFuncs.GetLength(); n++)
+	{
+		asCScriptFunction* fn = registeredTemplateGlobalFuncs[n];
+		if(fn && fn->name == name)
+			return true;
+	}
 	return false;
 }
 

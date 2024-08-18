@@ -2342,11 +2342,11 @@ asCTypeInfo* asCReader::ReadTypeInfo()
 
 		// Find the template subtype
 		ot = 0;
-		for( asUINT n = 0; n < engine->templateSubTypes.GetLength(); n++ )
+		for( asUINT n = 0; n < engine->registeredTemplateSubTypes.GetLength(); n++ )
 		{
-			if( engine->templateSubTypes[n] && engine->templateSubTypes[n]->name == typeName )
+			if( engine->registeredTemplateSubTypes[n] && engine->registeredTemplateSubTypes[n]->name == typeName )
 			{
-				ot = engine->templateSubTypes[n];
+				ot = engine->registeredTemplateSubTypes[n];
 				break;
 			}
 		}
