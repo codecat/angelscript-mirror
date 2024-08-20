@@ -77,6 +77,7 @@ public:
 	{
 		// This code writes out some statistics for the VM.
 		// It's useful for determining what needs to be optimized.
+		if (!outputDebug) return;
 
 #ifndef __MINGW32__
 		// _mkdir is broken on mingw
@@ -122,17 +123,19 @@ public:
 		}
 	}
 
-	void Instr(asBYTE bc)
+	void Instr(asBYTE bc, bool writeDebug)
 	{
 		++instrCount[bc];
 		++instrCount2[lastBC][bc];
 		lastBC = bc;
+		outputDebug = writeDebug;
 	}
 
 	// Instruction statistics
 	double instrCount[256];
 	double instrCount2[256][256];
 	int lastBC;
+	bool outputDebug;
 } stats;
 
 #endif
@@ -2286,7 +2289,7 @@ static const void *const dispatch_table[256] = {
 
 #ifdef AS_DEBUG
 	// Gather statistics on executed bytecode
-	stats.Instr(*(asBYTE*)l_bc);
+	stats.Instr(*(asBYTE*)l_bc, !m_engine->ep.noDebugOutput);
 
 	// Used to verify that the size of the instructions are correct
 	asDWORD *old = l_bc;
