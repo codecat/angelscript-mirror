@@ -155,7 +155,6 @@ public:
 	asSTypeBehaviour beh;
 
 	// Used for template types
-	// TODO: Replace asCDataType with asCTypeInfo*
 	asCArray<asCDataType> templateSubTypes;   // increases refCount for typeinfo held in datatype
 	bool                  acceptValueSubType;
 	bool                  acceptRefSubType;
