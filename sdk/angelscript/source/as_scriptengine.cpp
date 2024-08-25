@@ -2910,6 +2910,15 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 		return ConfigError(asINVALID_DECLARATION, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
 	}
 
+	if (func->templateSubTypes.GetLength())
+	{
+		func->funcType = asFUNC_TEMPLATE;
+
+		// Template functions are only supported for generic calling convention
+		if (callConv != asCALL_GENERIC)
+			return ConfigError(asNOT_SUPPORTED, "RegisterObjectMethod", declaration, 0);
+	}
+
 	// Check name conflicts
 	r = bld.CheckNameConflictMember(objectType, func->name.AddressOf(), 0, 0, false, false);
 	if( r < 0 )
@@ -3033,9 +3042,14 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 		return ConfigError(asINVALID_DECLARATION, "RegisterGlobalFunction", declaration, 0);
 	}
 
-	// Template functions are only supported for generic calling convention
-	if (func->templateSubTypes.GetLength() && callConv != asCALL_GENERIC) 
-		return ConfigError(asNOT_SUPPORTED, "RegisterGlobalFunctoin", declaration, 0);
+	if (func->templateSubTypes.GetLength())
+	{
+		func->funcType = asFUNC_TEMPLATE;
+
+		// Template functions are only supported for generic calling convention
+		if (callConv != asCALL_GENERIC)
+			return ConfigError(asNOT_SUPPORTED, "RegisterGlobalFunction", declaration, 0);
+	}
 
 	// TODO: namespace: What if the declaration defined an explicit namespace?
 	func->nameSpace = defaultNamespace;
@@ -3126,6 +3140,7 @@ int asCScriptEngine::GetTemplateFunctionInstance(asCScriptFunction* baseFunc, co
 	newFunc->objectType = baseFunc->objectType;
 	if( newFunc->objectType ) newFunc->objectType->AddRefInternal();
 	newFunc->sysFuncIntf = asNEW(asSSystemFunctionInterface)(*baseFunc->sysFuncIntf);
+	newFunc->funcType = asFUNC_SYSTEM;
 
 	// Adjust the clean up instructions
 	if (newFunc->sysFuncIntf->callConv == ICC_GENERIC_FUNC ||

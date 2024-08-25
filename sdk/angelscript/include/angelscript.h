@@ -391,7 +391,8 @@ enum asEFuncType
 	asFUNC_VIRTUAL   = 3,
 	asFUNC_FUNCDEF   = 4,
 	asFUNC_IMPORTED  = 5,
-	asFUNC_DELEGATE  = 6
+	asFUNC_DELEGATE  = 6,
+	asFUNC_TEMPLATE  = 7
 };
 
 // Is the target a 64bit system?

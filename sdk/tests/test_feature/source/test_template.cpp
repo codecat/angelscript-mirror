@@ -269,12 +269,18 @@ bool Test()
 		if (r < 0)
 			TEST_FAILED;
 		// TODO: Retrieve the script function and check that it is a template function and that it has template sub types
+		asIScriptFunction* func = engine->GetFunctionById(r);
+		if (func == 0 || func->GetFuncType() != asFUNC_TEMPLATE)
+			TEST_FAILED;
 
 		// Register a global template function
 		r = engine->RegisterGlobalFunction("T get<class T, class K>(K lmao)", asFUNCTION(get), asCALL_GENERIC, 0);
 		if (r < 0)
 			TEST_FAILED;
 		// TODO: Retrieve the script function and check that it is a template function and that it has template sub types
+		func = engine->GetFunctionById(r);
+		if (func == 0 || func->GetFuncType() != asFUNC_TEMPLATE)
+			TEST_FAILED;
 
 		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", R"(
@@ -304,6 +310,15 @@ bool Test()
 			TEST_FAILED;
 		if (!do_smth_called_correctly)
 			TEST_FAILED;
+
+		// It is not possible to call a template function
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ctx->Prepare(func);
+		if (r < 0) TEST_FAILED; // The prepare function doesn't check the type
+		r = ctx->Execute();
+		if (r != asEXECUTION_EXCEPTION)
+			TEST_FAILED;
+		ctx->Release();
 
 		engine->ShutDownAndRelease();
 	}

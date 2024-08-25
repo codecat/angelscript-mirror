@@ -1913,7 +1913,8 @@ bool Test()
 		r = ctx->Execute();
 		if( r != asEXECUTION_EXCEPTION ) // should fail since the imported function is not bound
 			TEST_FAILED;
-		if( string(ctx->GetExceptionString()) == "Unbound function called" )
+		if (string(ctx->GetExceptionString()) != "Unbound function called")
+			TEST_FAILED;
 		ctx->Release();
 
 		CBytecodeStream bytecode("");
@@ -1943,7 +1944,7 @@ bool Test()
 			g_func = 0;
 		}
 
-		engine->Release();
+		engine->ShutDownAndRelease();
 	}
 
 	// Test saving and loading with template in a namespace

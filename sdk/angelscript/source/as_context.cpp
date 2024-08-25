@@ -1665,15 +1665,13 @@ void asCContext::SetProgramPointer()
 
 		// Was the call successful?
 		if( m_status == asEXECUTION_ACTIVE )
-		{
 			m_status = asEXECUTION_FINISHED;
-		}
 	}
 	else
 	{
-		// This shouldn't happen unless there was an error in which
-		// case an exception should have been raised already
-		asASSERT( m_status == asEXECUTION_EXCEPTION );
+		// This can happen, e.g. if attempting to call a template function
+		if( m_status != asEXECUTION_EXCEPTION )
+			SetInternalException(TXT_NULL_POINTER_ACCESS, false);
 	}
 }
 
