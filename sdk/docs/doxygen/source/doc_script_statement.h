@@ -43,7 +43,9 @@ a random value. Variables of complex types, such as handles and object are initi
 with a default value. For handles this is <code>null</code>, for objects this is 
 what is defined by the object's default constructor.
 
-\todo Describe how to declare variables of template types
+\todo Describe variables with direct object initialization, i.e. object obj(expr);
+
+\todo Describe how to declare variables of template types, i.e. array<int> arr;
 
 
 

@@ -1043,7 +1043,9 @@ int CScriptBuilder::ExtractDeclaration(int pos, string &name, string &declaratio
 				}
 				else if( t == asTC_IDENTIFIER )
 				{
-					name = token;
+					// If a parenthesis is already found then the name is already known so it must not be overwritten
+					if( !hasParenthesis )
+						name = token;
 				}
 
 				// Skip trailing decorators

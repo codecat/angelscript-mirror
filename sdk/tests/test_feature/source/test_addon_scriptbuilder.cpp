@@ -78,6 +78,39 @@ bool Test()
 
 	// TODO: Preprocessor directives should be alone on the line
 
+	// Test Metadata on property using initialization with param list
+	// https://www.gamedev.net/forums/topic/717099-script-builder-addon-fails-on-variable-declaration/5464949/
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		CScriptBuilder builder;
+		builder.StartNewModule(engine, "test");
+		builder.AddSectionFromMemory("test", 
+			"class Bar {} \n"
+			"class Foo { Foo(const Bar& in b) {} } \n"
+			"[Metadata] \n"
+			"Foo Test(Bar()); \n"); 
+		r = builder.BuildModule();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asIScriptModule* mod = engine->GetModule("test");
+		int varIdx = mod->GetGlobalVarIndexByName("Test");
+		vector<string> metadata = builder.GetMetadataForVar(varIdx);
+		if (metadata[0] != "Metadata")
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test #include with international characters in file name
 	// Reported by Rémy Stivani
 	{
