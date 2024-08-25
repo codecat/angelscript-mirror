@@ -161,8 +161,8 @@ parameters, the first is for the indexing, and the second for the new value.
 <pre>
   class MyObj
   {
-    float get_opIndex(int idx) const       { return 0; }
-    void set_opIndex(int idx, float value) { }
+    float get_opIndex(int idx) const property { return 0; }
+    void set_opIndex(int idx, float value) property { }
   }
 </pre>
 
