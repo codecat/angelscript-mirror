@@ -2180,24 +2180,7 @@ void asCContext::CallInterfaceMethod(asCScriptFunction *func)
 	CallScriptFunction(realFunc);
 }
 
-
-#if !defined(HAVE_COMPUTED_GOTOS)
-
-#if defined(__GNUC__) && __GNUC__ >= 6
-#define HAVE_COMPUTED_GOTOS 1
-
-// Also in clang 5.0 but how do i test for that? Should use __has_extension, but I don't know the name of the labels as values extension
-#elif defined(__clang__) 
-#define HAVE_COMPUTED_GOTOS 1
-#endif
-#endif
-
-#if !defined(HAVE_COMPUTED_GOTOS) || HAVE_COMPUTED_GOTOS == 0
-#undef asUSE_COMPUTED_GOTOS
-#define asUSE_COMPUTED_GOTOS 0
-#endif
-
-#if asUSE_COMPUTED_GOTOS
+#if AS_USE_COMPUTED_GOTOS
 #define INSTRUCTION(x) case_##x
 #define NEXT_INSTRUCTION() goto *dispatch_table[*(asBYTE*)l_bc]
 #define BEGIN() NEXT_INSTRUCTION();
@@ -2209,7 +2192,7 @@ void asCContext::CallInterfaceMethod(asCScriptFunction *func)
 
 void asCContext::ExecuteNext()
 {
-#if asUSE_COMPUTED_GOTOS
+#if AS_USE_COMPUTED_GOTOS
 static const void *const dispatch_table[256] = {
 &&INSTRUCTION(asBC_PopPtr),		&&INSTRUCTION(asBC_PshGPtr),	&&INSTRUCTION(asBC_PshC4),		&&INSTRUCTION(asBC_PshV4),
 &&INSTRUCTION(asBC_PSF),		&&INSTRUCTION(asBC_SwapPtr),	&&INSTRUCTION(asBC_NOT),		&&INSTRUCTION(asBC_PshG4),
@@ -4876,7 +4859,7 @@ static const void *const dispatch_table[256] = {
 
 	// Don't let the optimizer optimize for size,
 	// since it requires extra conditions and jumps
-#if asUSE_COMPUTED_GOTOS == 0
+#if AS_USE_COMPUTED_GOTOS == 0
 	INSTRUCTION(201): l_bc = (asDWORD*)201; goto case_FAULT;
 	INSTRUCTION(202): l_bc = (asDWORD*)202; goto case_FAULT;
 	INSTRUCTION(203): l_bc = (asDWORD*)203; goto case_FAULT;

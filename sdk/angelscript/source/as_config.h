@@ -104,6 +104,9 @@
 // AS_USE_NAMESPACE
 // Adds the AngelScript namespace on the declarations.
 
+// AS_USE_COMPUTED_GOTOS
+// 1 = Uses computed gotos in the VM
+// 0 = Do not use computed gotos
 
 
 //
@@ -652,6 +655,17 @@
 	#define AS_SIZEOF_BOOL 1
 	#define STDCALL __attribute__((stdcall))
 	#define ASM_AT_N_T
+
+	// Enable use of computed gotos by default
+	#ifndef AS_USE_COMPUTED_GOTOS
+		#if defined(__GNUC__) && __GNUC__ >= 6
+			#define AS_USE_COMPUTED_GOTOS 1
+
+		// Also in clang 5.0 but how do i test for that? Should use __has_extension, but I don't know the name of the labels as values extension
+		#elif defined(__clang__) 
+			#define AS_USE_COMPUTED_GOTOS 1
+		#endif
+	#endif
 
 	// WII U
 	#if defined(__ghs__)
