@@ -268,18 +268,22 @@ bool Test()
 		r = engine->RegisterObjectMethod("lmao", "void do_smth<class T>(T param)", asFUNCTION(do_smth), asCALL_GENERIC);
 		if (r < 0)
 			TEST_FAILED;
-		// TODO: Retrieve the script function and check that it is a template function and that it has template sub types
+		// Retrieve the script function and check that it is a template function and that it has template sub types
 		asIScriptFunction* func = engine->GetFunctionById(r);
 		if (func == 0 || func->GetFuncType() != asFUNC_TEMPLATE)
+			TEST_FAILED;
+		if (string(func->GetDeclaration(true, true, true)) != "void lmao::do_smth<T>(T param)")
 			TEST_FAILED;
 
 		// Register a global template function
 		r = engine->RegisterGlobalFunction("T get<class T, class K>(K lmao)", asFUNCTION(get), asCALL_GENERIC, 0);
 		if (r < 0)
 			TEST_FAILED;
-		// TODO: Retrieve the script function and check that it is a template function and that it has template sub types
+		// Retrieve the script function and check that it is a template function and that it has template sub types
 		func = engine->GetFunctionById(r);
 		if (func == 0 || func->GetFuncType() != asFUNC_TEMPLATE)
+			TEST_FAILED;
+		if (string(func->GetDeclaration(true, true, true)) != "T get<T,K>(K lmao)")
 			TEST_FAILED;
 
 		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
