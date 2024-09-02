@@ -171,6 +171,7 @@ namespace Test_Addon_ContextMgr    { bool Test(); }
 namespace Test_Addon_ScriptFile    { bool Test(); }
 namespace Test_Addon_DateTime      { bool Test(); }
 namespace Test_Addon_StdString     { bool Test(); }
+namespace Test_Addon_ScriptSocket  { bool Test(); }
 
 #include "utils.h"
 
@@ -243,6 +244,7 @@ int allTests()
 	if( Test_Addon_Dictionary::Test()    ) goto failed; else PRINTF("-- Test_Addon_Dictionary passed\n");
 	if( Test_Addon_DateTime::Test()      ) goto failed; else PRINTF("-- Test_Addon_DateTime passed\n");
 	if( Test_Addon_StdString::Test()     ) goto failed; else PRINTF("-- Test_Addon_StdString passed\n");
+	if( Test_Addon_ScriptSocket::Test()  ) goto failed; else PRINTF("-- Test_Addon_ScriptSocket passed\n");
 
 	if( TestContext::Test()                     ) goto failed; else PRINTF("-- TestContext passed\n");
 	if( TestComposition::Test()                 ) goto failed; else PRINTF("-- TestComposition passed\n");

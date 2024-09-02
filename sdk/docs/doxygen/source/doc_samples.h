@@ -176,6 +176,8 @@ breakpoints, stepping through the code, examining variables, etc.
  - \ref doc_script_stdlib_system
  - Implementing a \#pragma callback
 
+\todo add socket
+
 \see \subpage doc_samples_asrun_manual
 
 

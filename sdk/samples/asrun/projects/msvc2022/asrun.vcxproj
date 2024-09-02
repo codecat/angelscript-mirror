@@ -173,6 +173,7 @@
     <ClCompile Include="..\..\..\..\add_on\debugger\debugger.cpp" />
     <ClCompile Include="..\..\..\..\add_on\scriptdictionary\scriptdictionary.cpp" />
     <ClCompile Include="..\..\..\..\add_on\scriptfile\scriptfilesystem.cpp" />
+    <ClCompile Include="..\..\..\..\add_on\scriptsocket\scriptsocket.cpp" />
     <ClCompile Include="..\..\source\main.cpp" />
     <ClCompile Include="..\..\..\..\add_on\scriptarray\scriptarray.cpp" />
     <ClCompile Include="..\..\..\..\add_on\scriptbuilder\scriptbuilder.cpp" />
@@ -186,6 +187,7 @@
     <ClInclude Include="..\..\..\..\add_on\datetime\datetime.h" />
     <ClInclude Include="..\..\..\..\add_on\scriptdictionary\scriptdictionary.h" />
     <ClInclude Include="..\..\..\..\add_on\scriptfile\scriptfilesystem.h" />
+    <ClInclude Include="..\..\..\..\add_on\scriptsocket\scriptsocket.h" />
     <ClInclude Include="..\..\..\..\angelscript\include\angelscript.h" />
     <ClInclude Include="..\..\..\..\add_on\debugger\debugger.h" />
     <ClInclude Include="..\..\..\..\add_on\scriptarray\scriptarray.h" />

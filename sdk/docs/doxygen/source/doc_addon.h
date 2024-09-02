@@ -30,6 +30,8 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
  - \subpage doc_addon_grid
  - \subpage doc_addon_datetime
  - \subpage doc_addon_helpers_try
+ 
+\todo add socket
 
 
 

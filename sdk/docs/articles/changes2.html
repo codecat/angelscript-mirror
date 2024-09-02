@@ -15,12 +15,13 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.38.0 WIP - 2024/08/25</h2>
+<h2>Version 2.38.0 WIP - 2024/09/02</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Use of computed gotos on gnuc and clang was not enabled by default (Thanks Asu)
+<li>Fixed crash in context if the engine was shutdown while a context was still suspended
 </ul>
 <li>Library
 <ul>
@@ -35,10 +36,12 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>It is now possible to instantiate registered template functions and call them (Thanks MindOfTony)
 </ul>
-<li>Add-ons
+<li>Add-ons &amp; Samples
 <ul>
 <li>Made parseFloat in std::string add-on threadsafe (Thanks gjl)
 <li>Fixed issue in script builder with metadata for variable declarations using direct object initialization (Thanks Miss)
+<li>Implemented a script socket add-on
+<li>asrun can now use sockets to setup a simple server, or connect to remote sockets
 </ul>
 <li>project
 <ul>

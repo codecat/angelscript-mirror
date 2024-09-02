@@ -5433,6 +5433,17 @@ bool asCContext::CleanStackFrame(bool catchException)
 	bool exceptionCaught = false;
 	asSTryCatchInfo *tryCatchInfo = 0;
 
+	if (m_currentFunction == 0)
+		return false;
+
+	if (m_currentFunction->funcType == asFUNC_SCRIPT && m_currentFunction->scriptData == 0)
+	{
+		asCString msg;
+		msg.Format(TXT_FUNC_s_RELEASED_BEFORE_CLEANUP, m_currentFunction->name.AddressOf());
+		m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, msg.AddressOf());
+		return false;
+	}
+
 	// Clean object variables on the stack
 	// If the stack memory is not allocated or the program pointer
 	// is not set, then there is nothing to clean up on the stack frame
@@ -5444,7 +5455,6 @@ bool asCContext::CleanStackFrame(bool catchException)
 
 		// Check if this function will catch the exception
 		// Try blocks can be nested, so use the innermost block
-		asASSERT(m_currentFunction->scriptData);
 		if (catchException && m_currentFunction->scriptData)
 		{
 			asUINT currPos = asUINT(m_regs.programPointer - m_currentFunction->scriptData->byteCode.AddressOf());

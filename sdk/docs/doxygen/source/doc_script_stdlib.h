@@ -19,6 +19,7 @@ manual for information on the API it exposes.
  - \subpage doc_script_stdlib_filesystem
  - \subpage doc_script_stdlib_system
  
+\todo Add socket
 
 
 
