@@ -59,7 +59,7 @@ const char *script =
 "#include \"dont_include\" \n"
 "*/ \n"
 // namespaces can also contain entities with metadata
-"namespace NS { \n"
+"namespace NS::nested { \n"
 " [func] void func() {} \n"
 " [class] class Class {} \n"
 "} \n"
@@ -267,7 +267,7 @@ bool Test()
 		if (metadata[0] != " test['hello'] ")
 			TEST_FAILED;
 
-		engine->GetModule(0)->SetDefaultNamespace("NS");
+		engine->GetModule(0)->SetDefaultNamespace("NS::nested");
 		func = engine->GetModule(0)->GetFunctionByName("func");
 		metadata = builder.GetMetadataForFunc(func);
 		if (metadata[0] != "func")
@@ -279,7 +279,7 @@ bool Test()
 		if (metadata[0] != " myclass ")
 			TEST_FAILED;
 
-		typeId = engine->GetModule(0)->GetTypeIdByDecl("NS::Class");
+		typeId = engine->GetModule(0)->GetTypeIdByDecl("NS::nested::Class");
 		metadata = builder.GetMetadataForType(typeId);
 		if (metadata[0] != "class")
 			TEST_FAILED;

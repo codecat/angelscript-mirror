@@ -395,16 +395,22 @@ int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length
 		// Check if namespace so the metadata for members can be gathered
 		if( token == "namespace" )
 		{
-			// Get the identifier after "namespace"
+			// Get the scope after "namespace". It can be composed of multiple nested namespaces, e.g. A::B::C
 			do
 			{
-				pos += len;
-				t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
-			} while(t == asTC_COMMENT || t == asTC_WHITESPACE);
+				do
+				{
+					pos += len;
+					t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+				} while (t == asTC_COMMENT || t == asTC_WHITESPACE);
 
-			if( currentNamespace != "" )
-				currentNamespace += "::";
-			currentNamespace += modifiedScript.substr(pos,len);
+				if (t == asTC_IDENTIFIER)
+				{
+					if (currentNamespace != "")
+						currentNamespace += "::";
+					currentNamespace += modifiedScript.substr(pos, len);
+				}
+			} while (t == asTC_IDENTIFIER || (t == asTC_KEYWORD && modifiedScript.substr(pos, len) == "::"));
 
 			// Search until first { is encountered
 			while( pos < modifiedScript.length() )
