@@ -96,17 +96,25 @@ int CScriptSocket::Listen(asWORD port)
 	return 0;
 }
 
-CScriptSocket* CScriptSocket::Accept()
+CScriptSocket* CScriptSocket::Accept(asINT64 timeoutMicrosec)
 {
 	// Cannot accept a client on an ordinary socket or if the socket is not active
 	if (!m_isListening || m_socket == -1)
 		return 0;
 
-	// TODO: Should optionally allow setting a timeout for how long to wait
 	// First determine if there is anything to receive so that doesn't block
 	fd_set read = { 1, (SOCKET)m_socket };
-	TIMEVAL timeout = { 0,0 }; // Don't wait
-	int r = select(0, &read, 0, 0, &timeout);
+	TIMEVAL timeout = { 0, 0 }; // Don't wait
+	if (timeoutMicrosec > 0)
+	{
+		// Limit the wait time to the highest value that TIMEVAL can represent,
+		// i.e. 2^31-1 seconds + 999,999 microseconds (approximately 68 years)
+		const asINT64 maxTimeout = asINT64(0x7FFFFFFF) * 1000000 + 999999;
+		if (timeoutMicrosec > maxTimeout) timeoutMicrosec = maxTimeout;
+		timeout.tv_sec = asINT32(timeoutMicrosec / 1000000) & 0x7FFFFFFF;
+		timeout.tv_usec = asINT32(timeoutMicrosec - asINT64(timeout.tv_sec) * 1000000);
+	}
+	int r = select(0, &read, 0, 0, timeoutMicrosec < 0 ? 0 : &timeout);
 	if (r == 0)
 		return 0;
 
@@ -245,7 +253,7 @@ int RegisterScriptSocket(asIScriptEngine* engine)
 
 	r = engine->RegisterObjectMethod("socket", "int listen(uint16 port)", asMETHOD(CScriptSocket, Listen), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("socket", "int close()", asMETHOD(CScriptSocket, Close), asCALL_THISCALL); assert(r >= 0);
-	r = engine->RegisterObjectMethod("socket", "socket @accept()", asMETHOD(CScriptSocket, Accept), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectMethod("socket", "socket @accept(int64 timeout = 0)", asMETHOD(CScriptSocket, Accept), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("socket", "int connect(uint ipv4address, uint16 port)", asMETHOD(CScriptSocket, Connect), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("socket", "int send(const string &in data)", asMETHOD(CScriptSocket, Send), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("socket", "string receive()", asMETHOD(CScriptSocket, Receive), asCALL_THISCALL); assert(r >= 0);
