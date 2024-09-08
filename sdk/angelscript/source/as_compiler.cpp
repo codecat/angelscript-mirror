@@ -3525,9 +3525,8 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 							// Make sure the right hand expression is treated as a handle
 							if (!expr->type.isExplicitHandle && !expr->type.IsNullConstant() )
 							{
-								// TODO: Clean-up: This code is from CompileExpressionPreOp. Create a reusable function
 								// Convert the expression to a handle
-								if (!expr->type.dataType.IsObjectHandle() && expr->type.dataType.GetTypeInfo() && !(expr->type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE))
+								if (!expr->type.dataType.IsObjectHandle() && expr->type.dataType.SupportHandles() && expr->type.dataType.GetTypeInfo() && !(expr->type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE))
 								{
 									asCDataType to = expr->type.dataType;
 									to.MakeHandle(true);

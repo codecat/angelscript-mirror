@@ -4,6 +4,7 @@
 #include "../../../add_on/scriptany/scriptany.h"
 #include "../../../add_on/scriptmath/scriptmath.h"
 #include "../../../add_on/scriptmath/scriptmathcomplex.h"
+#include "../../../add_on/scripthandle/scripthandle.h"
 #include <iostream>
 
 using namespace std;
@@ -179,6 +180,34 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
 	asIScriptModule *mod;
+
+	// Test passing value type to function argument that is expecting an ashandle type
+	// https://www.gamedev.net/forums/topic/717451-failed-assertion-when-assigning-string-to-ref/5466156/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptHandle(engine);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() { ref@ a = 'a'; } \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != 
+			"test (1, 1) : Info    : Compiling void main()\n"
+			"test (1, 24) : Error   : Object handle is not supported for this type\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test array of handles with default syntax
 	// https://www.gamedev.net/forums/topic/715669-4-assertion-errors-with-nested-lists-of-handles/
