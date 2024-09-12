@@ -421,6 +421,20 @@ void release_func(int* obj)
 	delete obj;
 }
 
+struct EnemyTypeDetails {
+	//...blah...
+	int a;
+};
+
+class Enemy {
+public:
+	Enemy(const EnemyTypeDetails& type) : typeRef(type), typePtr(&type) {  }
+
+	int a;
+	const EnemyTypeDetails& typeRef; //What I want, but can't register
+	const EnemyTypeDetails* typePtr;
+} e(EnemyTypeDetails());
+
 bool Test()
 {
 	bool fail = TestHelper();
@@ -431,6 +445,35 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
  	asIScriptEngine *engine;
+
+	// Test asOFFSET for an object member property as reference
+	// https://www.gamedev.net/forums/topic/717443-registerobjectmethod-crash-registering-a-const-reference/5466144/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		r = engine->RegisterObjectType("EnemyTypeDetails", sizeof(EnemyTypeDetails), asOBJ_VALUE | asOBJ_POD); assert(r >= 0);
+		r = engine->RegisterObjectType("Enemy", 0, asOBJ_REF | asOBJ_NOCOUNT); assert(r >= 0);
+	
+		// asOFFSET cannot be used to determine the offset of the member. This is because when the
+		// address of the member is taken C++ actually returns the address that it is referring to
+		// Standard offsetof and __builtin_offsetof also do not work
+		//int off1 = offsetof(Enemy, typeRef);
+		//int off2 = __builtin_offsetof(Enemy, typeRef);
+		r = engine->RegisterObjectProperty("Enemy", "const EnemyTypeDetails &typeRef", asOFFSET(Enemy, typeRef));
+		if (r != asINVALID_ARG)
+			TEST_FAILED;
+		r = engine->RegisterObjectProperty("Enemy", "const EnemyTypeDetails &typePtr", asOFFSET(Enemy, typePtr)); assert(r >= 0);
+
+		if (bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectProperty' with 'Enemy' and 'const EnemyTypeDetails &typeRef' (Code: asINVALID_ARG, -5)\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test factory functions with auxiliary pointers using asOBJ_CDECL_OBJLAST and asOBJ_CDECL_OBJFIRST
 	// https://www.gamedev.net/forums/topic/711801-why-are-the-ascall_cdecl_objlastfirst-calling-conventions-only-supported-in-methods/5445516/

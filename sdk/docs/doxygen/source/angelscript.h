@@ -702,6 +702,7 @@ typedef void (*asJITFunction)(asSVMRegisters* registers, asPWORD jitArg);
 // This macro does basically the same thing as offsetof defined in stddef.h, but
 // GNUC should not complain about the usage as I'm not using 0 as the base pointer.
 //! \brief Returns the offset of an attribute in a struct
+//! \todo Explain that it doesn't work for members that are declared as references. For these the offset must be manually calculated. Reference Register object properties with a more detailed explanation on how to deal with this
 #define asOFFSET(s,m) ((int)(size_t)(&reinterpret_cast<s*>(100000)->m)-100000)
 
 //! \brief Returns an asSFuncPtr representing the function specified by the name

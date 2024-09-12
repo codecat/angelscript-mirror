@@ -622,6 +622,8 @@ r = engine->RegisterObjectProperty("mytype", "othertype &a", asOFFSET(MyStruct,a
 Of course, the application must make sure the pointer is valid during the whole time 
 that it may be accessed from the script.
 
+\todo describe limitation with asOFFSET and members declared as references. suggest manually calculate offset relative to adjacent member, but alert on byte alignment
+
 \section doc_reg_objprop_composite Composite members
 
 If the application class that is being registered uses composition, then it is possible to register the properties

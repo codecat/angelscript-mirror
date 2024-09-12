@@ -2,6 +2,8 @@
 
 \page doc_adv_template Template types
 
+\todo reference \ref doc_callbacks and show how to register child template func def and example how to use it.
+
 A template type in AngelScript works similarly to how templates work in C++. The scripts 
 will be able to instantiate different forms of the template type by specifying which subtype 
 that should be used. The methods for the instance will then be adapted to this subtype, so

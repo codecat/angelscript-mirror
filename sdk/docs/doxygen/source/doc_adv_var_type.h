@@ -2,7 +2,7 @@
 
 \page doc_adv_var_type The variable parameter type
 
-
+\todo reference \ref doc_typeid
 
 The application can register functions that take a reference to a variable
 type, which means that the function can receive a reference to a variable of
