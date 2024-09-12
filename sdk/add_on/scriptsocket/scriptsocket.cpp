@@ -96,14 +96,13 @@ int CScriptSocket::Listen(asWORD port)
 	return 0;
 }
 
-CScriptSocket* CScriptSocket::Accept(asINT64 timeoutMicrosec)
+// Internal
+// Returns 1 if there is something to read on the socket
+// Returns 0 if there is nothing to read
+// Returns a negative value if there is an error (see return codes for select())
+int CScriptSocket::Select(asINT64 timeoutMicrosec)
 {
-	// Cannot accept a client on an ordinary socket or if the socket is not active
-	if (!m_isListening || m_socket == -1)
-		return 0;
-
-	// First determine if there is anything to receive so that doesn't block
-	fd_set read = { 1, (SOCKET)m_socket };
+	fd_set read = { 1, {(SOCKET)m_socket} };
 	TIMEVAL timeout = { 0, 0 }; // Don't wait
 	if (timeoutMicrosec > 0)
 	{
@@ -114,8 +113,20 @@ CScriptSocket* CScriptSocket::Accept(asINT64 timeoutMicrosec)
 		timeout.tv_sec = asINT32(timeoutMicrosec / 1000000) & 0x7FFFFFFF;
 		timeout.tv_usec = asINT32(timeoutMicrosec - asINT64(timeout.tv_sec) * 1000000);
 	}
+
 	int r = select(0, &read, 0, 0, timeoutMicrosec < 0 ? 0 : &timeout);
-	if (r == 0)
+	return r;
+}
+
+CScriptSocket* CScriptSocket::Accept(asINT64 timeoutMicrosec)
+{
+	// Cannot accept a client on an ordinary socket or if the socket is not active
+	if (!m_isListening || m_socket == -1)
+		return 0;
+
+	// First determine if there is anything to receive so that doesn't block
+	int r = Select(timeoutMicrosec);
+	if (r <= 0)
 		return 0;
 
 	// TODO: need to be able to check to what ip address and port the socket is connected it
@@ -190,7 +201,7 @@ int CScriptSocket::Send(const std::string& data)
 	return r;
 }
 
-std::string CScriptSocket::Receive()
+std::string CScriptSocket::Receive(asINT64 timeoutMicrosec)
 {
 	// Cannot receive on a listener socket or if the socket is not connected
 	if (m_isListening || m_socket == -1)
@@ -198,15 +209,12 @@ std::string CScriptSocket::Receive()
 
 	// TODO: Need to be able to set the size of the internal buffer
 	
-	// TODO: Should optionally allow setting a timeout for how long to wait
 	// First determine if there is anything to receive so that doesn't block
-	char buf[1024] = {};
-	fd_set read = { 1, (SOCKET)m_socket };
-	TIMEVAL timeout = { 0,0 }; // Don't wait
-	int r = select(0, &read, 0, 0, &timeout);
-	if (r == 0)
+	int r = Select(timeoutMicrosec);
+	if (r <= 0)
 		return "";
 
+	char buf[1024] = {};
 	std::string msg;
 	for (;;)
 	{
@@ -256,7 +264,7 @@ int RegisterScriptSocket(asIScriptEngine* engine)
 	r = engine->RegisterObjectMethod("socket", "socket @accept(int64 timeout = 0)", asMETHOD(CScriptSocket, Accept), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("socket", "int connect(uint ipv4address, uint16 port)", asMETHOD(CScriptSocket, Connect), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("socket", "int send(const string &in data)", asMETHOD(CScriptSocket, Send), asCALL_THISCALL); assert(r >= 0);
-	r = engine->RegisterObjectMethod("socket", "string receive()", asMETHOD(CScriptSocket, Receive), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectMethod("socket", "string receive(int64 timeout = 0)", asMETHOD(CScriptSocket, Receive), asCALL_THISCALL); assert(r >= 0);
 
 	return 0;
 }
