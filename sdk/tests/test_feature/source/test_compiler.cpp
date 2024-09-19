@@ -3502,6 +3502,7 @@ bool Test()
 		engine->Release();
 	}
 
+	// The compiler should be able to call a base class' constructor automatically if all parameters have default values
 	// Problem reported by ekimr
 	{
 		const char *script =

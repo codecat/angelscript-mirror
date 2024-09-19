@@ -188,6 +188,7 @@ enum asEEngineProp
 	asEP_JIT_INTERFACE_VERSION              = 35,
 	asEP_ALWAYS_IMPL_DEFAULT_COPY           = 36,
 	asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT = 37,
+	asEP_MEMBER_INIT_MODE                   = 38,
 
 	asEP_LAST_PROPERTY
 };

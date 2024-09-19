@@ -522,6 +522,7 @@ public:
 		asUINT jitInterfaceVersion;
 		asUINT alwaysImplDefaultCopy;
 		asUINT alwaysImplDefaultCopyConstruct;
+		asUINT memberInitMode;
 	} ep;
 
 	// Callbacks

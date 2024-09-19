@@ -129,6 +129,7 @@ void asCCompiler::Reset(asCBuilder *in_builder, asCScriptCode *in_script, asCScr
 	numLambdas = 0;
 
 	byteCode.ClearAll();
+	m_initializedProperties.SetLength(0);
 }
 
 int asCCompiler::CompileDefaultCopyConstructor(asCBuilder* in_builder, asCScriptCode* in_script, asCScriptNode* in_node, asCScriptFunction* in_outFunc, sClassDeclaration* in_classDecl)
@@ -646,6 +647,10 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *bc, bool onlyDefaults
 	for( asUINT n = 0; n < outFunc->objectType->properties.GetLength(); n++ )
 	{
 		asCObjectProperty *prop = outFunc->objectType->properties[n];
+		
+		// Don't compile additional member initialization if it has already been explicitly initialized in the body
+		if (engine->ep.memberInitMode == 1 && m_initializedProperties.IndexOf(prop) >= 0)
+			continue;
 
 		// Check if the property has an initialization expression
 		asCParser parser(builder);
@@ -795,16 +800,44 @@ int asCCompiler::CompileFunction(asCBuilder *in_builder, asCScriptCode *in_scrip
 	// Insert a JitEntry at the start of the function for JIT compilers
 	byteCode.InstrPTR(asBC_JitEntry, 0);
 
-	if( outFunc->objectType )
+	if(m_isConstructor)
 	{
-		if( m_isConstructor )
+		// From 2.38.0 it was implemented the ability to explicitly initialize the members within the body, and with this it
+		// was changed so that any member not explicitly initialized will be automatically initialized in the beginning even if
+		// the base class' constructor is explicitly called in the body.
+		if (engine->ep.memberInitMode == 1)
 		{
-			if( outFunc->objectType->derivedFrom )
+			// Initialize members without explicit expression first
+			CompileMemberInitialization(&byteCode, true);
+
+			// Only call the base class' constructor here unless explicitly called in the body
+			if (!m_isConstructorCalled && outFunc->objectType->derivedFrom)
+			{
+				if (outFunc->objectType->derivedFrom->beh.construct)
+				{
+					// Call base class' constructor
+					asCByteCode tmpBC(engine);
+					tmpBC.InstrSHORT(asBC_PSF, 0);
+					tmpBC.Instr(asBC_RDSPtr);
+					tmpBC.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
+					tmpBC.OptimizeLocally(tempVariableOffsets);
+					byteCode.AddCode(&tmpBC);
+				}
+				else
+					Error(TXT_BASE_DOESNT_HAVE_DEF_CONSTR, blockBegin);
+			}
+
+			// Add the initialization of the members with explicit expressions
+			CompileMemberInitialization(&byteCode, false);
+		}
+		else
+		{
+			if (outFunc->objectType->derivedFrom)
 			{
 				// Call the base class' default constructor unless called manually in the code
-				if( !m_isConstructorCalled )
+				if (!m_isConstructorCalled)
 				{
-					if( outFunc->objectType->derivedFrom->beh.construct )
+					if (outFunc->objectType->derivedFrom->beh.construct)
 					{
 						// Initialize members without explicit expression first
 						CompileMemberInitialization(&byteCode, true);
@@ -3248,7 +3281,6 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 		// Compile the expression
 		asCExprContext newExpr(engine);
 		asCExprContext* expr;
-		int r = 0;
 
 		if( preCompiled )
 		{
@@ -3257,7 +3289,9 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 		else
 		{
 			expr = &newExpr;
-			r = CompileAssignment(node, expr);
+			int r = CompileAssignment(node, expr);
+			if (r < 0)
+				return false;
 		}
 
 		// handles initialized with null doesn't need any bytecode
@@ -3265,338 +3299,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 		if (type.IsObjectHandle() && expr->type.IsNullConstant() && expr->bc.IsSimpleExpression() )
 			return false;
 
-		// Look for appropriate constructor
-		asCArray<int> funcs;
-		asCArray<asCExprContext *> args;
-
-		// Handles must use the handle assignment operation.
-		// Types that are ASHANDLE must not allow the use of the constructor in this case,
-		// because it is ambiguous whether a value assignment or handle assignment will be done.
-		// Only do this if the expression is of the same type, as the expression is an assignment
-		// and an initialization constructor may not have the same meaning.
-		// TODO: Should allow initialization constructor if it is declared as allowed for implicit conversions.
-		if( !type.IsObjectHandle() && !expr->type.isExplicitHandle &&
-			!(type.GetTypeInfo() && (type.GetTypeInfo()->GetFlags() & asOBJ_ASHANDLE)) &&
-			type.IsEqualExceptRefAndConst(expr->type.dataType) )
-		{
-			asSTypeBehaviour *beh = type.GetBehaviour();
-			if( beh )
-			{
-				if( type.GetTypeInfo()->flags & asOBJ_REF )
-					funcs = beh->factories;
-				else
-					funcs = beh->constructors;
-			}
-
-			asCString str = type.Format(outFunc->nameSpace);
-			args.PushLast(expr);
-			MatchFunctions(funcs, args, node, str.AddressOf(), 0, 0, 0, true);
-
-			// Make sure the argument is of the right type (and not just compatible with the expression)
-			if (funcs.GetLength() == 1)
-			{
-				asCScriptFunction *f = engine->scriptFunctions[funcs[0]];
-				if (!f->parameterTypes[0].IsEqualExceptRefAndConst(expr->type.dataType))
-					funcs.PopLast();
-			}
-		}
-
-		if( funcs.GetLength() == 1 )
-		{
-			// Use the constructor
-
-			// TODO: clean-up: A large part of this is identical to the initalization with argList above
-
-			// Add the default values for arguments not explicitly supplied
-			r = CompileDefaultAndNamedArgs(node, args, funcs[0], CastToObjectType(type.GetTypeInfo()));
-
-			if( r == asSUCCESS )
-			{
-				asCExprContext ctx(engine);
-				if( type.GetTypeInfo() && (type.GetTypeInfo()->flags & asOBJ_REF) )
-				{
-					if( isVarGlobOrMem == 0 )
-						MakeFunctionCall(&ctx, funcs[0], 0, args, node, true, offset);
-					else
-					{
-						MakeFunctionCall(&ctx, funcs[0], 0, args, node);
-						ctx.bc.Instr(asBC_RDSPtr);
-						if( isVarGlobOrMem == 1 )
-						{
-							// Store the returned handle in the global variable
-							ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
-						}
-						else
-						{
-							// Store the returned handle in the member
-							ctx.bc.InstrSHORT(asBC_PSF, 0);
-							ctx.bc.Instr(asBC_RDSPtr);
-							ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
-						}
-						if( type.IsFuncdef() )
-							ctx.bc.InstrPTR(asBC_REFCPY, &engine->functionBehaviours);
-						else
-							ctx.bc.InstrPTR(asBC_REFCPY, type.GetTypeInfo());
-						ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
-					}
-
-					// Pop the reference left by the function call
-					ctx.bc.Instr(asBC_PopPtr);
-				}
-				else
-				{
-					bool onHeap = false;
-
-					if( isVarGlobOrMem == 0 )
-					{
-						// When the object is allocated on the heap, the address where the
-						// reference will be stored must be pushed on the stack before the
-						// arguments. This reference on the stack is safe, even if the script
-						// is suspended during the evaluation of the arguments.
-						onHeap = IsVariableOnHeap(offset);
-						if( onHeap )
-							ctx.bc.InstrSHORT(asBC_PSF, (short)offset);
-					}
-					else if( isVarGlobOrMem == 1 )
-					{
-						// Push the address of the location where the variable will be stored on the stack.
-						// This reference is safe, because the addresses of the global variables cannot change.
-						onHeap = true;
-						ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
-					}
-					else
-					{
-						// Value types may be allocated inline if they are POD types
-						onHeap = !(type.IsObject() || type.IsFuncdef()) || type.IsReference() || (type.GetTypeInfo()->flags & asOBJ_REF);
-						if( onHeap )
-						{
-							ctx.bc.InstrSHORT(asBC_PSF, 0);
-							ctx.bc.Instr(asBC_RDSPtr);
-							ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
-						}
-					}
-
-					PrepareFunctionCall(funcs[0], &ctx.bc, args);
-					MoveArgsToStack(funcs[0], &ctx.bc, args, false);
-
-					// When the object is allocated on the stack, the address to the
-					// object is pushed on the stack after the arguments as the object pointer
-					if( !onHeap )
-					{
-						if( isVarGlobOrMem == 2 )
-						{
-							ctx.bc.InstrSHORT(asBC_PSF, 0);
-							ctx.bc.Instr(asBC_RDSPtr);
-							ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
-						}
-						else
-						{
-							ctx.bc.InstrSHORT(asBC_PSF, (short)offset);
-						}
-					}
-
-					PerformFunctionCall(funcs[0], &ctx, onHeap, &args, CastToObjectType(type.GetTypeInfo()));
-
-					if( isVarGlobOrMem == 0 )
-					{
-						// Mark the object in the local variable as initialized
-						ctx.bc.ObjInfo(offset, asOBJ_INIT);
-					}
-				}
-				ProcessDeferredParams(&ctx);
-				bc->AddCode(&ctx.bc);
-			}
-		}
-		else
-		{
-			// Call the default constructor, then call the assignment operator
-			asCExprContext ctx(engine);
-
-			// Call the default constructor here
-			if( isVarGlobOrMem == asVGM_VARIABLE )
-				CallDefaultConstructor(type, offset, IsVariableOnHeap(offset), &ctx.bc, errNode);
-			else if( isVarGlobOrMem == asVGM_GLOBAL )
-				CallDefaultConstructor(type, offset, true, &ctx.bc, errNode, isVarGlobOrMem);
-			else if( isVarGlobOrMem == asVGM_MEMBER )
-				CallDefaultConstructor(type, offset, type.IsReference(), &ctx.bc, errNode, isVarGlobOrMem);
-
-			if( r >= 0 )
-			{
-				if( type.IsPrimitive() )
-				{
-					if( type.IsReadOnly() && expr->type.isConstant )
-					{
-						ImplicitConversion(expr, type, node, asIC_IMPLICIT_CONV);
-
-						// Tell caller that the expression is a constant so it can mark the variable as pure constant
-						isConstantExpression = true;
-						*constantValue = expr->type.GetConstantData();
-					}
-
-					asCExprContext lctx(engine);
-					if( isVarGlobOrMem == 0 )
-						lctx.type.SetVariable(type, offset, false);
-					else if( isVarGlobOrMem == 1 )
-					{
-						lctx.type.Set(type);
-						lctx.type.dataType.MakeReference(true);
-
-						// If it is an enum value, i.e. offset is negative, that is being compiled then
-						// we skip this as the bytecode won't be used anyway, only the constant value
-						if( offset >= 0 )
-							lctx.bc.InstrPTR(asBC_LDG, engine->globalProperties[offset]->GetAddressOfValue());
-					}
-					else
-					{
-						asASSERT( isVarGlobOrMem == 2 );
-						lctx.type.Set(type);
-						lctx.type.dataType.MakeReference(true);
-
-						// Load the reference of the primitive member into the register
-						lctx.bc.InstrSHORT(asBC_PSF, 0);
-						lctx.bc.Instr(asBC_RDSPtr);
-						lctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
-						lctx.bc.Instr(asBC_PopRPtr);
-					}
-					lctx.type.dataType.MakeReadOnly(false);
-					lctx.type.isLValue = true;
-
-					DoAssignment(&ctx, &lctx, expr, node, node, ttAssignment, node);
-					ProcessDeferredParams(&ctx);
-				}
-				else
-				{
-					// TODO: runtime optimize: Here we should look for the best matching constructor, instead of
-					//                         just the copy constructor. Only if no appropriate constructor is
-					//                         available should the assignment operator be used.
-
-					asCExprContext lexpr(engine);
-					lexpr.type.Set(type);
-					if( isVarGlobOrMem == 0 )
-						lexpr.type.dataType.MakeReference(IsVariableOnHeap(offset));
-					else if( isVarGlobOrMem == 1 )
-						lexpr.type.dataType.MakeReference(true);
-					else if( isVarGlobOrMem == 2 )
-					{
-						if( !lexpr.type.dataType.IsObject() || lexpr.type.dataType.IsFuncdef() || (lexpr.type.dataType.GetTypeInfo()->flags & asOBJ_REF) )
-							lexpr.type.dataType.MakeReference(true);
-					}
-
-					// Allow initialization of constant variables
-					lexpr.type.dataType.MakeReadOnly(false);
-
-					if( type.IsObjectHandle() )
-						lexpr.type.isExplicitHandle = true;
-
-					if( isVarGlobOrMem == 0 )
-					{
-						lexpr.bc.InstrSHORT(asBC_PSF, (short)offset);
-						lexpr.type.stackOffset = (short)offset;
-						lexpr.type.isVariable = true;
-					}
-					else if( isVarGlobOrMem == 1 )
-					{
-						lexpr.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
-					}
-					else
-					{
-						lexpr.bc.InstrSHORT(asBC_PSF, 0);
-						lexpr.bc.Instr(asBC_RDSPtr);
-						lexpr.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
-						lexpr.type.stackOffset = -1;
-					}
-					lexpr.type.isLValue = true;
-
-
-					// If left expression resolves into a registered type
-					// check if the assignment operator is overloaded, and check
-					// the type of the right hand expression. If none is found
-					// the default action is a direct copy if it is the same type
-					// and a simple assignment.
-					bool assigned = false;
-					// Even though an ASHANDLE can be an explicit handle the overloaded operator needs to be called
-					if( (lexpr.type.dataType.IsObject() || lexpr.type.dataType.IsFuncdef()) && (!lexpr.type.isExplicitHandle || (lexpr.type.dataType.GetTypeInfo() && (lexpr.type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE))) )
-					{
-						bool useHndlAssign = false;
-						if (lexpr.type.dataType.IsHandleToAsHandleType())
-						{
-							useHndlAssign = true;
-
-							// Make sure the right hand expression is treated as a handle
-							if (!expr->type.isExplicitHandle && !expr->type.IsNullConstant() )
-							{
-								// Convert the expression to a handle
-								if (!expr->type.dataType.IsObjectHandle() && expr->type.dataType.SupportHandles() && expr->type.dataType.GetTypeInfo() && !(expr->type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE))
-								{
-									asCDataType to = expr->type.dataType;
-									to.MakeHandle(true);
-									to.MakeReference(true);
-									to.MakeHandleToConst(expr->type.dataType.IsReadOnly());
-									ImplicitConversion(expr, to, node, asIC_IMPLICIT_CONV, true, false);
-
-									asASSERT(expr->type.dataType.IsObjectHandle());
-								}
-								else if (expr->type.dataType.GetTypeInfo() && expr->type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE)
-								{
-									// For the ASHANDLE type we'll simply set the expression as a handle
-									expr->type.dataType.MakeHandle(true);
-								}
-
-								if( !expr->type.dataType.IsObjectHandle() && !expr->type.dataType.SupportHandles())
-								{
-									Error(TXT_OBJECT_HANDLE_NOT_SUPPORTED, node);
-								}
-								expr->type.isExplicitHandle = true;
-							}
-						}
-						assigned = CompileOverloadedDualOperator(node, &lexpr, expr, false, &ctx, useHndlAssign);
-						if( assigned )
-						{
-							// Pop the resulting value
-							if( !ctx.type.dataType.IsPrimitive() )
-								ctx.bc.Instr(asBC_PopPtr);
-
-							// Release the argument
-							ProcessDeferredParams(&ctx);
-
-							// Release temporary variable that may be allocated by the overloaded operator
-							ReleaseTemporaryVariable(ctx.type, &ctx.bc);
-						}
-					}
-
-					if( !assigned )
-					{
-						PrepareForAssignment(&lexpr.type.dataType, expr, node, false);
-
-						// If the expression is constant and the variable also is constant
-						// then mark the variable as pure constant. This will allow the compiler
-						// to optimize expressions with this variable.
-						if( type.IsReadOnly() && expr->type.isConstant )
-						{
-							isConstantExpression = true;
-							*constantValue = expr->type.GetConstantQW();
-						}
-
-						// Add expression code to bytecode
-						MergeExprBytecode(&ctx, expr);
-
-						// Add byte code for storing value of expression in variable
-						ctx.bc.AddCode(&lexpr.bc);
-
-						PerformAssignment(&lexpr.type, &expr->type, &ctx.bc, errNode);
-
-						// Release temporary variables used by expression
-						ReleaseTemporaryVariable(expr->type, &ctx.bc);
-
-						ctx.bc.Instr(asBC_PopPtr);
-
-						ProcessDeferredParams(&ctx);
-					}
-				}
-			}
-
-			bc->AddCode(&ctx.bc);
-		}
+		return CompileInitializationWithAssignment(bc, type, errNode, offset, constantValue, isVarGlobOrMem, node, expr);
 	}
 	else
 	{
@@ -3614,6 +3317,367 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 			else
 				CallDefaultConstructor(type, offset, false, bc, errNode, isVarGlobOrMem);
 		}
+	}
+
+	return isConstantExpression;
+}
+
+bool asCCompiler::CompileInitializationWithAssignment(asCByteCode* bc, const asCDataType& type, asCScriptNode* errNode, int offset, asQWORD* constantValue, EVarGlobOrMem isVarGlobOrMem, asCScriptNode* rnode, asCExprContext* rexpr)
+{
+	bool isConstantExpression = false;
+
+	// Look for appropriate constructor
+	asCArray<int> funcs;
+	asCArray<asCExprContext*> args;
+
+	// If the rexpr is already a temporary value of the same type, then it should be used directly without making a copy
+	// TODO: This can probably be done for local variables as well, maybe even for globals
+	// TODO: For value types, stored inline the rexpr would have to be compiled already to initialize the value so the following cannot be used
+	if (isVarGlobOrMem == asVGM_MEMBER && rexpr->type.isTemporary && type.IsEqualExceptRefAndConst(rexpr->type.dataType) && type.IsObject() && (type.IsObjectHandle() || type.SupportHandles()))
+	{
+		// Add the rexpr to the bytecode
+		Dereference(rexpr, true);
+		bc->AddCode(&rexpr->bc);
+
+		// Store the returned handle in the member
+		bc->InstrSHORT(asBC_PSF, 0);
+		bc->Instr(asBC_RDSPtr);
+		bc->InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
+
+		if (type.IsFuncdef())
+			bc->InstrPTR(asBC_REFCPY, &engine->functionBehaviours);
+		else
+			bc->InstrPTR(asBC_REFCPY, type.GetTypeInfo());
+		ReleaseTemporaryVariable(rexpr->type.stackOffset, bc);
+
+		bc->Instr(asBC_PopPtr);
+
+		return false;
+	}
+
+	// Handles must use the handle assignment operation.
+	// Types that are ASHANDLE must not allow the use of the constructor in this case,
+	// because it is ambiguous whether a value assignment or handle assignment will be done.
+	// Only do this if the expression is of the same type, as the expression is an assignment
+	// and an initialization constructor may not have the same meaning.
+	// TODO: Should allow initialization constructor if it is declared as allowed for implicit conversions.
+	if (!type.IsObjectHandle() && !rexpr->type.isExplicitHandle &&
+		!(type.GetTypeInfo() && (type.GetTypeInfo()->GetFlags() & asOBJ_ASHANDLE)) &&
+		type.IsEqualExceptRefAndConst(rexpr->type.dataType))
+	{
+		asSTypeBehaviour* beh = type.GetBehaviour();
+		if (beh)
+		{
+			if (type.GetTypeInfo()->flags & asOBJ_REF)
+				funcs = beh->factories;
+			else
+				funcs = beh->constructors;
+		}
+
+		asCString str = type.Format(outFunc->nameSpace);
+		args.PushLast(rexpr);
+		MatchFunctions(funcs, args, rnode, str.AddressOf(), 0, 0, 0, true);
+
+		// Make sure the argument is of the right type (and not just compatible with the expression)
+		if (funcs.GetLength() == 1)
+		{
+			asCScriptFunction* f = engine->scriptFunctions[funcs[0]];
+			if (!f->parameterTypes[0].IsEqualExceptRefAndConst(rexpr->type.dataType))
+				funcs.PopLast();
+		}
+	}
+
+	if (funcs.GetLength() == 1)
+	{
+		// Use the constructor
+
+		// TODO: clean-up: A large part of this is identical to the initalization with argList in CompileInitialization
+
+		// Add the default values for arguments not explicitly supplied
+		int r = CompileDefaultAndNamedArgs(rnode, args, funcs[0], CastToObjectType(type.GetTypeInfo()));
+		if (r == asSUCCESS)
+		{
+			asCExprContext ctx(engine);
+			if (type.GetTypeInfo() && (type.GetTypeInfo()->flags & asOBJ_REF))
+			{
+				if (isVarGlobOrMem == asVGM_VARIABLE)
+					MakeFunctionCall(&ctx, funcs[0], 0, args, rnode, true, offset);
+				else
+				{
+					MakeFunctionCall(&ctx, funcs[0], 0, args, rnode);
+					ctx.bc.Instr(asBC_RDSPtr);
+					if (isVarGlobOrMem == asVGM_GLOBAL)
+					{
+						// Store the returned handle in the global variable
+						ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
+					}
+					else
+					{
+						// Store the returned handle in the member
+						ctx.bc.InstrSHORT(asBC_PSF, 0);
+						ctx.bc.Instr(asBC_RDSPtr);
+						ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
+					}
+					if (type.IsFuncdef())
+						ctx.bc.InstrPTR(asBC_REFCPY, &engine->functionBehaviours);
+					else
+						ctx.bc.InstrPTR(asBC_REFCPY, type.GetTypeInfo());
+					ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
+				}
+
+				// Pop the reference left by the function call
+				ctx.bc.Instr(asBC_PopPtr);
+			}
+			else
+			{
+				bool onHeap = false;
+
+				if (isVarGlobOrMem == asVGM_VARIABLE)
+				{
+					// When the object is allocated on the heap, the address where the
+					// reference will be stored must be pushed on the stack before the
+					// arguments. This reference on the stack is safe, even if the script
+					// is suspended during the evaluation of the arguments.
+					onHeap = IsVariableOnHeap(offset);
+					if (onHeap)
+						ctx.bc.InstrSHORT(asBC_PSF, (short)offset);
+				}
+				else if (isVarGlobOrMem == asVGM_GLOBAL)
+				{
+					// Push the address of the location where the variable will be stored on the stack.
+					// This reference is safe, because the addresses of the global variables cannot change.
+					onHeap = true;
+					ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
+				}
+				else
+				{
+					// Value types may be allocated inline if they are POD types
+					onHeap = !(type.IsObject() || type.IsFuncdef()) || type.IsReference() || (type.GetTypeInfo()->flags & asOBJ_REF);
+					if (onHeap)
+					{
+						ctx.bc.InstrSHORT(asBC_PSF, 0);
+						ctx.bc.Instr(asBC_RDSPtr);
+						ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
+					}
+				}
+
+				PrepareFunctionCall(funcs[0], &ctx.bc, args);
+				MoveArgsToStack(funcs[0], &ctx.bc, args, false);
+
+				// When the object is allocated on the stack, the address to the
+				// object is pushed on the stack after the arguments as the object pointer
+				if (!onHeap)
+				{
+					if (isVarGlobOrMem == asVGM_MEMBER)
+					{
+						ctx.bc.InstrSHORT(asBC_PSF, 0);
+						ctx.bc.Instr(asBC_RDSPtr);
+						ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
+					}
+					else
+					{
+						ctx.bc.InstrSHORT(asBC_PSF, (short)offset);
+					}
+				}
+
+				PerformFunctionCall(funcs[0], &ctx, onHeap, &args, CastToObjectType(type.GetTypeInfo()));
+
+				if (isVarGlobOrMem == asVGM_VARIABLE)
+				{
+					// Mark the object in the local variable as initialized
+					ctx.bc.ObjInfo(offset, asOBJ_INIT);
+				}
+			}
+			ProcessDeferredParams(&ctx);
+			bc->AddCode(&ctx.bc);
+		}
+	}
+	else
+	{
+		// Call the default constructor, then call the assignment operator
+		asCExprContext ctx(engine);
+
+		// Call the default constructor here
+		if (isVarGlobOrMem == asVGM_VARIABLE)
+			CallDefaultConstructor(type, offset, IsVariableOnHeap(offset), &ctx.bc, errNode);
+		else if (isVarGlobOrMem == asVGM_GLOBAL)
+			CallDefaultConstructor(type, offset, true, &ctx.bc, errNode, isVarGlobOrMem);
+		else if (isVarGlobOrMem == asVGM_MEMBER)
+			CallDefaultConstructor(type, offset, type.IsReference(), &ctx.bc, errNode, isVarGlobOrMem);
+
+		if (type.IsPrimitive())
+		{
+			if (type.IsReadOnly() && rexpr->type.isConstant)
+			{
+				ImplicitConversion(rexpr, type, rnode, asIC_IMPLICIT_CONV);
+
+				// Tell caller that the expression is a constant so it can mark the variable as pure constant
+				isConstantExpression = true;
+				*constantValue = rexpr->type.GetConstantData();
+			}
+
+			asCExprContext lctx(engine);
+			if (isVarGlobOrMem == asVGM_VARIABLE)
+				lctx.type.SetVariable(type, offset, false);
+			else if (isVarGlobOrMem == asVGM_GLOBAL)
+			{
+				lctx.type.Set(type);
+				lctx.type.dataType.MakeReference(true);
+
+				// If it is an enum value, i.e. offset is negative, that is being compiled then
+				// we skip this as the bytecode won't be used anyway, only the constant value
+				if (offset >= 0)
+					lctx.bc.InstrPTR(asBC_LDG, engine->globalProperties[offset]->GetAddressOfValue());
+			}
+			else
+			{
+				asASSERT(isVarGlobOrMem == asVGM_MEMBER);
+				lctx.type.Set(type);
+				lctx.type.dataType.MakeReference(true);
+
+				// Load the reference of the primitive member into the register
+				lctx.bc.InstrSHORT(asBC_PSF, 0);
+				lctx.bc.Instr(asBC_RDSPtr);
+				lctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
+				lctx.bc.Instr(asBC_PopRPtr);
+			}
+			lctx.type.dataType.MakeReadOnly(false);
+			lctx.type.isLValue = true;
+
+			DoAssignment(&ctx, &lctx, rexpr, rnode, rnode, ttAssignment, rnode);
+			ProcessDeferredParams(&ctx);
+		}
+		else
+		{
+			// TODO: runtime optimize: Here we should look for the best matching constructor, instead of
+			//                         just the copy constructor. Only if no appropriate constructor is
+			//                         available should the assignment operator be used.
+
+			asCExprContext lexpr(engine);
+			lexpr.type.Set(type);
+			if (isVarGlobOrMem == asVGM_VARIABLE)
+				lexpr.type.dataType.MakeReference(IsVariableOnHeap(offset));
+			else if (isVarGlobOrMem == asVGM_GLOBAL)
+				lexpr.type.dataType.MakeReference(true);
+			else if (isVarGlobOrMem == asVGM_MEMBER)
+			{
+				if (!lexpr.type.dataType.IsObject() || lexpr.type.dataType.IsFuncdef() || (lexpr.type.dataType.GetTypeInfo()->flags & asOBJ_REF))
+					lexpr.type.dataType.MakeReference(true);
+			}
+
+			// Allow initialization of constant variables
+			lexpr.type.dataType.MakeReadOnly(false);
+
+			if (type.IsObjectHandle())
+				lexpr.type.isExplicitHandle = true;
+
+			if (isVarGlobOrMem == asVGM_VARIABLE)
+			{
+				lexpr.bc.InstrSHORT(asBC_PSF, (short)offset);
+				lexpr.type.stackOffset = (short)offset;
+				lexpr.type.isVariable = true;
+			}
+			else if (isVarGlobOrMem == asVGM_GLOBAL)
+			{
+				lexpr.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
+			}
+			else
+			{
+				lexpr.bc.InstrSHORT(asBC_PSF, 0);
+				lexpr.bc.Instr(asBC_RDSPtr);
+				lexpr.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
+				lexpr.type.stackOffset = -1;
+			}
+			lexpr.type.isLValue = true;
+
+
+			// If left expression resolves into a registered type
+			// check if the assignment operator is overloaded, and check
+			// the type of the right hand expression. If none is found
+			// the default action is a direct copy if it is the same type
+			// and a simple assignment.
+			bool assigned = false;
+			// Even though an ASHANDLE can be an explicit handle the overloaded operator needs to be called
+			if ((lexpr.type.dataType.IsObject() || lexpr.type.dataType.IsFuncdef()) && (!lexpr.type.isExplicitHandle || (lexpr.type.dataType.GetTypeInfo() && (lexpr.type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE))))
+			{
+				bool useHndlAssign = false;
+				if (lexpr.type.dataType.IsHandleToAsHandleType())
+				{
+					useHndlAssign = true;
+
+					// Make sure the right hand expression is treated as a handle
+					if (!rexpr->type.isExplicitHandle && !rexpr->type.IsNullConstant())
+					{
+						// Convert the expression to a handle
+						if (!rexpr->type.dataType.IsObjectHandle() && rexpr->type.dataType.SupportHandles() && rexpr->type.dataType.GetTypeInfo() && !(rexpr->type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE))
+						{
+							asCDataType to = rexpr->type.dataType;
+							to.MakeHandle(true);
+							to.MakeReference(true);
+							to.MakeHandleToConst(rexpr->type.dataType.IsReadOnly());
+							ImplicitConversion(rexpr, to, rnode, asIC_IMPLICIT_CONV, true, false);
+
+							asASSERT(rexpr->type.dataType.IsObjectHandle());
+						}
+						else if (rexpr->type.dataType.GetTypeInfo() && rexpr->type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE)
+						{
+							// For the ASHANDLE type we'll simply set the expression as a handle
+							rexpr->type.dataType.MakeHandle(true);
+						}
+
+						if (!rexpr->type.dataType.IsObjectHandle() && !rexpr->type.dataType.SupportHandles())
+						{
+							Error(TXT_OBJECT_HANDLE_NOT_SUPPORTED, rnode);
+						}
+						rexpr->type.isExplicitHandle = true;
+					}
+				}
+				assigned = CompileOverloadedDualOperator(rnode, &lexpr, rexpr, false, &ctx, useHndlAssign);
+				if (assigned)
+				{
+					// Pop the resulting value
+					if (!ctx.type.dataType.IsPrimitive())
+						ctx.bc.Instr(asBC_PopPtr);
+
+					// Release the argument
+					ProcessDeferredParams(&ctx);
+
+					// Release temporary variable that may be allocated by the overloaded operator
+					ReleaseTemporaryVariable(ctx.type, &ctx.bc);
+				}
+			}
+
+			if (!assigned)
+			{
+				PrepareForAssignment(&lexpr.type.dataType, rexpr, rnode, false);
+
+				// If the expression is constant and the variable also is constant
+				// then mark the variable as pure constant. This will allow the compiler
+				// to optimize expressions with this variable.
+				if (type.IsReadOnly() && rexpr->type.isConstant)
+				{
+					isConstantExpression = true;
+					*constantValue = rexpr->type.GetConstantQW();
+				}
+
+				// Add expression code to bytecode
+				MergeExprBytecode(&ctx, rexpr);
+
+				// Add byte code for storing value of expression in variable
+				ctx.bc.AddCode(&lexpr.bc);
+
+				PerformAssignment(&lexpr.type, &rexpr->type, &ctx.bc, errNode);
+
+				// Release temporary variables used by expression
+				ReleaseTemporaryVariable(rexpr->type, &ctx.bc);
+
+				ctx.bc.Instr(asBC_PopPtr);
+
+				ProcessDeferredParams(&ctx);
+			}
+		}
+
+		bc->AddCode(&ctx.bc);
 	}
 
 	return isConstantExpression;
@@ -8705,6 +8769,53 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 			return -1;
 	}
 
+	// If a constructor is being compiled, then check if this is the first time a member properties is
+	// assigned, in which case it should be considered an initialization instead of an ordinary assignment
+	if (engine->ep.memberInitMode == 1 && m_isConstructor)
+	{
+		// Is the left expression a member property of this object?
+		// TODO: Should probably have a boolean on asCExprContext to indicate that it is a property, and have it set in CompilerVariableAccess, and then cleared if any pre/post operation is done it
+		asCByteInstruction *instr = lctx->bc.GetFirstInstr();
+		if( instr && instr->op == asBC_PSF && instr->wArg[0] == 0 &&
+			instr->next && instr->next->op == asBC_RDSPtr &&
+			instr->next->next && instr->next->next->op == asBC_ADDSi &&
+			((instr->next->next->next && instr->next->next->next->op == asBC_RDSPtr && instr->next->next->next->next == 0) ||
+			 (instr->next->next->next && instr->next->next->next->op == asBC_RDSPtr && instr->next->next->next->next && instr->next->next->next->next->op == asBC_PopRPtr && instr->next->next->next->next->next == 0) ||
+			 (instr->next->next->next && instr->next->next->next->op == asBC_PopRPtr && instr->next->next->next->next == 0)) )
+		{
+			// Which property?
+			int offset = instr->next->next->wArg[0];
+			asCObjectProperty* prop = 0;
+			for( asUINT p = 0; p < outFunc->objectType->properties.GetLength(); p++ )
+				if (outFunc->objectType->properties[p]->byteOffset == offset)
+				{
+					prop = outFunc->objectType->properties[p];
+					break;
+				}
+
+			// Cannot initialize inherited properties, as those will be initialized by base class
+			if ( !(prop && prop->isInherited) )
+			{
+				// Verify if the property has already been initialized in this constructor
+				// If not already initialized then add it to the m_initializedProperties, and
+				// then compile the assignment as initialization instead of a normal assignment
+				// TODO: Need to keep track of the code path, as the initialization may have been in a different if-else scope
+				if (prop && m_initializedProperties.IndexOf(prop) < 0)
+				{
+					m_initializedProperties.PushLast(prop);
+
+					asQWORD constantValue;
+					CompileInitializationWithAssignment(&ctx->bc, prop->type, opNode, offset, &constantValue, asVGM_MEMBER, rexpr, rctx);
+
+					// The initialization is done, it is not allowed to do further processing on
+					ctx->type.SetDummy();
+
+					return 0;
+				}
+			}
+		}
+	}
+
 	if( lctx->type.dataType.IsPrimitive() )
 	{
 		if( !lctx->type.isLValue )
@@ -12017,7 +12128,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 		if( namedArgs[n].ctx )
 			asDELETE(namedArgs[n].ctx, asCExprContext);
 
-	if( initializeMembers )
+	if( engine->ep.memberInitMode == 0 && initializeMembers )
 	{
 		asASSERT( m_isConstructor );
 
@@ -16961,7 +17072,7 @@ void asCExprContext::Copy(asCExprContext *other)
 	isAnonymousInitList = other->isAnonymousInitList;
 	origCode            = other->origCode;
 
-	// Do not copy the origExpr member	
+	// Do not copy the origExpr member
 }
 
 void asCExprContext::Merge(asCExprContext *after)

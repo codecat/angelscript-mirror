@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.38.0 WIP - 2024/09/07</h2>
+<h2>Version 2.38.0 WIP - 2024/09/18</h2>
 
 <ul>
 <li>Bug fixes
@@ -28,6 +28,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Implemented support for registering template functions with RegisterGlobalFunction and RegisterObjectMethod using generic calling convention (Thanks MindOfTony)
 <li>Included a new function type asFUNC_TEMPLATE to indicate the template functions
+<li>Added engine property asEP_MEMBER_INIT_MODE to allow backwards compatiblity for how class members are initialized
 </ul>
 <li>Library interface
 <ul>
@@ -36,6 +37,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Script language
 <ul>
 <li>It is now possible to instantiate registered template functions and call them (Thanks MindOfTony)
+<li>A class member can now be explicitly initialized in the class constructor, overriding the initialization defined in the declaration (Thanks Patrick Jeeves)
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

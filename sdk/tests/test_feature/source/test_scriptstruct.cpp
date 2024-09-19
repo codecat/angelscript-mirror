@@ -1679,7 +1679,7 @@ bool Test()
 		}
 
 		// Initialization of handle members
-		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"class T { \n"
@@ -1713,24 +1713,51 @@ bool Test()
 			obj->Release();
 
 		// Expressions are evaluated in the scope where they will be executed
-		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("test",
-			"class Base { Base(int _a) {} int a = _a; } \n"
-			"class T : Base { T(int _a) { if( _a == 0 ) super(42); else super(24); } int b = a; } \n"
-			"void test() { \n"
-			"  T a(0); \n"
-			"  assert( a.b == 42 ); \n"
-			"  T b(1); \n"
-			"  assert( b.b == 24 ); \n"
-			"} \n");
-		r = mod->Build();
-		if( r < 0 )
-			TEST_FAILED;
+		// Before 2.38.0 the members where initialized after the call to super
+		{
+			engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+			engine->SetEngineProperty(asEP_MEMBER_INIT_MODE, 0);
+			mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+			mod->AddScriptSection("test",
+				"class Base { Base(int _a) {} int a = _a; } \n"
+				"class T : Base { T(int _a) { if( _a == 0 ) super(42); else super(24); } int b = a; } \n"
+				"void test() { \n"
+				"  T a(0); \n"
+				"  assert( a.b == 42 ); \n"
+				"  T b(1); \n"
+				"  assert( b.b == 24 ); \n"
+				"} \n");
+			r = mod->Build();
+			if (r < 0)
+				TEST_FAILED;
 
-		r = ExecuteString(engine, "test()", mod);
-		if( r != asEXECUTION_FINISHED )
-			TEST_FAILED;
+			r = ExecuteString(engine, "test()", mod);
+			if (r != asEXECUTION_FINISHED)
+				TEST_FAILED;
+		}
+
+		// After 2.38.0 the members are initialized in the beginning even if super is called, except if the member is explicitly initialized
+		{
+			engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+			engine->SetEngineProperty(asEP_MEMBER_INIT_MODE, 1);
+			mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+			mod->AddScriptSection("test",
+				"class Base { Base(int _a) {} int a = _a; } \n"
+				"class T : Base { T(int _a) { if( _a == 0 ) super(42); else super(24); } int b = a; } \n"
+				"void test() { \n"
+				"  T a(0); \n"
+				"  assert( a.b == 0 ); \n"
+				"  T b(1); \n"
+				"  assert( b.b == 0 ); \n"
+				"} \n");
+			r = mod->Build();
+			if (r < 0)
+				TEST_FAILED;
+
+			r = ExecuteString(engine, "test()", mod);
+			if (r != asEXECUTION_FINISHED)
+				TEST_FAILED;
+		}
 
 		engine->Release();
 	}

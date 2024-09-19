@@ -181,10 +181,64 @@ bool Test()
 
 		engine->ShutDownAndRelease();
 	}
-/*
-	// Test initialization of member of type that has copy constructur but not assignment operator (possible in C++, but not in AngelScript)
-	// TODO: To support this, I would have to implement the syntax like C++ where the initialization of members are given outside the constructor body
-	// TODO: Alternatively, make the constructors use CompileInitAsCopy on the first assignment of a member (I like this better)
+
+	// TODO: Potential syntax within constructor: "set member = expr;" to distinguish from ordinary assignment
+	// TODO: The constructor must evaluate and give error if a member has not been initialized and a default initialization cannot be given
+	// TODO: The default constructor must also verify that all members can indeed be initialized (as this is no longer done during the declaration)
+	// TODO: Test with derived classes. If the derived constructor assigns a value to an inherited member it will not be considered an initialization, as the happens in the base type
+	// TODO: Test initializations in conditions, i.e. if-else. If member is initialized in one condition it must also be initialized in the other
+	// TODO: Test initializations in for/while. It should not be done, since it will be repeated. Set flag m_insideLoop when compiling loops, and then clear when exiting (must be counter as there can be nested loops). Also test super() in a loop
+	// TODO: When calling super() all members are initialized right after by default. But this cannot be done any more when the script may also explicitly initialize member. Could perhaps defer the compilation of the member intializations until the constructor is called, and then inject the member initializations that were not explicitly initialized
+	// TODO: Test that accessing a member before it has been initialized will make it initialize in beginning as default
+
+	// Test that it is possible initialize a member that doesn't have a default constructor
+	// Can be done in the member declaration
+	// Can be overridden in the body of the constructor
+	{
+		engine = asCreateScriptEngine();
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME,
+			"class Bar\n" 
+			"{\n"
+			"  Bar() delete; \n"  // cannot initialize with default constructor
+			"  Bar(const Bar &in) delete; \n" // cannot copy
+			"  Bar &opAssign(const Bar &in) delete; \n" // cannot assign
+			"  Bar(int a) { value = a; } \n"
+			"  int value; \n"
+			"}\n"
+			"class Foo\n"
+			"{\n"
+			"  Foo() { assert( b.value == 1 ); } \n" // Use the default
+			"  Foo(int a) { b = Bar(a); assert( b.value == a ); }\n" // Override the defaut initialization
+			"  Bar b = Bar(1);\n" // By default initialize with value 1
+			"}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "Foo f; assert( f.b.value == 1 );\n", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "Foo f(2); assert( f.b.value == 2 );\n", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test initialization of member of type that has copy constructor but not assignment operator
 	// Reported by Patrick Jeeves
 	{
 		engine = asCreateScriptEngine();
@@ -210,11 +264,11 @@ bool Test()
 			"{ \n"
 			"  Obj4(const Obj4 &in i) \n"
 			"  { \n"
-			"    o1 = i.o1; \n"  // Not allowed, so it is not possible to create constructor for this type
+			"    o1 = i.o1; \n"
 			"    o2 = i.o2; \n"
 			"    o3 = i.o3; \n"
 			"  } \n"
-			"  Obj1 o1; \n" // Not allowed, there is no default constructur
+			"  Obj1 o1; \n"
 			"  Obj2 o2; \n"
 			"  Obj3 o3; \n"
 			"} \n");
@@ -230,7 +284,7 @@ bool Test()
 
 		engine->ShutDownAndRelease();
 	}
-*/
+
 	// Test object with registered constructors
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
