@@ -238,6 +238,46 @@ bool Test()
 		engine->ShutDownAndRelease();
 	}
 
+	// Test attempt to initialize member with direct call to constructor
+	// Reported by Patrick Jeeves
+	{
+		engine = asCreateScriptEngine();
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME,
+			"class Object \n"
+			"{ \n"
+			"	Object(float a, float b) { _a = a; _b = b; } \n"
+			"	Object() delete; \n"
+			"	Object(Object& in) delete; \n"
+			"	Object& opAssign(Object& in) delete; \n"
+			"   float _a, _b;"
+			"} \n"
+			"class Foo \n"
+			"{ \n"
+			"	Object me(a: 1, b: 2); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "Foo f; assert( f.me._a == 1 && f.me._b == 2 );\n", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test initialization of member of type that has copy constructor but not assignment operator
 	// Reported by Patrick Jeeves
 	{
