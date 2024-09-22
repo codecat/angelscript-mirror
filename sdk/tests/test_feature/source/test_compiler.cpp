@@ -181,6 +181,23 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Attempt assigning 0 to null
+	// Reported by Sam Tupy
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		r = ExecuteString(engine, "null = 0;");
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "ExecuteString (1, 1) : Error   : Expression is not an l-value\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		engine->ShutDownAndRelease();
+	}
+
 	// Test passing value type to function argument that is expecting an ashandle type
 	// https://www.gamedev.net/forums/topic/717451-failed-assertion-when-assigning-string-to-ref/5466156/
 	{

@@ -8967,7 +8967,7 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 		// The lvalue reference may be marked as a temporary, if for example
 		// it was originated as a handle returned from a function. In such
 		// cases it must be possible to assign values to it anyway.
-		if( lctx->type.dataType.IsObjectHandle() && !lctx->type.isExplicitHandle )
+		if( lctx->type.dataType.IsObjectHandle() && !lctx->type.isExplicitHandle && !lctx->type.IsNullConstant() )
 		{
 			// Convert the handle to a object reference
 			asCDataType to;
@@ -9012,7 +9012,7 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 		// the application developer is responsible for making the
 		// implementation safe against unwanted destruction of the input
 		// reference before the time.
-		bool simpleExpr = (lctx->type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE) && lctx->bc.IsSimpleExpression();
+		bool simpleExpr = (lctx->type.dataType.GetTypeInfo() && lctx->type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE) && lctx->bc.IsSimpleExpression();
 
 		// Implicitly convert the rvalue to the type of the lvalue
 		bool needConversion = false;
