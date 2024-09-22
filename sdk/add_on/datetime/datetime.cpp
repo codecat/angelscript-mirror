@@ -97,6 +97,12 @@ asUINT CDateTime::getSecond() const
 	return local.tm_sec;
 }
 
+asUINT CDateTime::getWeekDay() const
+{
+	tm local = time_point_to_tm(tp);
+	return local.tm_wday;
+}
+
 bool CDateTime::setDate(asUINT year, asUINT month, asUINT day)
 {
 	tm local = time_point_to_tm(tp);
@@ -248,6 +254,7 @@ void RegisterScriptDateTime(asIScriptEngine *engine)
 		r = engine->RegisterObjectMethod("datetime", "uint get_hour() const property", asMETHOD(CDateTime, getHour), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod("datetime", "uint get_minute() const property", asMETHOD(CDateTime, getMinute), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod("datetime", "uint get_second() const property", asMETHOD(CDateTime, getSecond), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectMethod("datetime", "uint get_weekDay() const property", asMETHOD(CDateTime, getWeekDay), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod("datetime", "bool setDate(uint year, uint month, uint day)", asMETHOD(CDateTime, setDate), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod("datetime", "bool setTime(uint hour, uint minute, uint second)", asMETHOD(CDateTime, setTime), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod("datetime", "int64 opSub(const datetime &in) const", asMETHODPR(CDateTime, operator-, (const CDateTime &other) const, asINT64), asCALL_THISCALL); assert(r >= 0);
@@ -272,6 +279,7 @@ void RegisterScriptDateTime(asIScriptEngine *engine)
 		r = engine->RegisterObjectMethod("datetime", "uint get_hour() const property", WRAP_MFN(CDateTime, getHour), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterObjectMethod("datetime", "uint get_minute() const property", WRAP_MFN(CDateTime, getMinute), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterObjectMethod("datetime", "uint get_second() const property", WRAP_MFN(CDateTime, getSecond), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectMethod("datetime", "uint get_weekDay() const property", WRAP_MFN(CDateTime, getWeekDay), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterObjectMethod("datetime", "bool setDate(uint year, uint month, uint day)", WRAP_MFN(CDateTime, setDate), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterObjectMethod("datetime", "bool setTime(uint hour, uint minute, uint second)", WRAP_MFN(CDateTime, setTime), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterObjectMethod("datetime", "int64 opSub(const datetime &in) const", WRAP_MFN_PR(CDateTime, operator-, (const CDateTime &other) const, asINT64), asCALL_GENERIC); assert(r >= 0);

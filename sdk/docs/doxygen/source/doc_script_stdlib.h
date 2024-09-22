@@ -692,6 +692,8 @@ a rather low precision of seconds only.
 
 \section doc_datatype_datetime_addon Supporting datetime object
 
+\todo describe weekday
+
 \subsection doc_addon_datetime_2_construct Constructors
 
 <b>datetime()</b><br>
