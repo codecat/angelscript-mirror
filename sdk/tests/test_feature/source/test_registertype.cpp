@@ -446,6 +446,34 @@ bool Test()
 	COutStream out;
  	asIScriptEngine *engine;
 
+	// Test placement constructor in global variable for registered type
+	// Reported by Patrick Jeeves
+	SKIP_KNOWN_BUG
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		r = engine->RegisterObjectType("Foo", 0, asOBJ_REF | asOBJ_NOCOUNT); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("Foo", asBEHAVE_FACTORY, "Foo @f(int a, int b)", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"Foo s = Foo(1,2); \n" // Should be allowed. There should not be a copy of the object in this case
+			"Foo t(1,2); \n"); // Syntax sugar. Same effect as previous declaration
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test asOFFSET for an object member property as reference
 	// https://www.gamedev.net/forums/topic/717443-registerobjectmethod-crash-registering-a-const-reference/5466144/
 	{

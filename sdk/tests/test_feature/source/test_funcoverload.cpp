@@ -30,6 +30,44 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test function overload between obj@ and const obj@
+	// Reported by Patrick Jeeves
+	{
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+
+		asIScriptModule* mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char* script1 =
+			"int called = 0; \n"
+			"MeshComponent@ GetMesh(GameObject@, int part = 0) { called = 1; return null; } \n"
+			"const MeshComponent@ GetMesh(const GameObject@, int part = 0) { called = 2; return null; } \n"
+			"class MeshComponent {} \n"
+			"class GameObject {} \n";
+		mod->AddScriptSection(TESTNAME, script1);
+		int r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "GameObject @obj; const GameObject @cobj = obj; GetMesh(cobj); assert( called == 2 );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "GameObject @obj; GetMesh(obj); assert( called == 1 );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test function overload where one option is ?&in
 	// https://www.gamedev.net/forums/topic/715439-recent-change-fixing-funtion-overload-between-obj-and-const-obj-broke-a-lot-of-bindings/5460950/
 	{

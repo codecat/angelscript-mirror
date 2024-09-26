@@ -3747,14 +3747,17 @@ asCScriptNode *asCParser::SuperficiallyParseVarInit()
 		int indentBrace = 0;
 		while( indentParan || indentBrace || (t.type != ttListSeparator && t.type != ttEndStatement && t.type != ttEndStatementBlock) )
 		{
-			if( t.type == ttOpenParenthesis)
+			sToken after;
+			if (t.type == ttOpenParenthesis)
 				indentParan++;
-			else if( t.type == ttCloseParenthesis)
+			else if (t.type == ttCloseParenthesis)
 				indentParan--;
-			else if( t.type == ttStartStatementBlock )
+			else if (t.type == ttStartStatementBlock)
 				indentBrace++;
-			else if( t.type == ttEndStatementBlock )
+			else if (t.type == ttEndStatementBlock)
 				indentBrace--;
+			else if (t.type == ttLessThan && IsTemplateTypeList(t, &after))
+				RewindTo(&after);
 			else if( t.type == ttNonTerminatedStringConstant )
 			{
 				Error(TXT_NONTERMINATED_STRING, &t);

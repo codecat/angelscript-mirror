@@ -254,6 +254,8 @@ asDWORD ComputeCRC32(const asBYTE *buf, asUINT length);
 
 #define SKIP_ON_MAX_PORT if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") ) { PRINTF("Test on line %d in %s skipped\n", __LINE__, __FILE__); } else
 
+#define SKIP_KNOWN_BUG if( true ) { PRINTF("Test on line %d in %s skipped due to known bug\n", __LINE__, __FILE__); } else
+
 std::string GetCurrentDir();
 
 
