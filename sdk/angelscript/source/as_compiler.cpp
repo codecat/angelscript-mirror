@@ -3162,13 +3162,14 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 						asCExprContext ctx(engine);
 						if( type.GetTypeInfo() && (type.GetTypeInfo()->flags & asOBJ_REF) )
 						{
-							if( isVarGlobOrMem == 0 )
+							if( isVarGlobOrMem == asVGM_VARIABLE )
 								MakeFunctionCall(&ctx, funcs[0], 0, args, node, true, offset);
 							else
 							{
 								MakeFunctionCall(&ctx, funcs[0], 0, args, node);
-								ctx.bc.Instr(asBC_RDSPtr);
-								if( isVarGlobOrMem == 1 )
+								if( !(type.GetTypeInfo()->flags & asOBJ_SCOPED) )
+									ctx.bc.Instr(asBC_RDSPtr);
+								if( isVarGlobOrMem == asVGM_GLOBAL )
 								{
 									// Store the returned handle in the global variable
 									ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
@@ -3180,7 +3181,17 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 									ctx.bc.Instr(asBC_RDSPtr);
 									ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
 								}
-								if( type.IsFuncdef())
+
+								if (type.GetTypeInfo()->flags & asOBJ_SCOPED)
+								{
+									// For scoped typed we must move the reference from the local
+									// variable rather than copy it as there is no AddRef behaviour
+									ctx.bc.InstrSHORT_DW(asBC_COPY, AS_PTR_SIZE, asTYPEID_OBJHANDLE | engine->GetTypeIdFromDataType(type));
+
+									// Clear the local variable so the reference isn't released
+									ctx.bc.InstrSHORT(asBC_ClrVPtr, (short)ctx.type.stackOffset);
+								}
+								else if( type.IsFuncdef())
 									ctx.bc.InstrPTR(asBC_REFCPY, &engine->functionBehaviours);
 								else
 									ctx.bc.InstrPTR(asBC_REFCPY, type.GetTypeInfo());
@@ -3194,7 +3205,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 						{
 							bool onHeap = false;
 
-							if( isVarGlobOrMem == 0 )
+							if( isVarGlobOrMem == asVGM_VARIABLE )
 							{
 								// When the object is allocated on the heap, the address where the
 								// reference will be stored must be pushed on the stack before the
@@ -3204,7 +3215,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 								if( onHeap )
 									ctx.bc.InstrSHORT(asBC_PSF, (short)offset);
 							}
-							else if( isVarGlobOrMem == 1 )
+							else if( isVarGlobOrMem == asVGM_GLOBAL )
 							{
 								// Push the address of the location where the variable will be stored on the stack.
 								// This reference is safe, because the addresses of the global variables cannot change.
@@ -3230,7 +3241,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 							// object is pushed on the stack after the arguments as the object pointer
 							if( !onHeap )
 							{
-								if( isVarGlobOrMem == 2 )
+								if( isVarGlobOrMem == asVGM_MEMBER )
 								{
 									ctx.bc.InstrSHORT(asBC_PSF, 0);
 									ctx.bc.Instr(asBC_RDSPtr);
@@ -3244,7 +3255,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 
 							PerformFunctionCall(funcs[0], &ctx, onHeap, &args, CastToObjectType(type.GetTypeInfo()));
 
-							if( isVarGlobOrMem == 0 )
+							if( isVarGlobOrMem == asVGM_VARIABLE )
 							{
 								// Mark the object in the local variable as initialized
 								ctx.bc.ObjInfo(offset, asOBJ_INIT);
@@ -3331,20 +3342,38 @@ bool asCCompiler::CompileInitializationWithAssignment(asCByteCode* bc, const asC
 	asCArray<asCExprContext*> args;
 
 	// If the rexpr is already a temporary value of the same type, then it should be used directly without making a copy
-	// TODO: This can probably be done for local variables as well, maybe even for globals
+	// TODO: This can probably be done for local variables as well
 	// TODO: For value types, stored inline the rexpr would have to be compiled already to initialize the value so the following cannot be used
-	if (isVarGlobOrMem == asVGM_MEMBER && rexpr->type.isTemporary && type.IsEqualExceptRefAndConst(rexpr->type.dataType) && type.IsObject() && (type.IsObjectHandle() || type.SupportHandles()))
+	if ((isVarGlobOrMem == asVGM_MEMBER || isVarGlobOrMem == asVGM_GLOBAL) &&
+		rexpr->type.isTemporary && type.GetTypeInfo() == rexpr->type.dataType.GetTypeInfo() && type.IsObject() && (type.IsObjectHandle() || type.SupportHandles()))
 	{
 		// Add the rexpr to the bytecode
-		Dereference(rexpr, true);
+		if( !(type.GetTypeInfo()->flags & asOBJ_SCOPED) )
+			Dereference(rexpr, true);
 		bc->AddCode(&rexpr->bc);
 
 		// Store the returned handle in the member
-		bc->InstrSHORT(asBC_PSF, 0);
-		bc->Instr(asBC_RDSPtr);
-		bc->InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
+		if (isVarGlobOrMem == asVGM_MEMBER)
+		{
+			bc->InstrSHORT(asBC_PSF, 0);
+			bc->Instr(asBC_RDSPtr);
+			bc->InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateType(outFunc->objectType, false)));
+		}
+		else
+		{
+			bc->InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
+		}
 
-		if (type.IsFuncdef())
+		if (type.GetTypeInfo()->flags & asOBJ_SCOPED)
+		{
+			// For scoped typed we must move the reference from the local
+			// variable rather than copy it as there is no AddRef behaviour
+			bc->InstrSHORT_DW(asBC_COPY, AS_PTR_SIZE, asTYPEID_OBJHANDLE | engine->GetTypeIdFromDataType(type));
+
+			// Clear the local variable so the reference isn't released
+			bc->InstrSHORT(asBC_ClrVPtr, (short)rexpr->type.stackOffset);
+		}
+		else if (type.IsFuncdef())
 			bc->InstrPTR(asBC_REFCPY, &engine->functionBehaviours);
 		else
 			bc->InstrPTR(asBC_REFCPY, type.GetTypeInfo());

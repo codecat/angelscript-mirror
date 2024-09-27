@@ -448,11 +448,12 @@ bool Test()
 
 	// Test placement constructor in global variable for registered type
 	// Reported by Patrick Jeeves
-	SKIP_KNOWN_BUG
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
+
+		engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, 0);
 
 		r = engine->RegisterObjectType("Foo", 0, asOBJ_REF | asOBJ_NOCOUNT); assert(r >= 0);
 		r = engine->RegisterObjectBehaviour("Foo", asBEHAVE_FACTORY, "Foo @f(int a, int b)", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
@@ -2627,6 +2628,7 @@ bool TestAlignedScoped()
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"vec g_pos = vec(-74.25679016113281f, 0.0f, 27.4027156829834f); \n"
+			"vec g_pos2(-74.25679016113281f, 0.0f, 27.4027156829834f); \n"
 			"void loop() \n"
 			"{ \n"
 			"  vec l_pos = vec(-74.25679016113281f, 0.0f, 27.4027156829834f); \n"
@@ -2636,6 +2638,10 @@ bool TestAlignedScoped()
 		// TODO: runtime optimize: The bytecode produced is not optimal. It should use the copy constructor to copy the global variable to a local variable
 		r = mod->Build();
 		if( r < 0 )
+			TEST_FAILED;
+
+		vec* g_pos = reinterpret_cast<vec*>(mod->GetAddressOfGlobalVar(mod->GetGlobalVarIndexByName("g_pos")));
+		if (g_pos == 0 || (g_pos->x < -75 || g_pos->x > -74))
 			TEST_FAILED;
 
 		r = ExecuteString(engine, "loop()", mod);
