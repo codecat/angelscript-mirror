@@ -523,6 +523,7 @@ public:
 		asUINT alwaysImplDefaultCopy;
 		asUINT alwaysImplDefaultCopyConstruct;
 		asUINT memberInitMode;
+		asUINT boolConversionMode;
 	} ep;
 
 	// Callbacks

@@ -39,26 +39,26 @@ The following modify the script language in one way or the other:
 
 \ref asEP_DISALLOW_EMPTY_LIST_ELEMENTS
 
-By turning on this option the compiler will no longer accept empty list elements in initialization lists. 
+By turning on this option the compiler will no longer accept empty list elements in initialization lists.
 The following will for example not be supported:
 
 <pre>
   array<int> arr = {1,2,,4,5,};
 </pre>
 
-When not turned on, the compiler will leave the empty list elements with the uninitialized value, just as an 
+When not turned on, the compiler will leave the empty list elements with the uninitialized value, just as an
 uninitialized variable of the same type.
 
 \ref asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE
 
-By turning on this the compiler will no longer allow the use of value assignment operators on reference types. 
+By turning on this the compiler will no longer allow the use of value assignment operators on reference types.
 While it may seem drastic, it can help reduce risk for bugs in the scripts, as the script writer will no longer
-be able to do a value assignment by mistake when he meant to a handle assignment. Reference types should usually  
+be able to do a value assignment by mistake when he meant to a handle assignment. Reference types should usually
 not be copied, so the imposed restriction will likely not cause problems anyway.
 
 \ref asEP_ALLOW_UNSAFE_REFERENCES
- 
-By turning on unsafe references you allow in-out references to be used for primitives and value types too. 
+
+By turning on unsafe references you allow in-out references to be used for primitives and value types too.
 Normally this will work fine, just as it does in ordinary languages such as C++, but know that it is 
 quite possible to write scripts that will cause memory invasions or crashes if the references are not properly
 guarded. With this option turned on you cannot consider the scripts to be sand-boxed any longer.
@@ -66,26 +66,26 @@ guarded. With this option turned on you cannot consider the scripts to be sand-b
 Turning this option on also makes temporary objects created within expressions to be destroyed only at the 
 end of expressions, rather than as soon as possible. This makes it possible to pass references to temporary objects
 to function calls within the expression, without the references becoming invalid too early.
- 
+
 \ref asEP_USE_CHARACTER_LITERALS, \ref asEP_ALLOW_MULTILINE_STRINGS, \ref asEP_SCRIPT_SCANNER, \ref asEP_STRING_ENCODING
 
 These options are used to determine how strings are treated by the compiler. The details are described in \ref doc_strings.
- 
+
 \ref asEP_HEREDOC_TRIM_MODE
 
-With this option the compiler can be set to always trim \ref doc_datatypes_strings "heredoc strings", 
+With this option the compiler can be set to always trim \ref doc_datatypes_strings "heredoc strings",
 only trim if it is multiple lines, or never trim them.
- 
+
 \ref asEP_ALLOW_IMPLICIT_HANDLE_TYPES
- 
+
 This option is experimental. By turning it on script classes can be declared to always be treated as handles by declaring the 
 class with @ before the name of the class. When this is done all variables of that type will be handles, and the assignment
 operator will always perform a handle assignment.
- 
+
 \ref asEP_REQUIRE_ENUM_SCOPE
- 
+
 With this option all enum values must be prefixed with the enum type using the scope operator to qualify.
- 
+
 \ref asEP_PROPERTY_ACCESSOR_MODE
 
 By default \ref doc_script_class_prop "virtual property accessors" when declared as individual functions need to be 
@@ -97,16 +97,16 @@ property accessors if the function signature was appropriate. This led to undesi
 declare such functions without the intention of them being used as virtual properties and yet the compiler used them as such.
 
 For backwards compatibility it is still possible to configure the engine to use this behaviour by setting the engine
-property asEP_PROPERTY_ACCESSOR_MODE to 2. 
+property asEP_PROPERTY_ACCESSOR_MODE to 2.
 
 If it also possible to disable virtual property accessors all together by setting the engine property to 0. Setting the 
 option to 1 only allows virtual property accessors for registered functions, but still without requiring the keyword 'property'.
- 
+
 \ref asEP_DISALLOW_GLOBAL_VARS
 
 The application can disable the ability to declare global variables in scripts completely. This can be useful in such cases
 when the application wish to have full control of what can and cannot be stored by a script.  
- 
+
 \ref asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT
 
 This property determines if the compiler will automatically provide a default constructor for classes. When set to 0 (default) 
@@ -140,10 +140,10 @@ with the same name as the function argument as the script writer may think he's 
 just naming the function argument.
 
 \ref asEP_DISABLE_INTEGER_DIVISION
- 
+
 This option changes the default behaviour of the / and /= operators. When true, this option replaces integer division
 with floating-point division, e.g. 1/2 == 0.5 instead of 1/2 == 0
- 
+
 \ref asEP_PRIVATE_PROP_AS_PROTECTED
 
 When this option is set to true the compiler will not prevent the access to private properties inherited from the parent class.
@@ -163,6 +163,8 @@ can be encoded in UTF-8 format and compiler normally.
 
 By turning on this option the compiler will silently accept duplicate declarations of shared interfaces in modules. 
 This option was added to provide backwards compatibility with 2.35.0.
+
+\todo document asEP_BOOL_CONVERSION_MODE
 
 
 

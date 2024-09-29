@@ -4727,9 +4727,15 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 	int r = CompileAssignment(inode->firstChild, &expr);
 	if( r == 0 )
 	{
-		// Allow value types to be converted to bool using 'bool opImplConv()'
-		if( expr.type.dataType.GetTypeInfo() && (expr.type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE) )
-			ImplicitConversion(&expr, asCDataType::CreatePrimitive(ttBool, false), inode, asIC_IMPLICIT_CONV);
+		if (ProcessPropertyGetAccessor(&expr, inode) < 0)
+			return;
+
+		// If turned on, allow the compiler to use either 'bool opImplConv()' or 'bool opConv()' on the type
+		if (engine->ep.boolConversionMode == 1)
+			ImplicitConversion(&expr, asCDataType::CreatePrimitive(ttBool, false), inode, asIC_EXPLICIT_VAL_CAST);
+		// else, allow value types to be converted to bool using 'bool opImplConv()'
+		else if (expr.type.dataType.GetTypeInfo() && (expr.type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE))
+				ImplicitConversion(&expr, asCDataType::CreatePrimitive(ttBool, false), inode, asIC_IMPLICIT_CONV);
 
 		if (!expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)))
 		{
@@ -4741,8 +4747,6 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 		{
 			if( !expr.type.isConstant )
 			{
-				if( ProcessPropertyGetAccessor(&expr, inode) < 0 )
-					return;
 				ConvertToVariable(&expr);
 				ProcessDeferredParams(&expr);
 
@@ -4887,8 +4891,14 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 		int r = CompileAssignment(second->firstChild, &expr);
 		if( r >= 0 )
 		{
-			// Allow value types to be converted to bool using 'bool opImplConv()'
-			if( expr.type.dataType.GetTypeInfo() && (expr.type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE) )
+			if (ProcessPropertyGetAccessor(&expr, second) < 0)
+				return;
+
+			// If turned on, allow the compiler to use either 'bool opImplConv()' or 'bool opConv()' on the type
+			if (engine->ep.boolConversionMode == 1)
+				ImplicitConversion(&expr, asCDataType::CreatePrimitive(ttBool, false), second->firstChild, asIC_EXPLICIT_VAL_CAST);
+			// else, allow value types to be converted to bool using 'bool opImplConv()'
+			else if (expr.type.dataType.GetTypeInfo() && (expr.type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE))
 				ImplicitConversion(&expr, asCDataType::CreatePrimitive(ttBool, false), second->firstChild, asIC_IMPLICIT_CONV);
 
 			if (!expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)))
@@ -4899,8 +4909,6 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 			}
 			else
 			{
-				if( ProcessPropertyGetAccessor(&expr, second) < 0 )
-					return;
 				ConvertToVariable(&expr);
 				ProcessDeferredParams(&expr);
 
@@ -5005,8 +5013,14 @@ void asCCompiler::CompileWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 	int r = CompileAssignment(wnode->firstChild, &expr);
 	if( r == 0 )
 	{
-		// Allow value types to be converted to bool using 'bool opImplConv()'
-		if( expr.type.dataType.GetTypeInfo() && (expr.type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE) )
+		if (ProcessPropertyGetAccessor(&expr, wnode) < 0)
+			return;
+
+		// If turned on, allow the compiler to use either 'bool opImplConv()' or 'bool opConv()' on the type
+		if (engine->ep.boolConversionMode == 1)
+			ImplicitConversion(&expr, asCDataType::CreatePrimitive(ttBool, false), wnode->firstChild, asIC_EXPLICIT_VAL_CAST);
+		// else, allow value types to be converted to bool using 'bool opImplConv()'
+		else if (expr.type.dataType.GetTypeInfo() && (expr.type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE))
 			ImplicitConversion(&expr, asCDataType::CreatePrimitive(ttBool, false), wnode->firstChild, asIC_IMPLICIT_CONV);
 
 		if (!expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)))
@@ -5017,8 +5031,6 @@ void asCCompiler::CompileWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 		}
 		else
 		{
-			if( ProcessPropertyGetAccessor(&expr, wnode) < 0 )
-				return;
 			ConvertToVariable(&expr);
 			ProcessDeferredParams(&expr);
 
@@ -5099,8 +5111,14 @@ void asCCompiler::CompileDoWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 	asCExprContext expr(engine);
 	CompileAssignment(wnode->lastChild, &expr);
 
-	// Allow value types to be converted to bool using 'bool opImplConv()'
-	if( expr.type.dataType.GetTypeInfo() && (expr.type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE) )
+	if (ProcessPropertyGetAccessor(&expr, wnode) < 0)
+		return;
+
+	// If turned on, allow the compiler to use either 'bool opImplConv()' or 'bool opConv()' on the type
+	if (engine->ep.boolConversionMode == 1)
+		ImplicitConversion(&expr, asCDataType::CreatePrimitive(ttBool, false), wnode->lastChild, asIC_EXPLICIT_VAL_CAST);
+	// else, allow value types to be converted to bool using 'bool opImplConv()'
+	else if (expr.type.dataType.GetTypeInfo() && (expr.type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE))
 		ImplicitConversion(&expr, asCDataType::CreatePrimitive(ttBool, false), wnode->lastChild, asIC_IMPLICIT_CONV);
 
 	if (!expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)))
@@ -5111,8 +5129,6 @@ void asCCompiler::CompileDoWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 	}
 	else
 	{
-		if( ProcessPropertyGetAccessor(&expr, wnode) < 0 )
-			return;
 		ConvertToVariable(&expr);
 		ProcessDeferredParams(&expr);
 		
@@ -6451,7 +6467,6 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asCExprContext *ctx, const 
 {
 	asCDataType to = toOrig;
 	to.MakeReference(false);
-	asASSERT( !ctx->type.dataType.IsReference() );
 
 	// Maybe no conversion is needed
 	if( to.IsEqualExceptConst(ctx->type.dataType) )
@@ -9152,8 +9167,14 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asCExprContext *ctx)
 		if( r < 0 )
 			e.type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), true);
 
-		// Allow value types to be converted to bool using 'bool opImplConv()'
-		if( e.type.dataType.GetTypeInfo() && (e.type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE) )
+		if (ProcessPropertyGetAccessor(&e, cexpr) < 0)
+			return -1;
+
+		// If turned on, allow the compiler to use either 'bool opImplConv()' or 'bool opConv()' on the type
+		if (engine->ep.boolConversionMode == 1)
+			ImplicitConversion(&e, asCDataType::CreatePrimitive(ttBool, false), cexpr, asIC_EXPLICIT_VAL_CAST);
+		// else, allow value types to be converted to bool using 'bool opImplConv()'
+		else if (e.type.dataType.GetTypeInfo() && (e.type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE))
 			ImplicitConversion(&e, asCDataType::CreatePrimitive(ttBool, false), cexpr, asIC_IMPLICIT_CONV);
 
 		if( r >= 0 && !e.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
@@ -9164,9 +9185,6 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asCExprContext *ctx)
 			e.type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), true);
 		}
 		ctype = e.type;
-
-		if( ProcessPropertyGetAccessor(&e, cexpr) < 0)
-			return -1;
 
 		if( e.type.dataType.IsReference() ) ConvertToVariable(&e);
 		ProcessDeferredParams(&e);
@@ -12446,8 +12464,11 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asCExprContext *ctx
 	}
 	else if( op == ttNot )
 	{
-		// Allow value types to be converted to bool using 'bool opImplConv()'
-		if( ctx->type.dataType.GetTypeInfo() && (ctx->type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE) )
+		// If turned on, allow the compiler to use either 'bool opImplConv()' or 'bool opConv()' on the type
+		if (engine->ep.boolConversionMode == 1)
+			ImplicitConversion(ctx, asCDataType::CreatePrimitive(ttBool, false), node, asIC_EXPLICIT_VAL_CAST);
+		// else, allow value types to be converted to bool using 'bool opImplConv()'
+		else if (ctx->type.dataType.GetTypeInfo() && (ctx->type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE))
 			ImplicitConversion(ctx, asCDataType::CreatePrimitive(ttBool, false), node, asIC_IMPLICIT_CONV);
 
 		if( ctx->type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
@@ -15951,11 +15972,19 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asCExprContext *lc
 	rctx->bc.GetVarsUsed(reservedVariables);
 	lctx->bc.GetVarsUsed(reservedVariables);
 
-	// Allow value types to be converted to bool using 'bool opImplConv()'
-	if( lctx->type.dataType.GetTypeInfo() && (lctx->type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE) )
+	// If turned on, allow the compiler to use either 'bool opImplConv()' or 'bool opConv()' on the type
+	if (engine->ep.boolConversionMode == 1)
+		ImplicitConversion(lctx, to, node, asIC_EXPLICIT_VAL_CAST);
+	// else, allow value types to be converted to bool using 'bool opImplConv()'
+	else if (lctx->type.dataType.GetTypeInfo() && (lctx->type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE))
 		ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV);
-	if( rctx->type.dataType.GetTypeInfo() && (rctx->type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE) )
+
+	// The same goes for the right hand expression
+	if (engine->ep.boolConversionMode == 1)
+		ImplicitConversion(rctx, to, node, asIC_EXPLICIT_VAL_CAST);
+	else if (rctx->type.dataType.GetTypeInfo() && (rctx->type.dataType.GetTypeInfo()->GetFlags() & asOBJ_VALUE))
 		ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV);
+
 	reservedVariables.SetLength(l);
 
 	// Verify that the conversion was successful

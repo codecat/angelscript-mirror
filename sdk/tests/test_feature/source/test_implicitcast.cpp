@@ -218,11 +218,13 @@ bool Test()
 		engine->ShutDownAndRelease();
 	}
 
-	// Test opImplConv to bool in conditions is not allowed for reference types
+	// Test opImplConv to bool in conditions is not allowed for reference types (when context conversion is not turned on)
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
+
+		engine->SetEngineProperty(asEP_BOOL_CONVERSION_MODE, 0);
 
 		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
