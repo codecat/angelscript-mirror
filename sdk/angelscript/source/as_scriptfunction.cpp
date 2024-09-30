@@ -496,7 +496,8 @@ void asCScriptFunction::DestroyInternal()
 
 	// Release template sub types
 	for (asUINT n = 0; n < templateSubTypes.GetLength(); n++)
-		templateSubTypes[n].GetTypeInfo()->Release();
+		if(templateSubTypes[n].GetTypeInfo())
+			templateSubTypes[n].GetTypeInfo()->Release();
 }
 
 // interface
@@ -1921,6 +1922,34 @@ asCScriptFunction* asCScriptFunction::GetCalledFunction(asDWORD programPos)
 	}
 
 	return 0;
+}
+
+// interface
+asUINT asCScriptFunction::GetSubTypeCount() const
+{
+	return asUINT(templateSubTypes.GetLength());
+}
+
+// interface
+int asCScriptFunction::GetSubTypeId(asUINT subtypeIndex) const
+{
+	// This method is only supported for templates and template specializations
+	if (templateSubTypes.GetLength() == 0)
+		return asERROR;
+
+	if (subtypeIndex >= templateSubTypes.GetLength())
+		return asINVALID_ARG;
+
+	return engine->GetTypeIdFromDataType(templateSubTypes[subtypeIndex]);
+}
+
+// interface
+asITypeInfo* asCScriptFunction::GetSubType(asUINT subtypeIndex) const
+{
+	if (subtypeIndex >= templateSubTypes.GetLength())
+		return 0;
+
+	return templateSubTypes[subtypeIndex].GetTypeInfo();
 }
 
 END_AS_NAMESPACE

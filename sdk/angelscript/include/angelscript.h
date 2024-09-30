@@ -1174,6 +1174,11 @@ public:
 	virtual int              GetParam(asUINT index, int *typeId, asDWORD *flags = 0, const char **name = 0, const char **defaultArg = 0) const = 0;
 	virtual int              GetReturnTypeId(asDWORD *flags = 0) const = 0;
 
+	// Template functions
+	virtual asUINT           GetSubTypeCount() const = 0;
+	virtual int              GetSubTypeId(asUINT subTypeIndex = 0) const = 0;
+	virtual asITypeInfo     *GetSubType(asUINT subTypeIndex = 0) const = 0;
+
 	// Type id for function pointers
 	virtual int              GetTypeId() const = 0;
 	virtual bool             IsCompatibleWithTypeId(int typeId) const = 0;

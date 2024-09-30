@@ -12066,7 +12066,9 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 		builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
 		
 		// Instantiate all template functions
-		int r = InstantiateTemplateFunctions(funcs, node->firstChild->next);
+		asCScriptNode* datatypeNode = node->firstChild->next;
+		if (datatypeNode->nodeType == snIdentifier) datatypeNode = datatypeNode->next;
+		int r = InstantiateTemplateFunctions(funcs, datatypeNode);
 		if (r < 0) return r;
 	}
 

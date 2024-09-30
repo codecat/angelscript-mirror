@@ -159,9 +159,16 @@ bool Test()
 			TEST_FAILED;
 
 		// Test that null pointer exception is thrown for handles
-		r = ExecuteString(engine, "TestConv @t; if( t ) {}", mod);
+		asIScriptContext* ctx = engine->CreateContext();
+		r = ExecuteString(engine, "TestConv @t; if( t ) {}", mod, ctx);
 		if (r != asEXECUTION_EXCEPTION)
 			TEST_FAILED;
+		else if( std::string(ctx->GetExceptionString()) != "Null pointer access" )
+		{
+			PRINTF("got exception: %s\n", ctx->GetExceptionString());
+			TEST_FAILED;
+		}
+		ctx->Release();
 
 		if (bout.buffer != 
 			"ExecuteString (1, 13) : Error   : No matching signatures to 'func(TestConv&)'\n"

@@ -3176,6 +3176,11 @@ int asCScriptEngine::GetTemplateFunctionInstance(asCScriptFunction* baseFunc, co
 	for (asUINT p = 0; p < baseFunc->parameterTypes.GetLength(); p++)
 		newFunc->parameterTypes[p] = DetermineTypeForTemplate(baseFunc->parameterTypes[p], baseFunc->templateSubTypes, types, 0, 0, 0);
 
+	newFunc->templateSubTypes = types;
+	for (asUINT t = 0; t < newFunc->templateSubTypes.GetLength(); t++)
+		if (newFunc->templateSubTypes[t].GetTypeInfo())
+			newFunc->templateSubTypes[t].GetTypeInfo()->AddRef();
+
 	newFunc->id = GetNextScriptFunctionId();
 	AddScriptFunction(newFunc);
 

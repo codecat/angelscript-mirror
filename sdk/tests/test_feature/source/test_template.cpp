@@ -230,6 +230,11 @@ void get(asIScriptGeneric* gen)
 {
 	float arg = gen->GetArgFloat(0);
 	get_called_correctly = gen->GetReturnTypeId() == asTYPEID_INT32 && gen->GetArgTypeId(0) == asTYPEID_FLOAT && arg == 1.25f;
+
+	// It is also possible to determine the correct types from the function itself, useful for functions that do not have return type or parameters
+	asIScriptFunction* func = gen->GetFunction();
+	if (func->GetSubTypeId(0) != asTYPEID_INT32 || func->GetSubTypeId(1) != asTYPEID_FLOAT)
+		get_called_correctly = false;
 }
 std::string* make()
 {
@@ -311,16 +316,22 @@ bool Test()
 			TEST_FAILED;
 		if (string(func->GetDeclaration(true, true, true)) != "void lmao::do_smth<T>(T param)")
 			TEST_FAILED;
+		if (func->GetSubTypeCount() != 1 || std::string(func->GetSubType(0)->GetName()) != "T")
+			TEST_FAILED;
 
 		// Register a global template function
+		engine->SetDefaultNamespace("nm");
 		r = engine->RegisterGlobalFunction("T get<class T, class K>(K lmao)", asFUNCTION(get), asCALL_GENERIC, 0);
 		if (r < 0)
 			TEST_FAILED;
+		engine->SetDefaultNamespace("");
 		// Retrieve the script function and check that it is a template function and that it has template sub types
 		func = engine->GetFunctionById(r);
 		if (func == 0 || func->GetFuncType() != asFUNC_TEMPLATE)
 			TEST_FAILED;
-		if (string(func->GetDeclaration(true, true, true)) != "T get<T,K>(K lmao)")
+		if (string(func->GetDeclaration(true, true, true)) != "T nm::get<T,K>(K lmao)")
+			TEST_FAILED;
+		if (func->GetSubTypeCount() != 2 || std::string(func->GetSubType(1)->GetName()) != "K" )
 			TEST_FAILED;
 
 		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
@@ -329,11 +340,10 @@ bool Test()
 				{
 					lmao lol;
 					lol.do_smth<int>(100);
-					get<int, float>(1.25);
+					nm::get<int, float>(1.25);
 				}
 			)");
 		r = mod->Build();
-
 		if (r < 0)
 			TEST_FAILED;
 
