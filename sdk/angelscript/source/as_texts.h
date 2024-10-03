@@ -50,6 +50,7 @@
 
 #define TXT_BOTH_MUST_BE_SAME                     "Can't find unambiguous implicit conversion to make both expressions have the same type"
 #define TXT_BOTH_CONDITIONS_MUST_CALL_CONSTRUCTOR "Both conditions must call constructor"
+#define TXT_BOTH_CONDITIONS_MUST_INIT_MEMBER_s    "Both conditions must initialize member '%s'"
 #define TXT_BASE_DOESNT_HAVE_DEF_CONSTR           "Base class doesn't have default constructor. Make explicit call to base constructor"
 #define TXT_BASE_DOESNT_HAVE_CPY_CONSTR_OR_DEF_CONSTR  "Base class doesn't have copy constructor or default constructor and assign operator. Make explicit call to base constructor"
 

@@ -4774,7 +4774,9 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 	}
 
 	// Compile the if statement
+	// Backup the call to super() and member initializations
 	bool origIsConstructorCalled = m_isConstructorCalled;
+	asCArray<asCObjectProperty*> origInitializedProperties = m_initializedProperties;
 
 	bool hasReturn1;
 	asCByteCode ifBC(engine);
@@ -4796,12 +4798,15 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 	bool constructorCall2 = false;
 	if( !origIsConstructorCalled && m_isConstructorCalled )
 		constructorCall1 = true;
+	asCArray<asCObjectProperty*> initializedProperties1 = m_initializedProperties;
+	asCArray<asCObjectProperty*> initializedProperties2 = origInitializedProperties;
 
 	// Do we have an else statement?
 	if( inode->firstChild->next != inode->lastChild )
 	{
-		// Reset the constructor called flag so the else statement can call the constructor too
+		// Reset the constructor called flag and initialized properties so the else statement can also implement these
 		m_isConstructorCalled = origIsConstructorCalled;
+		m_initializedProperties = origInitializedProperties;
 
 		int afterElse = 0;
 		if( !hasReturn1 )
@@ -4840,6 +4845,8 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 
 		if( !origIsConstructorCalled && m_isConstructorCalled )
 			constructorCall2 = true;
+
+		initializedProperties2 = m_initializedProperties;
 	}
 	else
 	{
@@ -4856,6 +4863,30 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 	}
 
 	m_isConstructorCalled = origIsConstructorCalled || constructorCall1 || constructorCall2;
+
+	// Make sure both paths initialize the same members (if any)
+	if ( m_isConstructor && initializedProperties1 != initializedProperties2)
+	{
+		// Report errors for each of the members initialized wrongly
+		for (asUINT n = origInitializedProperties.GetLength(); n < initializedProperties1.GetLength(); n++)
+		{
+			if (!initializedProperties2.Exists(initializedProperties1[n]))
+			{
+				asCString str;
+				str.Format(TXT_BOTH_CONDITIONS_MUST_INIT_MEMBER_s, initializedProperties1[n]->name.AddressOf());
+				Error(str, inode);
+			}
+		}
+		for (asUINT n = origInitializedProperties.GetLength(); n < initializedProperties2.GetLength(); n++)
+		{
+			if (!initializedProperties1.Exists(initializedProperties2[n]))
+			{
+				asCString str;
+				str.Format(TXT_BOTH_CONDITIONS_MUST_INIT_MEMBER_s, initializedProperties2[n]->name.AddressOf());
+				Error(str, inode);
+			}
+		}
+	}
 }
 
 void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)

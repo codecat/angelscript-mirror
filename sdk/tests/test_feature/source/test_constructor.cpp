@@ -186,10 +186,69 @@ bool Test()
 	// TODO: The constructor must evaluate and give error if a member has not been initialized and a default initialization cannot be given
 	// TODO: The default constructor must also verify that all members can indeed be initialized (as this is no longer done during the declaration)
 	// TODO: Test with derived classes. If the derived constructor assigns a value to an inherited member it will not be considered an initialization, as the happens in the base type
-	// TODO: Test initializations in conditions, i.e. if-else. If member is initialized in one condition it must also be initialized in the other
-	// TODO: Test initializations in for/while. It should not be done, since it will be repeated. Set flag m_insideLoop when compiling loops, and then clear when exiting (must be counter as there can be nested loops). Also test super() in a loop
-	// TODO: When calling super() all members are initialized right after by default. But this cannot be done any more when the script may also explicitly initialize member. Could perhaps defer the compilation of the member intializations until the constructor is called, and then inject the member initializations that were not explicitly initialized
-	// TODO: Test that accessing a member before it has been initialized will make it initialize in beginning as default
+	// TODO: Test initializations in for/while. It should not be done, since it will be repeated. Set flag m_insideLoop when compiling loops, and then clear when exiting (must be counter as there can be nested loops).
+	// TODO: Test initialization in switch. It must not be done because the compiler will not guarantee that all paths initialize the member.
+	// TODO: Test that accessing a member before it has been initialized will make it initialize in beginning as default (else it would cause null pointer exception at runtime)
+	// TODO: Test that the compiler can catch scenarios where constructor doesn't initialize all members before return, e.g. foo(bool b) { a = expr; if(b) return; c = expr; }
+
+	// Test that member initializations can be done in if statement, as long as both conditions initialize the same members
+	// https://www.gamedev.net/forums/topic/717528-constructors-behaving-strangely
+	{
+		engine = asCreateScriptEngine();
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME,
+			"class Bar\n"
+			"{\n"
+			"  Bar(int a) { value = a; } \n"
+			"  int value; \n"
+			"}\n"
+			"class Foo\n"
+			"{\n"
+			"  Foo(int a) { if( a == 1 ) b = Bar(10); else b = Bar(15); }\n" // the b member is initialized different values depending on the if condition
+			"  Bar b = Bar(1);\n" // By default initialize with value 1
+			"}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "Foo f(1), g(2); assert( f.b.value == 10 ); \n assert( g.b.value == 15 ); \n", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		mod->AddScriptSection(TESTNAME,
+			"class Bar\n"
+			"{\n"
+			"  Bar(int a) { value = a; } \n"
+			"  int value; \n"
+			"}\n"
+			"class Foo2\n"
+			"{\n"
+			"  Foo2(int a) {\n"
+			"    if( a == 1 ) b = Bar(10);\n" // doesn't work, the member b is not initialized in the else case
+			"    if( a == 2 ) {} else { c = Bar(1); }\n" // doesn't work, the member b is not initialized in the else case
+			"  }\n"
+			"  Bar b = Bar(1);\n"
+			"  Bar c;\n"
+			"}\n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "TestConstructor (8, 3) : Info    : Compiling Foo2::Foo2(int)\n"
+						   "TestConstructor (9, 5) : Error   : Both conditions must initialize member 'b'\n"
+						   "TestConstructor (10, 5) : Error   : Both conditions must initialize member 'c'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test that it is possible initialize a member that doesn't have a default constructor
 	// Can be done in the member declaration
