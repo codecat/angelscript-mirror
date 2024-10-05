@@ -119,6 +119,7 @@ void asCCompiler::Reset(asCBuilder *in_builder, asCScriptCode *in_script, asCScr
 
 	m_isConstructor       = false;
 	m_isConstructorCalled = false;
+	m_hasReturned         = false;
 	m_classDecl           = 0;
 	m_globalVar           = 0;
 
@@ -4777,6 +4778,7 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 	// Backup the call to super() and member initializations
 	bool origIsConstructorCalled = m_isConstructorCalled;
 	asCArray<asCObjectProperty*> origInitializedProperties = m_initializedProperties;
+	bool origHasReturned = m_hasReturned;
 
 	bool hasReturn1;
 	asCByteCode ifBC(engine);
@@ -4807,6 +4809,7 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 		// Reset the constructor called flag and initialized properties so the else statement can also implement these
 		m_isConstructorCalled = origIsConstructorCalled;
 		m_initializedProperties = origInitializedProperties;
+		m_hasReturned = origHasReturned;
 
 		int afterElse = 0;
 		if( !hasReturn1 )
@@ -5329,6 +5332,9 @@ void asCCompiler::PrepareTemporaryVariable(asCScriptNode *node, asCExprContext *
 
 void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 {
+	// Set flag to indicate that a return statement has been compiled
+	m_hasReturned = true;
+
 	// Get return type and location
 	sVariable *v = variables->GetVariable("return");
 
@@ -8891,6 +8897,10 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 						// If a break label is set we are either in a loop or a switch statements
 						Error(TXT_CANNOT_INIT_MEMBERS_IN_SWITCH, opNode);
 					}
+
+					// Give error if a return has already been compiled
+					if (m_hasReturned)
+						Error(TXT_ALL_CODE_PATHS_MUST_INIT_MEMBER, opNode);
 
 					asQWORD constantValue;
 					CompileInitializationWithAssignment(&ctx->bc, prop->type, opNode, offset, &constantValue, asVGM_MEMBER, rexpr, rctx);

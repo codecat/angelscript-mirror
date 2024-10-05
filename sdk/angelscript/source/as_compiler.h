@@ -401,6 +401,7 @@ protected:
 
 	bool                         m_isConstructor;
 	bool                         m_isConstructorCalled;
+	bool                         m_hasReturned;
 	asCArray<asCObjectProperty*> m_initializedProperties; // Doesn't hold reference
 	sClassDeclaration           *m_classDecl;
 	sGlobalVariableDescription  *m_globalVar;
