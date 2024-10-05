@@ -8879,6 +8879,19 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 				{
 					m_initializedProperties.PushLast(prop);
 
+					// Give an error if the initialization is happening inside a loop or switch statement
+					if (continueLabels.GetLength() > 0)
+					{
+						// If a continue label is set we are in a loop
+						Error(TXT_CANNOT_INIT_MEMBERS_IN_LOOPS, opNode);
+					}
+					else if (breakLabels.GetLength() > 0)
+					{
+						// TODO: Should eventually allow initialization in switch statements
+						// If a break label is set we are either in a loop or a switch statements
+						Error(TXT_CANNOT_INIT_MEMBERS_IN_SWITCH, opNode);
+					}
+
 					asQWORD constantValue;
 					CompileInitializationWithAssignment(&ctx->bc, prop->type, opNode, offset, &constantValue, asVGM_MEMBER, rexpr, rctx);
 

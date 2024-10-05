@@ -67,6 +67,8 @@
 #define TXT_CANNOT_INHERIT_FROM_s_FINAL            "Can't inherit from class '%s' marked as final"
 #define TXT_CANNOT_INHERIT_FROM_MULTIPLE_CLASSES   "Can't inherit from multiple classes"
 #define TXT_CANNOT_INHERIT_FROM_SELF               "Can't inherit from itself, or another class that inherits from this class"
+#define TXT_CANNOT_INIT_MEMBERS_IN_LOOPS           "Can't initialize the members in loops"
+#define TXT_CANNOT_INIT_MEMBERS_IN_SWITCH          "Can't initialize the members in switch"
 #define TXT_CANNOT_PASS_CLASS_METHOD_AS_ARG        "Can't pass class method as arg directly. Use a delegate object instead"
 #define TXT_CANNOT_RESOLVE_AUTO                    "Unable to resolve auto type"
 #define TXT_CANNOT_ACCESS_NON_STATIC_MEMBER_s      "Cannot access non-static member '%s' like this"

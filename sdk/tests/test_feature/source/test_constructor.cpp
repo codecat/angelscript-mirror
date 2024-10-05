@@ -186,10 +186,79 @@ bool Test()
 	// TODO: The constructor must evaluate and give error if a member has not been initialized and a default initialization cannot be given
 	// TODO: The default constructor must also verify that all members can indeed be initialized (as this is no longer done during the declaration)
 	// TODO: Test with derived classes. If the derived constructor assigns a value to an inherited member it will not be considered an initialization, as the happens in the base type
-	// TODO: Test initializations in for/while. It should not be done, since it will be repeated. Set flag m_insideLoop when compiling loops, and then clear when exiting (must be counter as there can be nested loops).
-	// TODO: Test initialization in switch. It must not be done because the compiler will not guarantee that all paths initialize the member.
 	// TODO: Test that accessing a member before it has been initialized will make it initialize in beginning as default (else it would cause null pointer exception at runtime)
 	// TODO: Test that the compiler can catch scenarios where constructor doesn't initialize all members before return, e.g. foo(bool b) { a = expr; if(b) return; c = expr; }
+
+	// Test that initializations of members isn't done in loops and switch cases
+	// TODO: Initialization in switch can potentially be done if all code paths do the initialization and there are no fallthroughs that potentially initialize it twice
+	{
+		engine = asCreateScriptEngine();
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME,
+			"class Bar\n"
+			"{\n"
+			"  Bar(int a) { value = a; } \n"
+			"  int value; \n"
+			"}\n"
+			"class Foo\n"
+			"{\n"
+			"  Foo(int v) { \n"
+			"    switch( v) { case 1: a = Bar(1); } \n" // Must give error that member cannot be initialized in switch case
+			"    while( v == 0 ) { b = Bar(1); } \n"    // Must give error that member cannot be initialized in loop
+			"  } \n" 
+			"  Bar a, b;\n"
+			"}\n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != 
+			"TestConstructor (8, 3) : Info    : Compiling Foo::Foo(int)\n"
+			"TestConstructor (9, 28) : Error   : Can't initialize the members in switch\n"
+			"TestConstructor (10, 25) : Error   : Can't initialize the members in loops\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		mod->AddScriptSection(TESTNAME,
+			"class Bar\n"
+			"{\n"
+			"  Bar(int a) { value = a; } \n"
+			"  Bar &opAssign(const Bar &in) delete; \n" // no assignment
+			"  int value; \n"
+			"}\n"
+			"class Foo\n"
+			"{\n"
+			"  Foo(int v) { \n"
+			"    a = Bar(0); \n" // The initialization is happening here
+			"    b = Bar(0); \n" 
+			"    switch( v) { case 1: a = Bar(1); } \n" // Will attempt a normal assignment
+			"    while( v == 0 ) { b = Bar(1); } \n"
+			"  } \n"
+			"  Bar a, b;\n"
+			"}\n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != 
+			"TestConstructor (9, 3) : Info    : Compiling Foo::Foo(int)\n"
+			"TestConstructor (12, 28) : Error  : No appropriate opAssign method found in 'Bar' for value assignment\n"
+			"TestConstructor (13, 25) : Error  : No appropriate opAssign method found in 'Bar' for value assignment\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test that member initializations can be done in if statement, as long as both conditions initialize the same members
 	// https://www.gamedev.net/forums/topic/717528-constructors-behaving-strangely
