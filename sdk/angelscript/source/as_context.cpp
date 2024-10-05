@@ -6093,11 +6093,9 @@ void *asCContext::GetThisPointer(asUINT stackLevel)
 		sf = (asDWORD*)s[0];
 	}
 
-	if( func == 0 )
+	// sf is null if this is for a nested state
+	if( sf == 0 || func == 0 || func->objectType == 0 )
 		return 0;
-
-	if( func->objectType == 0 )
-		return 0; // not in a method
 
 	void *thisPointer = (void*)*(asPWORD*)(sf);
 	if( thisPointer == 0 )
