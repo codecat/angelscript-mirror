@@ -182,14 +182,99 @@ bool Test()
 		engine->ShutDownAndRelease();
 	}
 
-	// TODO: Potential syntax within constructor: "set member = expr;" to distinguish from ordinary assignment
-	// TODO: The constructor must evaluate and give error if a member has not been initialized and a default initialization cannot be given
-	// TODO: The default constructor must also verify that all members can indeed be initialized (as this is no longer done during the declaration)
-	// TODO: Test with derived classes. If the derived constructor assigns a value to an inherited member it will not be considered an initialization, as the happens in the base type
-	// TODO: Test that accessing a member before it has been initialized will make it initialize in beginning as default (else it would cause null pointer exception at runtime)
+	// Test that accessing a member before it has been initialized will make it initialize in beginning as default (else it would cause null pointer exception at runtime)
+	// It's not an error to access the member, as long as there is no explicit init after it. Should set a flag for the property that it has been accessed before init and give error when initializing it.
+	{
+		engine = asCreateScriptEngine();
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME,
+			"class Bar\n"
+			"{\n"
+			"  Bar() delete; \n" // no default constructor
+			"  Bar(int a) { value = a; } \n"
+			"  int value; \n"
+			"}\n"
+			"class Foo\n"
+			"{\n"
+			"  Foo() {\n"
+			"    if( a.value == 0 )\n" // this access is not invalid by itself, as the member could be initialized by the member initialization at the declaration
+			"      a = Bar(0);\n"      // however, by doing an explicit initialization afterwards it is a clear error
+			"    else\n"
+			"      a = Bar(1);\n"
+			"  } \n"
+			"  Foo(int v) { a.value = 1; }" // The access to the member is OK, it will be auto initialized based on the member declaration
+			"  Foo(float v) {\n"
+			"    if( v == 0 )\n"
+			"    {"
+			"      a = Bar(0);\n"
+			"      a.value = 1;\n" // this access doesn't invalidate the initialization in the else condition
+			"    }\n"
+			"    else\n"
+			"      a = Bar(1);\n"
+			"  } \n"
+			"  Bar a = Bar(1);\n"
+			"}\n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer !=
+			"TestConstructor (9, 3) : Info    : Compiling Foo::Foo()\n"
+			"TestConstructor (11, 9) : Error   : The member has been accessed before the initialization\n"
+			"TestConstructor (13, 9) : Error   : The member has been accessed before the initialization\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test that the compiler catch errors of members that cannot be initialized with default constructor
+	{
+		engine = asCreateScriptEngine();
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME,
+			"class Bar\n"
+			"{\n"
+			"  Bar() delete; \n" // no default constructor
+			"  Bar(int a) { value = a; } \n"
+			"  int value; \n"
+			"}\n"
+			"class Foo\n"
+			"{\n"
+			"  Foo(int v) {} \n" // Bar doesn't have a default constructor so 'a' must be explicitly initialized
+			"  Bar a;\n"
+			"}\n"
+			"class Foo2 { Bar a; }\n"); // Compiler will attempt to generate default constructor for Foo2, since no other constructor is declared. But will fail
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer !=
+			"TestConstructor (9, 3) : Info    : Compiling Foo::Foo(int)\n"
+			"TestConstructor (10, 7) : Error   : No default constructor for object of type 'Bar'.\n"
+			"TestConstructor (12, 7) : Info    : Compiling auto generated Foo2::Foo2()\n"
+			"TestConstructor (12, 18) : Error   : No default constructor for object of type 'Bar'.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test that the compiler can catch the error of attempting to initialize some members after a condition return (i.e. not all code paths initialize the same set of members)
-	// TODO: Set a flag after a return to ensure no initialization happens after it
 	{
 		engine = asCreateScriptEngine();
 

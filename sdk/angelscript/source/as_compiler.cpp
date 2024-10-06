@@ -131,6 +131,7 @@ void asCCompiler::Reset(asCBuilder *in_builder, asCScriptCode *in_script, asCScr
 
 	byteCode.ClearAll();
 	m_initializedProperties.SetLength(0);
+	m_propertyAccessCount.EraseAll();
 }
 
 int asCCompiler::CompileDefaultCopyConstructor(asCBuilder* in_builder, asCScriptCode* in_script, asCScriptNode* in_node, asCScriptFunction* in_outFunc, sClassDeclaration* in_classDecl)
@@ -4778,6 +4779,7 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 	// Backup the call to super() and member initializations
 	bool origIsConstructorCalled = m_isConstructorCalled;
 	asCArray<asCObjectProperty*> origInitializedProperties = m_initializedProperties;
+	asCMap<asCObjectProperty*, asUINT> origPropertyAccessCount = m_propertyAccessCount;
 	bool origHasReturned = m_hasReturned;
 
 	bool hasReturn1;
@@ -4802,6 +4804,8 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 		constructorCall1 = true;
 	asCArray<asCObjectProperty*> initializedProperties1 = m_initializedProperties;
 	asCArray<asCObjectProperty*> initializedProperties2 = origInitializedProperties;
+	asCMap<asCObjectProperty*, asUINT> propertyAccessCount1 = m_propertyAccessCount;
+	asCMap<asCObjectProperty*, asUINT> propertyAccessCount2 = origPropertyAccessCount;
 
 	// Do we have an else statement?
 	if( inode->firstChild->next != inode->lastChild )
@@ -4810,6 +4814,7 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 		m_isConstructorCalled = origIsConstructorCalled;
 		m_initializedProperties = origInitializedProperties;
 		m_hasReturned = origHasReturned;
+		m_propertyAccessCount = origPropertyAccessCount;
 
 		int afterElse = 0;
 		if( !hasReturn1 )
@@ -4887,6 +4892,42 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 				asCString str;
 				str.Format(TXT_BOTH_CONDITIONS_MUST_INIT_MEMBER_s, initializedProperties2[n]->name.AddressOf());
 				Error(str, inode);
+			}
+		}
+
+		// Use the max property access count so a member accessed in only one of the conditions will be considered as well
+		asSMapNode<asCObjectProperty*, asUINT>* node = 0;
+		if (propertyAccessCount1.MoveFirst(&node))
+		{
+			asSMapNode<asCObjectProperty*, asUINT>* node2;
+			if (m_propertyAccessCount.MoveTo(&node2, node->key))
+				node2->value = node2->value > node->value ? node2->value : node->value;
+			else
+				m_propertyAccessCount.Insert(node->key, node->value);
+			
+			while (propertyAccessCount1.MoveNext(&node, node))
+			{
+				if (m_propertyAccessCount.MoveTo(&node2, node->key))
+					node2->value = node2->value > node->value ? node2->value : node->value;
+				else
+					m_propertyAccessCount.Insert(node->key, node->value);
+			}
+		}
+
+		if (propertyAccessCount2.MoveFirst(&node))
+		{
+			asSMapNode<asCObjectProperty*, asUINT>* node2;
+			if (m_propertyAccessCount.MoveTo(&node2, node->key))
+				node2->value = node2->value > node->value ? node2->value : node->value;
+			else
+				m_propertyAccessCount.Insert(node->key, node->value);
+
+			while (propertyAccessCount2.MoveNext(&node, node))
+			{
+				if (m_propertyAccessCount.MoveTo(&node2, node->key))
+					node2->value = node2->value > node->value ? node2->value : node->value;
+				else
+					m_propertyAccessCount.Insert(node->key, node->value);
 			}
 		}
 	}
@@ -8898,6 +8939,11 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 						Error(TXT_CANNOT_INIT_MEMBERS_IN_SWITCH, opNode);
 					}
 
+					// Give an error if the member has been accessed before
+					asSMapNode<asCObjectProperty*, asUINT>* node;
+					if (m_propertyAccessCount.MoveTo(&node, prop) && node->value > 1)
+						Error(TXT_MEMBER_ACCESSED_BEFORE_INIT, opNode);
+
 					// Give error if a return has already been compiled
 					if (m_hasReturned)
 						Error(TXT_ALL_CODE_PATHS_MUST_INIT_MEMBER, opNode);
@@ -10409,6 +10455,16 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				dt = asCDataType::CreateType(outFunc->objectType, false);
 			asCObjectProperty *prop = builder->GetObjectProperty(dt, name.AddressOf());
 			asASSERT(prop);
+
+			// Count the access, so it can be determined if the access happens before initialization in constructors
+			if (m_isConstructor)
+			{
+				asSMapNode<asCObjectProperty*, asUINT> *node;
+				if (m_propertyAccessCount.MoveTo(&node, prop))
+					node->value++;
+				else
+					m_propertyAccessCount.Insert(prop, 1);
+			}
 
 			// Is the property access allowed?
 			if (prop->isPrivate && prop->isInherited)
