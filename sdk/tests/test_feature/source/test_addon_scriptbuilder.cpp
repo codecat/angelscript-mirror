@@ -78,6 +78,42 @@ bool Test()
 
 	// TODO: Preprocessor directives should be alone on the line
 
+	// Test Metadata with namespaces using double scopes
+	// https://www.gamedev.net/forums/topic/717547-script-builder-metadata-namespace-bug/5466636/
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		CScriptBuilder builder;
+		builder.StartNewModule(engine, "test");
+		builder.AddSectionFromMemory("test",
+			"namespace Foo::Bar { \n"
+			"  int a = 5; \n"
+			"} \n"
+			"namespace Thing { \n"
+			"  [Setting] \n"
+			"  int b = 10; \n"
+			"} \n");
+		r = builder.BuildModule();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asIScriptModule* mod = engine->GetModule("test");
+		int varIdx = mod->GetGlobalVarIndexByName("Thing::b");
+		vector<string> metadata = builder.GetMetadataForVar(varIdx);
+		if (metadata[0] != "Setting")
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test Metadata on property using initialization with param list
 	// https://www.gamedev.net/forums/topic/717099-script-builder-addon-fails-on-variable-declaration/5464949/
 	{

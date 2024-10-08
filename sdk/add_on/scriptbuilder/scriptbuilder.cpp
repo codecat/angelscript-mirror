@@ -396,6 +396,8 @@ int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length
 		if( token == "namespace" )
 		{
 			// Get the scope after "namespace". It can be composed of multiple nested namespaces, e.g. A::B::C
+			// Keep track of the number of nested namespace scopes are declared for each block
+			int nestedNamespaces = 0;
 			do
 			{
 				do
@@ -409,8 +411,10 @@ int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length
 					if (currentNamespace != "")
 						currentNamespace += "::";
 					currentNamespace += modifiedScript.substr(pos, len);
+					nestedNamespaces++;
 				}
 			} while (t == asTC_IDENTIFIER || (t == asTC_KEYWORD && modifiedScript.substr(pos, len) == "::"));
+			currentNamespaceStack.push_back(nestedNamespaces);
 
 			// Search until first { is encountered
 			while( pos < modifiedScript.length() )
@@ -434,14 +438,20 @@ int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length
 		// Check if end of namespace
 		if( currentNamespace != "" && token == "}" )
 		{
-			size_t found = currentNamespace.rfind( "::" );
-			if( found != string::npos )
+			assert(currentNamespaceStack.size() > 0);
+			int nestedNamespaces = currentNamespaceStack[currentNamespaceStack.size()-1];
+			currentNamespaceStack.pop_back();
+			while (nestedNamespaces-- > 0)
 			{
-				currentNamespace.erase( found );
-			}
-			else
-			{
-				currentNamespace = "";
+				size_t found = currentNamespace.rfind("::");
+				if (found != string::npos)
+				{
+					currentNamespace.erase(found);
+				}
+				else
+				{
+					currentNamespace = "";
+				}
 			}
 			pos += len;
 			continue;
