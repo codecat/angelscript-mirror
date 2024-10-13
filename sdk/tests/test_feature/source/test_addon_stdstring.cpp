@@ -26,6 +26,55 @@ namespace Test_Addon_StdString
 		COutStream out;
 		CBufferedOutStream bout;
 
+		// Test regexFind
+		{
+			asIScriptEngine* engine = asCreateScriptEngine();
+			engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+			RegisterStdString(engine);
+			bout.buffer = "";
+
+			engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+			asIScriptContext* ctx = engine->CreateContext();
+			r = ExecuteString(engine,
+				"string s = '0Jonsson9';\n"
+				"uint length;\n"
+				"int pos = s.regexFind('[[:alpha:]]+', 0, length);\n"
+				"assert( pos == 1 );\n"
+				"assert( length == 7 );\n", 0, ctx);
+			if (r != asEXECUTION_FINISHED)
+			{
+				TEST_FAILED;
+				if (r == asEXECUTION_EXCEPTION)
+				{
+					PRINTF("%s\n", GetExceptionInfo(ctx).c_str());
+				}
+			}
+			ctx->Release();
+
+			// Test regexFind with utf8 characters. The regex doesn't really understand
+			// the utf8 encoding so each byte is matched individually
+			ctx = engine->CreateContext();
+			r = ExecuteString(engine, 
+				"string s = '0J\\xc3\\xb6nsson9';\n" // \xc3\xb6 is utf-8 for ö
+				"uint length;\n"
+				"int pos = s.regexFind('[[:alpha:]]+[\\x80-\\xff]+[[:alpha:]]+', 0, length);\n"
+				"assert( pos == 1 );\n"
+				"assert( length == 8 );\n", 0, ctx);
+			if (r != asEXECUTION_FINISHED)
+			{
+				TEST_FAILED;
+				if (r == asEXECUTION_EXCEPTION)
+				{
+					PRINTF("%s\n", GetExceptionInfo(ctx).c_str());
+				}
+			}
+			ctx->Release();
+
+
+			engine->ShutDownAndRelease();
+		}
+
 		// Test const string with int value assignment
 		// https://www.gamedev.net/forums/topic/715649-assertion-failure-const-string-asdf-10/5461912/
 		{

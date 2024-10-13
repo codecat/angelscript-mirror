@@ -488,6 +488,8 @@ The second variant finds the first character that doesn't match any of those in 
 
 \note These functions work on the individual bytes in the strings. They do not attempt to understand encoded characters, e.g. UTF-8 encoded characters that can take up to 4 bytes.
 
+\todo Add info on regexFind (also doesn't handle utf-8)
+
 <b>array<string>@ split(const string &in delimiter) const</b><br>
 
 Splits the string in smaller strings where the delimiter is found.

@@ -7,6 +7,7 @@
 #ifndef __psp2__
 	#include <locale.h> // setlocale()
 #endif
+#include <regex>
 
 
 using namespace std;
@@ -373,6 +374,51 @@ static int StringFindFirst(const string &sub, asUINT start, const string &str)
 {
 	// We don't register the method directly because the argument types change between 32bit and 64bit platforms
 	return (int)str.find(sub, (size_t)(start < 0 ? string::npos : start));
+}
+
+// This function returns the index of the first position that matches the regular expression
+//
+// AngelScript signature:
+// int string::regexFind(const string &in regex, uint start = 0, uint &out lengthOfMatch = void)
+static int StringRegexFind(const string& rex, asUINT start, asUINT& outLengthOfMatch, const string& str)
+{
+	if (start >= str.length())
+	{
+		outLengthOfMatch = 0;
+		return -1;
+	}
+
+	// TODO: If possible add support for matching utf8 characters
+	// However on with MSVC it doesn't seem that std::regex works with utf8
+	// This works with MSVC, but I don't want to have to convert the string to UTF-16 first because the position and length will not work
+	// https://www.regular-expressions.info/stdregex.html
+	// 
+	//  std::wregex pattern(L"[[:alpha:]]+");
+	//  bool result = std::regex_match(std::wstring(L"abcdéfg"), pattern);
+	//
+	// The solution from stack overflow doesn't work with MSVC
+	// https://stackoverflow.com/questions/11254232/do-c11-regular-expressions-work-with-utf-8-strings
+	// 
+	//  std::locale old;
+	//  std::locale::global(std::locale("en_US.UTF-8"));
+	//  std::regex pattern("[[:alpha:]]+", std::regex_constants::extended);
+	//  bool result = std::regex_match(std::string(u8"abcdéfg"), pattern);
+	//
+	// I've tried setting the manifest to use utf8 code page but it also doesn't work with MSVC
+	// https://learn.microsoft.com/en-us/windows/apps/design/globalizing/use-utf8-code-page
+
+	std::regex pattern(rex, std::regex_constants::ECMAScript | std::regex_constants::collate);
+	std::cmatch match;
+	bool result = std::regex_search(str.c_str() + start, str.c_str()+str.length(), match, pattern);
+
+	if (!result)
+	{
+		outLengthOfMatch = 0;
+		return -1;
+	}
+
+	outLengthOfMatch = (asUINT)match[0].length();
+	return (int)match.prefix().length();
 }
 
 // This function returns the index of the first position where the one of the bytes in substring
@@ -854,7 +900,7 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("string", "int findLastNotOf(const string &in, int start = -1) const", asFUNCTION(StringFindLastNotOf), asCALL_CDECL_OBJLAST); assert(r >= 0);
 	r = engine->RegisterObjectMethod("string", "void insert(uint pos, const string &in other)", asFUNCTION(StringInsert), asCALL_CDECL_OBJLAST); assert(r >= 0);
 	r = engine->RegisterObjectMethod("string", "void erase(uint pos, int count = -1)", asFUNCTION(StringErase), asCALL_CDECL_OBJLAST); assert(r >= 0);
-
+	r = engine->RegisterObjectMethod("string", "int regexFind(const string  &in regex, uint start = 0, uint &out lengthOfMatch = void) const", asFUNCTION(StringRegexFind), asCALL_CDECL_OBJLAST); assert(r >= 0);
 
 	r = engine->RegisterGlobalFunction("string formatInt(int64 val, const string &in options = \"\", uint width = 0)", asFUNCTION(formatInt), asCALL_CDECL); assert(r >= 0);
 	r = engine->RegisterGlobalFunction("string formatUInt(uint64 val, const string &in options = \"\", uint width = 0)", asFUNCTION(formatUInt), asCALL_CDECL); assert(r >= 0);
