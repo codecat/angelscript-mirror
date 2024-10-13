@@ -406,6 +406,7 @@ void DumpModule(asIScriptModule *mod)
 		" int findLastNotOf(const string&in, int = - 1) const\n"
 		" void insert(uint, const string&in)\n"
 		" void erase(uint, int = - 1)\n"
+		" int regexFind(const string&in, uint = 0, uint&out = void) const\n"
 		"type: interface MyIntf\n"
 		" void func() const\n" )
 	{
