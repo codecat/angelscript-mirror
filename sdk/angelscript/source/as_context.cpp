@@ -6560,7 +6560,7 @@ int as_powi(int base, int exponent, bool& isOverflow)
 			if( exponent & 1 ) result *= base;
 			exponent >>= 1;
 			base *= base;
-			FALLTHROUGH;
+			FALLTHROUGH
 		case 2:
 			if( exponent & 1 ) result *= base;
 			exponent >>= 1;
