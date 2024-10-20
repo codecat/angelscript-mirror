@@ -190,6 +190,7 @@ enum asEEngineProp
 	asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT = 37,
 	asEP_MEMBER_INIT_MODE                   = 38,
 	asEP_BOOL_CONVERSION_MODE               = 39,
+	asEP_FOREACH_SUPPORT                    = 40,
 
 	asEP_LAST_PROPERTY
 };

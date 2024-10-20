@@ -64,6 +64,7 @@ add_executable(
         ../../source/test_factory.cpp
         ../../source/test_float.cpp
         ../../source/test_for.cpp
+        ../../source/test_foreach.cpp
         ../../source/test_funcoverload.cpp
         ../../source/test_functionptr.cpp
         ../../source/test_garbagecollect.cpp

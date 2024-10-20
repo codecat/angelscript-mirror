@@ -249,6 +249,7 @@ protected:
 	void CompileSwitchStatement(asCScriptNode *node, bool *hasReturn, asCByteCode *bc);
 	void CompileCase(asCScriptNode *node, asCByteCode *bc, bool *hasReturn, bool *hasBreak);
 	void CompileForStatement(asCScriptNode *node, asCByteCode *bc);
+	void CompileForEachStatement(asCScriptNode* node, asCByteCode* bc);
 	void CompileWhileStatement(asCScriptNode *node, asCByteCode *bc);
 	void CompileDoWhileStatement(asCScriptNode *node, asCByteCode *bc);
 	void CompileBreakStatement(asCScriptNode *node, asCByteCode *bc);
@@ -418,6 +419,7 @@ protected:
 	void ReleaseTemporaryVariable(asCExprValue &t, asCByteCode *bc);
 	void ReleaseTemporaryVariable(int offset, asCByteCode *bc);
 	bool IsVariableOnHeap(int offset);
+	int DeclareVariable(const asCString &name, const asCDataType &type, int offset, asCByteCode *bc, asCScriptNode *node);
 
 	// This ordered array indicates the type of each variable
 	asCArray<asCDataType> variableAllocations;

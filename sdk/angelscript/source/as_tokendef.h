@@ -130,6 +130,7 @@ enum eTokenType
 	ttIf,                  // if
 	ttElse,                // else
 	ttFor,                 // for
+	ttForEach,             // foreach
 	ttWhile,               // while
 	ttBool,                // bool
 	ttFuncDef,             // funcdef
@@ -264,6 +265,7 @@ sTokenWord const tokenWords[] =
 	asTokenDef("false"     , ttFalse),
 	asTokenDef("float"     , ttFloat),
 	asTokenDef("for"       , ttFor),
+	asTokenDef("foreach"   , ttForEach),
 	asTokenDef("funcdef"   , ttFuncDef),
 	asTokenDef("if"        , ttIf),
 	asTokenDef("import"    , ttImport),

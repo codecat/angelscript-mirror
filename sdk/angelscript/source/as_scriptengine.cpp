@@ -490,6 +490,14 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		ep.boolConversionMode = (asUINT)value;
 		break;
 
+	case asEP_FOREACH_SUPPORT:
+		if (value > 1)
+			return asINVALID_ARG;
+		ep.foreachSupport = value ? true : false;
+		// TODO: funcdef: Make sure there is no compilation currently in progress
+		tok.InitJumpTable();
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -618,7 +626,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 
 	case asEP_BOOL_CONVERSION_MODE:
 		return ep.boolConversionMode;
-		break;
+	
+	case asEP_FOREACH_SUPPORT:
+		return ep.foreachSupport;
 
 	default:
 		return 0;
@@ -697,6 +707,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.alwaysImplDefaultCopyConstruct = 0;        // 0 = as per language spec, 1 = always implement it, 2, never implement
 		ep.memberInitMode                = 1;         // 0 = pre 2.38.0, members with init expr in declaration are initialized after super(), 1 = all members initialized in beginning, except if explicitly initialized in body
 		ep.boolConversionMode            = 0;         // 0 = only do use opImplConv for registered value type, 1 = use also opConv in contextual conversion even for reference types
+		ep.foreachSupport                = true;
 	}
 
 	gc.engine = this;

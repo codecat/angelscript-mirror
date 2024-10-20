@@ -125,7 +125,7 @@ cannot be determined at compile time it cannot be used in the case values.
 
 
 
-\section while Loops: while / do-while / for
+\section while Loops: while / do-while / for / foreach
 
 <pre>
   // Loop, where the condition is checked before the logic is executed
@@ -168,7 +168,7 @@ part is executed after the logic within the loop, e.g. used to increment an iter
 Multiple variables can be declared in the <code>for</code> loop, separated by <code>,</code>. 
 Likewise, multiple increment expressions can be used in the last part by separating them with <code>,</code>.
 
-
+\todo Document foreach loops. Reference \ref doc_script_class_foreach_ops
 
 
 

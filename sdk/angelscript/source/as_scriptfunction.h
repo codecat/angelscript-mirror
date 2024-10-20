@@ -247,7 +247,7 @@ public:
 
 	void      DestroyInternal();
 
-	void      AddVariable(const asCString &name, asCDataType &type, int stackOffset, bool onHeap);
+	void      AddVariable(const asCString &name, const asCDataType &type, int stackOffset, bool onHeap);
 
 	int       GetSpaceNeededForArguments();
 	int       GetSpaceNeededForReturnValue();

@@ -86,6 +86,8 @@ xor<br>
 </tr>
 </table>
 
+\todo Add foreach
+
 <small>* Not really a reserved keyword, but is recognized by the compiler as a built-in keyword.</small>
 
 These are the non-alphabetical tokens that are also used in the language syntax.

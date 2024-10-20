@@ -57,6 +57,7 @@ bool TestOptimize();
 bool TestNotInitialized();
 bool TestVector3();
 
+namespace TestForEach           { bool Test(); }
 namespace TestException         { bool Test(); }
 namespace TestCDeclReturn       { bool Test(); }
 namespace TestCustomMem         { bool Test(); }
@@ -246,6 +247,7 @@ int allTests()
 	if( Test_Addon_StdString::Test()     ) goto failed; else PRINTF("-- Test_Addon_StdString passed\n");
 	if( Test_Addon_ScriptSocket::Test()  ) goto failed; else PRINTF("-- Test_Addon_ScriptSocket passed\n");
 
+	if( TestForEach::Test()                     ) goto failed; else PRINTF("-- TestForEach passed\n");
 	if( TestContext::Test()                     ) goto failed; else PRINTF("-- TestContext passed\n");
 	if( TestComposition::Test()                 ) goto failed; else PRINTF("-- TestComposition passed\n");
 	if( TestPropIntegerDivision::Test()         ) goto failed; else PRINTF("-- TestPropIntegerDivision passed\n");

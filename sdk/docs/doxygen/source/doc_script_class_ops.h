@@ -246,5 +246,8 @@ An example where the opCast/opImplCast operator overloads come in handy is when 
 
 \see \ref conversion, \ref doc_adv_inheritappclass
 
+\section doc_script_class_foreach_ops Foreach loop operators
+
+\todo Document this. reference \ref while
 
 */

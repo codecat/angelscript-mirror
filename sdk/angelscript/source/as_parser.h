@@ -111,6 +111,7 @@ protected:
 	asCScriptNode *ParseCase();
 	asCScriptNode *ParseIf();
 	asCScriptNode *ParseFor();
+	asCScriptNode *ParseForEach();
 	asCScriptNode *ParseWhile();
 	asCScriptNode *ParseDoWhile();
 	asCScriptNode *ParseReturn();

@@ -70,6 +70,7 @@ public:
 
 	static asCDataType CreatePrimitive(eTokenType tt, bool isConst);
 	static asCDataType CreateType(asCTypeInfo *ti, bool isConst);
+	static asCDataType CreateById(asCScriptEngine* engine, int typeId, bool isConst);
 	static asCDataType CreateAuto(bool isConst);
 	static asCDataType CreateObjectHandle(asCTypeInfo *ot, bool isConst);
 	static asCDataType CreateNullHandle();

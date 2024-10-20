@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.38.0 WIP - 2024/10/13</h2>
+<h2>Version 2.38.0 WIP - 2024/10/20</h2>
 
 <ul>
 <li>Bug fixes
@@ -37,6 +37,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Included a new function type asFUNC_TEMPLATE to indicate the template functions
 <li>Added engine property asEP_MEMBER_INIT_MODE to allow backwards compatiblity for how class members are initialized
 <li>Added engine property asEP_BOOL_CONVERSION_MODE to enable or disable contextual conversion to bool
+<li>Added engine property asEP_FOREACH_SUPPORT to allow turning off the foreach loops for backwards compatibility
 </ul>
 <li>Library interface
 <ul>
@@ -48,6 +49,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>It is now possible to instantiate registered template functions and call them (Thanks MindOfTony)
 <li>A class member can now be explicitly initialized in the class constructor, overriding the initialization defined in the declaration (Thanks Patrick Jeeves)
 <li>Implemented contextual conversion to bool in conditions and boolean operations (Thanks HenryAWE)
+<li>Implemented support for foreach loops (Thanks HenryAWE)
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

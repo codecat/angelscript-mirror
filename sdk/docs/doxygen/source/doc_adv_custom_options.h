@@ -166,6 +166,8 @@ This option was added to provide backwards compatibility with 2.35.0.
 
 \todo document asEP_BOOL_CONVERSION_MODE
 
+\todo document asEP_FOREACH_SUPPORT
+
 
 
 

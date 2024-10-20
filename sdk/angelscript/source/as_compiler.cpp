@@ -3064,32 +3064,8 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		}
 
 		int offset = AllocateVariable(type, false);
-		if( variables->DeclareVariable(name.AddressOf(), type, offset, IsVariableOnHeap(offset)) < 0 )
-		{
-			// TODO: It might be an out-of-memory too
-
-			asCString str;
-			str.Format(TXT_s_ALREADY_DECLARED, name.AddressOf());
-			Error(str, node);
-
-			// Don't continue after this error, as it will just
-			// lead to more errors that are likely false
+		if (DeclareVariable(name, type, offset, bc, node) < 0)
 			return;
-		}
-		else
-		{
-			// Warn if this variable hides another variable in a higher scope
-			if( variables->parent && variables->parent->GetVariable(name.AddressOf()) )
-			{
-				asCString str;
-				str.Format(TXT_s_HIDES_VAR_IN_OUTER_SCOPE, name.AddressOf());
-				Warning(str, node);
-			}
-		}
-
-		// Add marker that the variable has been declared
-		bc->VarDecl((int)outFunc->scriptData->variables.GetLength());
-		outFunc->AddVariable(name, type, offset, IsVariableOnHeap(offset));
 
 		// Keep the node for the variable decl
 		asCScriptNode *varNode = node;
@@ -4300,6 +4276,8 @@ void asCCompiler::CompileStatement(asCScriptNode *statement, bool *hasReturn, as
 		CompileIfStatement(statement, hasReturn, bc);
 	else if (statement->nodeType == snFor)
 		CompileForStatement(statement, bc);
+	else if (statement->nodeType == snForEach)
+		CompileForEachStatement(statement, bc);
 	else if (statement->nodeType == snWhile)
 		CompileWhileStatement(statement, bc);
 	else if (statement->nodeType == snDoWhile)
@@ -5062,6 +5040,498 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 		// Don't deallocate function parameters
 		if( v->stackOffset > 0 )
 			DeallocateVariable(v->stackOffset);
+	}
+
+	RemoveVariableScope();
+	bc->Block(false);
+}
+
+int asCCompiler::DeclareVariable(const asCString& name, const asCDataType& type, int offset, asCByteCode* bc, asCScriptNode *node)
+{
+	if (variables->DeclareVariable(name.AddressOf(), type, offset, IsVariableOnHeap(offset)) < 0)
+	{
+		// TODO: It might be an out-of-memory too
+
+		asCString str;
+		str.Format(TXT_s_ALREADY_DECLARED, name.AddressOf());
+		Error(str, node);
+
+		// Don't continue after this error, as it will just
+		// lead to more errors that are likely false
+		return -1;
+	}
+	else
+	{
+		// Warn if this variable hides another variable in a higher scope
+		if (name != "" && variables->parent && variables->parent->GetVariable(name.AddressOf()))
+		{
+			asCString str;
+			str.Format(TXT_s_HIDES_VAR_IN_OUTER_SCOPE, name.AddressOf());
+			Warning(str, node);
+		}
+	}
+
+	// Add marker that the variable has been declared
+	bc->VarDecl((int)outFunc->scriptData->variables.GetLength());
+	outFunc->AddVariable(name, type, offset, IsVariableOnHeap(offset));
+
+	return 0;
+}
+
+void asCCompiler::CompileForEachStatement(asCScriptNode* node, asCByteCode* bc)
+{
+	const char* const BEGIN_NAME = "opForBegin";
+	const char* const END_NAME = "opForEnd";
+	const char* const NEXT_NAME = "opForNext";
+	const char* const VALUE_NAME = "opForValue";
+
+	asCArray<asCDataType> itemDataTypes;
+	asCArray<asCScriptNode*> itemNodes; // Item identifiers
+	asUINT itemCount = 0;
+
+	asCScriptNode* rangeNode = node->firstChild;
+	while (rangeNode->nodeType != snAssignment)
+	{
+		++itemCount;
+
+		// Datatype of the item
+		asASSERT(rangeNode->nodeType == snDataType);
+		asCDataType itemDt = builder->CreateDataTypeFromNode(rangeNode, script, outFunc->nameSpace, false, outFunc->objectType);
+		itemDataTypes.PushLast(itemDt);
+
+		// Indentifier
+		asASSERT(rangeNode->next->nodeType == snIdentifier);
+		itemNodes.PushLast(rangeNode->next);
+
+		rangeNode = rangeNode->next->next;
+	}
+
+	//---------------------------------------
+	// Compile the range expression and store in a local variable
+	asCExprContext rangeExpr(engine);
+	if (CompileAssignment(rangeNode, &rangeExpr) < 0)
+		return;
+	bool isConstRange = rangeExpr.type.isConstant;
+
+	asCTypeInfo* rangeTypeInfo = rangeExpr.type.dataType.GetTypeInfo();
+	if (!rangeTypeInfo)
+	{
+		asCString str;
+		str.Format(TXT_s_NOT_A_FOREACH_TYPE, rangeExpr.type.dataType.Format(outFunc->nameSpace).AddressOf());
+		Error(str, node->lastChild);
+		return;
+	}
+
+	asCDataType rangeDt = rangeExpr.type.dataType;
+	rangeDt.MakeReference(false);
+	if (rangeDt.SupportHandles()) rangeDt.MakeHandle(true);
+	int rangeOffset = AllocateVariable(rangeDt, false);
+	if (DeclareVariable("", rangeDt, rangeOffset, &rangeExpr.bc, node) < 0)
+		return;
+
+	CompileInitializationWithAssignment(&rangeExpr.bc, rangeDt, rangeNode, rangeOffset, 0, asVGM_VARIABLE, rangeNode, &rangeExpr);
+	ProcessDeferredParams(&rangeExpr);
+	rangeExpr.bc.OptimizeLocally(tempVariableOffsets);
+
+	//---------------------------------------
+	// Check for required operators
+	// Method ids
+	int opForBeginId = 0, opForEndId = 0, opForNextId = 0;
+	asCArray<int> opForValueNIds; // For multiple items
+
+	// TypeId of the iterator type
+	int iterTid = asTYPEID_VOID;
+
+	// TODO: foreach: Considering overloads for those 4 operators,
+	// for example a const and a non-const one.
+	// If a const and non-const opForBegin returns different iterator types,
+	// code for finding opForValue(N), opForNext, opForEnd should also handle overloading
+	// Maybe we can use MatchFunctions instead of GetMethodByName
+
+	{
+		asIScriptFunction* f = rangeTypeInfo->GetMethodByName(BEGIN_NAME, true);
+		if (f && (!isConstRange || f->IsReadOnly()) && f->GetParamCount() == 0)
+		{
+			iterTid = f->GetReturnTypeId();
+			if (iterTid)
+			{
+				opForBeginId = f->GetId();
+			}
+		}
+	}
+
+	if (iterTid)
+	{
+		asIScriptFunction* f = rangeTypeInfo->GetMethodByName(END_NAME, true);
+		if (f && (!isConstRange || f->IsReadOnly())
+			&& f->GetReturnTypeId() == asTYPEID_BOOL
+			&& f->GetParamCount() == 1)
+		{
+			int param_tid;
+			f->GetParam(0, &param_tid);
+			if (param_tid == iterTid)
+				opForEndId = f->GetId();
+		}
+	}
+
+	if (iterTid)
+	{
+		asIScriptFunction* f = rangeTypeInfo->GetMethodByName(NEXT_NAME, true);
+		if (f && (!isConstRange || f->IsReadOnly())
+			&& f->GetReturnTypeId() == iterTid
+			&& f->GetParamCount() == 1)
+		{
+			int param_tid;
+			f->GetParam(0, &param_tid);
+			if (param_tid == iterTid)
+				opForNextId = f->GetId();
+		}
+	}
+
+	if (iterTid)
+	{
+		// Find the methods and types for each value
+		if (itemCount > 1 || opForValueNIds.GetLength() == 0)
+		{
+			for (asUINT i = 0; i < itemCount; ++i)
+			{
+				int opForValueIdN = 0;
+
+				asCString methodName;
+
+				// Special case for only one item
+				// try the opForValue without an index suffix at first
+				asIScriptFunction* f = 0;
+				if( itemCount == 1 )
+					f = rangeTypeInfo->GetMethodByName(VALUE_NAME, true);
+				if (f == 0)
+				{
+					methodName.Format("%s%d", VALUE_NAME, (int)i);
+					f = rangeTypeInfo->GetMethodByName(methodName.AddressOf(), true);
+				}
+
+				if (f && (!isConstRange || f->IsReadOnly())
+					&& f->GetParamCount() == 1)
+				{
+					int param_tid;
+					f->GetParam(0, &param_tid);
+					if (param_tid == iterTid)
+					{
+						opForValueIdN = f->GetId();
+						opForValueNIds.PushLast(opForValueIdN);
+					}
+				}
+				else
+					break;
+
+				// Resolve auto using return type of opForValueN
+				if (itemDataTypes[i].IsAuto())
+				{
+					asDWORD retFlags;
+					int retTid = f->GetReturnTypeId(&retFlags);
+
+					bool isConst = itemDataTypes[i].IsReadOnly() || retFlags & asTM_CONST;
+					asCDataType dt = asCDataType::CreateById(engine, retTid, isConst);
+
+					itemDataTypes[i] = dt;
+				}
+			}
+		}
+	}
+
+	// Give a clear error message about which part not satisfies the requirement
+	if (!(opForBeginId && opForEndId && opForNextId && opForValueNIds.GetLength() == itemCount))
+	{
+		asCString str;
+		str.Format(TXT_s_NOT_A_FOREACH_TYPE, rangeExpr.type.dataType.Format(outFunc->nameSpace).AddressOf());
+		Error(str, node->lastChild);
+
+		if (!opForBeginId)
+		{
+			str.Format(TXT_MISSING_OR_INVALID_DEFINITON_OF_s, BEGIN_NAME);
+			Information(str, node->lastChild);
+		}
+		else
+		{
+			// Only report the other methods if opForBegin is valid, otherwise the error might be misleading
+			if (!opForEndId)
+			{
+				str.Format(TXT_MISSING_OR_INVALID_DEFINITON_OF_s, END_NAME);
+				Information(str, node->lastChild);
+			}
+			if (!opForNextId)
+			{
+				str.Format(TXT_MISSING_OR_INVALID_DEFINITON_OF_s, NEXT_NAME);
+				Information(str, node->lastChild);
+			}
+			if (opForValueNIds.GetLength() != itemCount)
+			{
+				str.Format(TXT_MISSING_OR_INVALID_DEFINITON_OF_s, (asCString(VALUE_NAME) + "#").AddressOf());
+				Information(str, node->lastChild);
+			}
+		}
+
+		return;
+	}
+
+	asCDataType iterDt = asCDataType::CreateById(engine, iterTid, isConstRange);
+
+	// The following part is majorly copied from CompileForStatement
+
+	// Add a variable scope that will be used by CompileBreak/Continue to know where to stop deallocating variables
+	bc->Block(true);
+	AddVariableScope(true, true);
+
+	// We will use three labels for the for loop
+	int conditionLabel = nextLabel++;
+	int afterLabel = nextLabel++;
+	int continueLabel = nextLabel++;
+	int insideLabel = nextLabel++;
+
+	continueLabels.PushLast(continueLabel);
+	breakLabels.PushLast(afterLabel);
+
+	//---------------------------------------
+	// Compile the initialization statement
+	asCByteCode initBC(engine);
+	LineInstr(&initBC, node->firstChild->tokenPos);
+	int iterOffset = AllocateVariable(iterDt, false);
+	if (DeclareVariable("", iterDt, iterOffset, &initBC, node) < 0)
+		return;
+
+	asCExprContext opForBeginExpr(engine);
+	{
+		opForBeginExpr.bc.InstrSHORT(asBC_PshVPtr, short(rangeOffset));
+
+		asCArray<asCExprContext*> args;
+		int r = MakeFunctionCall(
+			&opForBeginExpr,
+			opForBeginId,
+			CastToObjectType(rangeExpr.type.dataType.GetTypeInfo()),
+			args,
+			node->firstChild
+		);
+		UNUSED_VAR(r);
+		asASSERT(r >= 0);
+	}
+	CompileInitializationWithAssignment(
+		&initBC, iterDt, node->firstChild, iterOffset, NULL, asVGM_VARIABLE, rangeNode, &opForBeginExpr
+	);
+	ReleaseTemporaryVariable(opForBeginExpr.type, &initBC);
+	initBC.OptimizeLocally(tempVariableOffsets);
+
+	//-----------------------------------
+	// Compile the condition statement
+	asCExprContext opForEndExpr(engine);
+	{
+		opForEndExpr.bc.InstrSHORT(asBC_PshVPtr, short(rangeOffset));
+
+		asCArray<asCExprContext*> args;
+		asCExprContext arg(engine);
+		arg.type.SetVariable(iterDt, iterOffset, false);
+		if (!iterDt.IsPrimitive())
+		{
+			arg.bc.InstrSHORT(asBC_PSF, (short)iterOffset);
+			if( iterDt.IsObjectHandle() ) arg.type.dataType.MakeReference(true);
+		}
+		arg.type.isLValue = true;
+		arg.exprNode = node;
+		args.PushLast(&arg);
+
+		int r = MakeFunctionCall(
+			&opForEndExpr,
+			opForEndId,
+			CastToObjectType(rangeExpr.type.dataType.GetTypeInfo()),
+			args,
+			node
+		);
+		UNUSED_VAR(r);
+		asASSERT(r >= 0);
+
+		ConvertToVariable(&opForEndExpr);
+		ProcessDeferredParams(&opForEndExpr);
+
+		// If expression is true exit the loop
+		opForEndExpr.bc.InstrSHORT(asBC_CpyVtoR4, (short)opForEndExpr.type.stackOffset);
+		opForEndExpr.bc.Instr(asBC_ClrHi);
+		opForEndExpr.bc.InstrDWORD(asBC_JZ, insideLabel);
+		ReleaseTemporaryVariable(opForEndExpr.type, &opForEndExpr.bc);
+
+		opForEndExpr.bc.OptimizeLocally(tempVariableOffsets);
+
+		// Prepend the line instruction for the condition
+		asCByteCode tmp(engine);
+		LineInstr(&tmp, node->firstChild->tokenPos);
+		tmp.AddCode(&opForEndExpr.bc);
+		opForEndExpr.bc.AddCode(&tmp);
+	}
+
+	//---------------------------
+	// Compile the increment statement
+	asCExprContext next(engine);
+	{
+		asCExprContext opForNextExpr(engine);
+		opForNextExpr.bc.InstrSHORT(asBC_PshVPtr, short(rangeOffset));
+
+		asCArray<asCExprContext*> args;
+		asCExprContext arg(engine);
+		arg.type.SetVariable(iterDt, iterOffset, false);
+		if (!iterDt.IsPrimitive())
+		{
+			arg.bc.InstrSHORT(asBC_PSF, (short)iterOffset);
+			if (iterDt.IsObjectHandle()) arg.type.dataType.MakeReference(true);
+		}
+		arg.type.isLValue = true;
+		arg.exprNode = node;
+		args.PushLast(&arg);
+
+		int r = MakeFunctionCall(
+			&opForNextExpr,
+			opForNextId,
+			CastToObjectType(rangeExpr.type.dataType.GetTypeInfo()),
+			args,
+			node
+		);
+		UNUSED_VAR(r);
+		asASSERT(r >= 0);
+
+		asCExprContext lhs(engine);
+		lhs.type.SetVariable(iterDt, iterOffset, false);
+		if (!iterDt.IsPrimitive())
+		{
+			lhs.bc.InstrSHORT(asBC_PSF, (short)iterOffset);
+			if (iterDt.IsObjectHandle()) lhs.type.dataType.MakeReference(true);
+		}
+		if (iterDt.IsObjectHandle())
+			lhs.type.isExplicitHandle = true;
+		lhs.type.isLValue = true;
+		lhs.exprNode = node;
+
+		DoAssignment(
+			&next,
+			&lhs,
+			&opForNextExpr,
+			node,
+			node,
+			ttAssignment,
+			node
+		);
+		ReleaseTemporaryVariable(next.type, &next.bc);
+
+		// Pop the value from the stack
+		if (!next.type.dataType.IsPrimitive())
+			next.bc.Instr(asBC_PopPtr);
+
+		next.bc.OptimizeLocally(tempVariableOffsets);
+	}
+
+	//------------------------------
+	// Compile loop statement
+	bool hasReturn;
+	asCByteCode foreachBC(engine);
+
+	asCArray<int> itemOffsets;
+	for (asUINT i = 0; i < itemCount; ++i)
+	{
+		asCByteCode itemNBC(engine);
+
+		asCDataType& itemDt = itemDataTypes[i];
+		asCScriptNode* itemNode = itemNodes[i];
+
+		int itemOffset = AllocateVariable(itemDt, false);
+		asCString itemName(&script->code[itemNode->tokenPos], itemNode->tokenLength);
+		if (DeclareVariable(itemName, itemDt, itemOffset, &itemNBC, node) < 0)
+			return;
+
+		itemOffsets.PushLast(itemOffset);
+
+		asCExprContext opForValueNExpr(engine);
+
+		opForValueNExpr.bc.InstrSHORT(asBC_PshVPtr, short(rangeOffset));
+
+		asCArray<asCExprContext*> args;
+		asCExprContext arg(engine);
+		arg.type.SetVariable(iterDt, iterOffset, false);
+		if (!iterDt.IsPrimitive())
+		{
+			arg.bc.InstrSHORT(asBC_PSF, (short)iterOffset);
+			if (iterDt.IsObjectHandle()) arg.type.dataType.MakeReference(true);
+		}
+		arg.type.isLValue = true;
+		arg.exprNode = node;
+		args.PushLast(&arg);
+		int r = MakeFunctionCall(
+			&opForValueNExpr,
+			opForValueNIds[i],
+			CastToObjectType(rangeExpr.type.dataType.GetTypeInfo()),
+			args,
+			node->firstChild
+		);
+		UNUSED_VAR(r);
+		asASSERT(r >= 0);
+
+		CompileInitializationWithAssignment(
+			&itemNBC, itemDt, itemNode->prev, itemOffset, NULL, asVGM_VARIABLE, rangeNode, &opForValueNExpr
+		);
+		ReleaseTemporaryVariable(opForValueNExpr.type, &itemNBC);
+
+		// Suppress the compiler warning of uninitialized variable
+		variables->GetVariableByOffset(itemOffset)->isInitialized = true;
+
+		itemNBC.OptimizeLocally(tempVariableOffsets);
+
+		foreachBC.AddCode(&itemNBC);
+	}
+
+	CompileStatement(node->lastChild, &hasReturn, &foreachBC);
+
+	// Reversely destruct the items,
+	// we'll re-initialize them in the next iteration
+	for (asUINT i = itemOffsets.GetLength(); i != 0; --i)
+	{
+		int itemOffset = itemOffsets[i - 1];
+		asCDataType& itemDt = itemDataTypes[i - 1];
+		CallDestructor(itemDt, itemOffset, IsVariableOnHeap(itemOffset), &foreachBC);
+
+		// No need to deallocate here,
+		// we'll deallocate them after the loop is done
+	}
+
+	//-------------------------------
+	// Join the code pieces
+	bc->AddCode(&rangeExpr.bc);
+	bc->AddCode(&initBC);
+	bc->InstrDWORD(asBC_JMP, conditionLabel);
+
+	bc->Label((short)insideLabel);
+
+	// Add a suspend bytecode inside the loop to guarantee
+	// that the application can suspend the execution
+	bc->Instr(asBC_SUSPEND);
+	bc->InstrPTR(asBC_JitEntry, 0);
+
+	LineInstr(bc, node->lastChild->tokenPos);
+	bc->AddCode(&foreachBC);
+
+	bc->Label((short)continueLabel);
+	bc->AddCode(&next.bc);
+
+	bc->Label((short)conditionLabel);
+	bc->AddCode(&opForEndExpr.bc);
+
+	bc->Label((short)afterLabel);
+
+	continueLabels.PopLast();
+	breakLabels.PopLast();
+
+	// Deallocate variables in this block, in reverse order
+	for (int n = (int)variables->variables.GetLength() - 1; n >= 0; n--)
+	{
+		sVariable* v = variables->variables[n];
+
+		// Call variable destructors here, for variables not yet destroyed
+		CallDestructor(v->type, v->stackOffset, v->onHeap, bc);
+		DeallocateVariable(v->stackOffset);
 	}
 
 	RemoveVariableScope();
@@ -5896,6 +6366,7 @@ void asCCompiler::DeallocateVariable(int offset)
 	n = GetVariableSlot(offset);
 	if( n != -1 )
 	{
+		asASSERT(!freeVariables.Exists(n));
 		freeVariables.PushLast(n);
 		return;
 	}

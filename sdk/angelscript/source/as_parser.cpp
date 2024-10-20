@@ -4137,7 +4137,7 @@ asCScriptNode *asCParser::ParseDeclaration(bool isClassProp, bool isGlobalVar)
 	UNREACHABLE_RETURN;
 }
 
-// BNF:7: STATEMENT     ::= (IF | FOR | WHILE | RETURN | STATBLOCK | BREAK | CONTINUE | DOWHILE | SWITCH | EXPRSTAT | TRY)
+// BNF:7: STATEMENT     ::= (IF | FOR | FOREACH | WHILE | RETURN | STATBLOCK | BREAK | CONTINUE | DOWHILE | SWITCH | EXPRSTAT | TRY)
 asCScriptNode *asCParser::ParseStatement()
 {
 	sToken t1;
@@ -4149,6 +4149,8 @@ asCScriptNode *asCParser::ParseStatement()
 		return ParseIf();
 	else if (t1.type == ttFor)
 		return ParseFor();
+	else if (t1.type == ttForEach)
+		return ParseForEach();
 	else if (t1.type == ttWhile)
 		return ParseWhile();
 	else if (t1.type == ttReturn)
@@ -4487,6 +4489,74 @@ asCScriptNode *asCParser::ParseFor()
 				return node;
 			}
 		}
+	}
+
+	node->AddChildLast(ParseStatement());
+
+	return node;
+}
+
+// BNF:8: FOREACH       ::= 'foreach' '(' TYPE IDENTIFIER {',' TYPE INDENTIFIER} ':' ASSIGN ')' STATEMENT
+asCScriptNode *asCParser::ParseForEach()
+{
+	asCScriptNode* node = CreateNode(snForEach);
+	if (node == 0) return 0;
+
+	sToken t;
+	GetToken(&t);
+	if (t.type != ttForEach)
+	{
+		Error(ExpectedToken("foreach"), &t);
+		Error(InsteadFound(t), &t);
+		return node;
+	}
+
+	node->UpdateSourcePos(t.pos, t.length);
+
+	GetToken(&t);
+	if (t.type != ttOpenParenthesis)
+	{
+		Error(ExpectedToken("("), &t);
+		Error(InsteadFound(t), &t);
+		return node;
+	}
+
+	// Item(s)
+	for (;;)
+	{
+		// Item type
+		node->AddChildLast(ParseType(true, false, true));
+		// TODO: Support reference type
+		// node->AddChildLast(ParseTypeMod(false));
+
+		// Identifier of item
+		node->AddChildLast(ParseIdentifier());
+		
+		GetToken(&t);
+		if (t.type == ttListSeparator)
+		{
+			continue;
+		}
+		else if (t.type != ttColon)
+		{
+			const char* tokens[] = { ",", ":" };
+			Error(ExpectedOneOf(tokens, 2), &t);
+			Error(InsteadFound(t), &t);
+			return node;
+		}
+		else // t.type == ttColon
+			break;
+	}
+
+	// The range object
+	node->AddChildLast(ParseAssignment());
+
+	GetToken(&t);
+	if (t.type != ttCloseParenthesis)
+	{
+		Error(ExpectedToken(")"), &t);
+		Error(InsteadFound(t), &t);
+		return node;
 	}
 
 	node->AddChildLast(ParseStatement());

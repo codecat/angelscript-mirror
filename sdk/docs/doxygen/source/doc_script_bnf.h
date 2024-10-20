@@ -3,7 +3,7 @@
 
 \page doc_script_bnf Script language grammar
 
-\todo Update BNF with function templates
+\todo Update BNF with function templates and foreach
 
 This is language grammar in Backus-Naur Form (BNF).
 

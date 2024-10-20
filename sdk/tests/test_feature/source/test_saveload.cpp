@@ -425,7 +425,7 @@ bool Test()
 		mod->Discard();
 
 		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
-		if (crc32 != 0x9D71B577)
+		if (crc32 != 0xE6670DA3)
 		{
 			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 			TEST_FAILED;
@@ -476,7 +476,7 @@ bool Test()
 		mod->Discard();
 
 		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
-		if (crc32 != 0x606E2B96)
+		if (crc32 != 0x405B1FB8)
 		{
 			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 			TEST_FAILED;
@@ -526,7 +526,7 @@ bool Test()
 		mod->Discard();
 
 		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
-		if (crc32 != 0xD1E61780)
+		if (crc32 != 0xF63653BC)
 		{
 			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 			TEST_FAILED;
@@ -599,7 +599,7 @@ bool Test()
 		mod->Discard();
 
 		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
-		if (crc32 != 0x21EC7158)
+		if (crc32 != 0x40722A31)
 		{
 			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 			TEST_FAILED;
@@ -1449,7 +1449,7 @@ bool Test()
 		else
 		{
 			asDWORD crc32 = ComputeCRC32(&bc.buffer[0], asUINT(bc.buffer.size()));
-			if (crc32 != 0xA3398BDD)
+			if (crc32 != 0x67DD2EF5)
 			{
 				PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 				TEST_FAILED;
@@ -1504,7 +1504,7 @@ bool Test()
 			TEST_FAILED;
 
 		asDWORD crc32 = ComputeCRC32(&bc.buffer[0], asUINT(bc.buffer.size()));
-		if (crc32 != 0x2B348AEB)
+		if (crc32 != 0xE5FDFEFC)
 		{
 			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 			TEST_FAILED;
@@ -1566,7 +1566,7 @@ bool Test()
 			TEST_FAILED;
 
 		asDWORD crc = ComputeCRC32(&bc.buffer[0], asUINT(bc.buffer.size()));
-		if (crc != 2406682749u)
+		if (crc != 3450955286u)
 		{
 			PRINTF("Wrong checksum. Got %u\n", crc);
 			TEST_FAILED;
@@ -1746,7 +1746,7 @@ bool Test()
 
 		engine->ShutDownAndRelease();
 
-		if( bout.buffer != "config (64, 0) : Warning : Cannot register template callback without the actual implementation\n" )
+		if( bout.buffer != "config (65, 0) : Warning : Cannot register template callback without the actual implementation\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -1819,6 +1819,7 @@ bool Test()
 					"ep 37 0\n"
 					"ep 38 1\n"
 					"ep 39 0\n"
+					"ep 40 1\n"
 					"\n"
 					"// Enums\n"
 					"\n"
@@ -2428,7 +2429,7 @@ bool Test()
 			// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 		}
 		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
-		if( crc32 != 0x4FAB3614)
+		if( crc32 != 0xA36EE915)
 		{
 			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 			TEST_FAILED;
@@ -2509,7 +2510,7 @@ bool Test()
 		mod->SaveByteCode(&streamTiny, true);
 		engine->Release();
 
-		asBYTE expected[] = {0x01,0x00,0x00,0x00,0x00,0x00,0x01,0x66,0x02,0x66,0x00,0x40,0x50,0x00,0x00,0x01,0x00,0x00,0x00,0x02,0x3F,0x0A,0x00,0x00,0x00,0x01,0x72,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+		asBYTE expected[] = {0x01,0x00,0x00,0x00,0x00,0x00,0x01,0x66,0x02,0x66,0x00,0x40,0x51,0x00,0x00,0x01,0x00,0x00,0x00,0x02,0x3F,0x0A,0x00,0x00,0x00,0x01,0x72,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 		bool match = true;
 		for( asUINT n = 0; n < streamTiny.buffer.size(); n++ )
 			if( streamTiny.buffer[n] != expected[n] )
