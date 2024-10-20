@@ -159,30 +159,30 @@ class ClassExceptionInConstructor
 public:
 	ClassExceptionInConstructor()
 	{
-		if( !strstr(asGetLibraryOptions(), "AS_NO_EXCEPTIONS") )
+		if (!strstr(asGetLibraryOptions(), "AS_NO_EXCEPTIONS"))
 			throw std::exception();
 		else
 		{
-			asIScriptContext *ctx = asGetActiveContext();
-			if( ctx ) ctx->SetException("Caught an exception from the application");
+			asIScriptContext* ctx = asGetActiveContext();
+			if (ctx) ctx->SetException("Caught an exception from the application");
 		}
 	}
 	~ClassExceptionInConstructor() {}
-	ClassExceptionInConstructor &operator=(const ClassExceptionInConstructor &) { return *this; }
+	ClassExceptionInConstructor& operator=(const ClassExceptionInConstructor&) { return *this; }
 
-	static void Construct(void *mem) { new(mem) ClassExceptionInConstructor(); }
-	static void Destruct(ClassExceptionInConstructor *mem) { mem->~ClassExceptionInConstructor(); }
+	static void Construct(void* mem) { new(mem) ClassExceptionInConstructor(); }
+	static void Destruct(ClassExceptionInConstructor* mem) { mem->~ClassExceptionInConstructor(); }
 };
 
-CScriptArray *CreateArrayOfStrings()
+CScriptArray* CreateArrayOfStrings()
 {
-	asIScriptContext *ctx = asGetActiveContext();
-	if( ctx )
+	asIScriptContext* ctx = asGetActiveContext();
+	if (ctx)
 	{
 		asIScriptEngine* engine = ctx->GetEngine();
 		asITypeInfo* t = engine->GetTypeInfoByDecl("array<string@>");
 		CScriptArray* arr = CScriptArray::Create(t, 3);
-		for( asUINT i = 0; i < arr->GetSize(); i++ )
+		for (asUINT i = 0; i < arr->GetSize(); i++)
 		{
 			CScriptString** p = static_cast<CScriptString**>(arr->At(i));
 			*p = new CScriptString("test");
@@ -193,7 +193,7 @@ CScriptArray *CreateArrayOfStrings()
 }
 
 static std::stringstream printResult;
-static void print(asIScriptGeneric *gen) 
+static void print(asIScriptGeneric* gen)
 {
 	void* ptr = *(void**)gen->GetAddressOfArg(0);
 	int typeId = gen->GetArgTypeId(0);
@@ -238,6 +238,26 @@ void FillSTLVector(CScriptArray* in, std::vector < T >& out)
 	{
 		out[i] = *(T*)(in->At(i));
 	}
+}
+
+template < class T >
+void FillSTLMatrix(CScriptArray* in, std::vector < std::vector < T > >& out)
+{
+	out.resize(in->GetSize());
+	for (int i = 0; i < (int)in->GetSize(); i++)
+	{
+		CScriptArray* row = (CScriptArray*)(in->At(i));
+		if (row)
+		{
+			FillSTLVector(row, out[i]);
+		}
+	}
+}
+
+std::vector < std::vector < double >> mtx;
+void TakeArrayOfArray(CScriptArray* in)
+{
+	FillSTLMatrix(in, mtx);
 }
 
 void doCalculations(const std::string& /* geom_id */, const int& /* surf_indx */, const std::vector < double >& us, const std::vector < double >& ws, std::vector < double >& k1_out_vec, std::vector < double >& k2_out_vec, std::vector < double >& ka_out_vec, std::vector < double >& kg_out_vec)
@@ -314,6 +334,32 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
+
+	// Test passing array<array<double>> to application
+	// https://www.gamedev.net/forums/topic/717597-how-do-i-register-an-angelscript-function-that-passes-an-array-of-array-of-doubles/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, true);
+		engine->RegisterGlobalFunction("void TakeArrayOfArray(array<array<double>> &)", asFUNCTION(TakeArrayOfArray), asCALL_CDECL);
+
+		r = ExecuteString(engine, "array<array<double>> arr = {{1,2},{3,4}}; TakeArrayOfArray(arr);");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (mtx[0][0] != 1 || mtx[0][1] != 2 || mtx[1][0] != 3 || mtx[1][1] != 4)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Allow registering a property with arrays of const handles that cannot be modified by the script
 	// Reported by Tomasz
