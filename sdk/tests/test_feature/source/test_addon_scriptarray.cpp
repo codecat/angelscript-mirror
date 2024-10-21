@@ -335,6 +335,58 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// Test conversion when insert to array with handle
+	// Reported by Sam Tupy
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, false);
+		RegisterStdString(engine);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class dummy_string {\n"
+			"  private string value; \n"
+			"  dummy_string(const string &in value) {	\n" // implicit conversion from string
+			"    this.value=value; \n"
+			"  }\n"
+			"  dummy_string() {	\n" // need a no-arg one to go in arrays
+			"    this.value=''; \n"
+			"  }\n"
+			"  const string opConv() const {	\n"
+			"    return this.value; \n"
+			"  }\n"
+			"  const string opImplConv() const {	\n"
+			"    return this.value; \n"
+			"  }\n"
+			"}\n"
+			"void main() {	\n"
+			"  array<dummy_string> strings1; \n"
+			"  strings1.insertLast(dummy_string('this is a test')); \n" // exactly what you expect
+			"  strings1.insertLast('this is another test'); \n" // also works because of the conversion constructor
+			"  array<dummy_string@> strings2; \n"
+			"  strings2.insertLast(dummy_string('this is even another test')); \n" // also works
+			"  strings2.insertLast('this is a handle conversion test!'); \n" // dies?
+			"}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test passing array<array<double>> to application
 	// https://www.gamedev.net/forums/topic/717597-how-do-i-register-an-angelscript-function-that-passes-an-array-of-array-of-doubles/
 	{

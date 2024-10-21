@@ -1821,7 +1821,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 					// For parameters expecting a reference to a handle we need to make sure the argument
 					// is really a handle, and not just a reference to the object. Do this check before the
 					// implicit conversion so it can be treated correctly.
-					if (dt.IsObjectHandle() && !ctx->type.dataType.IsObjectHandle() && !ctx->IsAnonymousInitList())
+					if (dt.IsObjectHandle() && !ctx->type.dataType.IsObjectHandle() && !ctx->IsAnonymousInitList() && ctx->type.dataType.SupportHandles())
 					{
 						// Make a refCopy into a local handle variable
 						// Allocate a handle variable
@@ -7881,7 +7881,6 @@ asUINT asCCompiler::ImplicitConvObjectValue(asCExprContext *ctx, const asCDataTy
 	// another object then we can try an implicit value cast
 	if( to.GetTypeInfo() != ctx->type.dataType.GetTypeInfo() )
 	{
-		// TODO: Implement support for implicit constructor/factory
 		asCObjectType *ot = CastToObjectType(ctx->type.dataType.GetTypeInfo());
 		if( ot == 0 )
 			return cost;
