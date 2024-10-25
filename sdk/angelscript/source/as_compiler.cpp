@@ -5111,7 +5111,7 @@ void asCCompiler::CompileForEachStatement(asCScriptNode* node, asCByteCode* bc)
 	asCExprContext rangeExpr(engine);
 	if (CompileAssignment(rangeNode, &rangeExpr) < 0)
 		return;
-	bool isConstRange = rangeExpr.type.isConstant;
+	bool isConstRange = rangeExpr.type.dataType.IsReadOnly() || rangeExpr.type.dataType.IsHandleToConst();
 
 	asCTypeInfo* rangeTypeInfo = rangeExpr.type.dataType.GetTypeInfo();
 	if (!rangeTypeInfo)
@@ -5142,49 +5142,74 @@ void asCCompiler::CompileForEachStatement(asCScriptNode* node, asCByteCode* bc)
 	// TypeId of the iterator type
 	int iterTid = asTYPEID_VOID;
 
-	// TODO: foreach: Considering overloads for those 4 operators,
-	// for example a const and a non-const one.
-	// If a const and non-const opForBegin returns different iterator types,
-	// code for finding opForValue(N), opForNext, opForEnd should also handle overloading
-	// Maybe we can use MatchFunctions instead of GetMethodByName
-
 	{
-		asIScriptFunction* f = rangeTypeInfo->GetMethodByName(BEGIN_NAME, true);
-		if (f && (!isConstRange || f->IsReadOnly()) && f->GetParamCount() == 0)
+		asCArray<int> funcs;
+		builder->GetObjectMethodDescriptions(BEGIN_NAME, CastToObjectType(rangeTypeInfo), funcs, isConstRange);
+
+		for (asUINT i = 0; i < funcs.GetLength(); i++)
 		{
-			iterTid = f->GetReturnTypeId();
-			if (iterTid)
+			asIScriptFunction* f = engine->scriptFunctions[funcs[i]];
+			if (f->GetParamCount() == 0)
 			{
-				opForBeginId = f->GetId();
+				if (opForBeginId != 0 && !isConstRange)
+				{
+					// Is the new function a better match?
+					if (!f->IsReadOnly())
+						opForBeginId = funcs[i];
+				}
+				else
+					opForBeginId = funcs[i];
+			}
+		}
+
+		if (opForBeginId)
+			iterTid = engine->scriptFunctions[opForBeginId]->GetReturnTypeId();
+	}
+
+	if (iterTid)
+	{
+		asCArray<int> funcs;
+		builder->GetObjectMethodDescriptions(END_NAME, CastToObjectType(rangeTypeInfo), funcs, isConstRange);
+
+		for (asUINT i = 0; i < funcs.GetLength(); i++)
+		{
+			asIScriptFunction* f = engine->scriptFunctions[funcs[i]];
+			asDWORD flags;
+			int paramTid;
+			if (f->GetParamCount() == 1 && f->GetReturnTypeId(&flags) == asTYPEID_BOOL && !(flags && asTM_INOUTREF) && f->GetParam(0, &paramTid) >= 0 && paramTid == iterTid)
+			{
+				if (opForEndId != 0 && !isConstRange)
+				{
+					// Is the new function a better match?
+					if (!f->IsReadOnly())
+						opForEndId = funcs[i];
+				}
+				else
+					opForEndId = funcs[i];
 			}
 		}
 	}
 
 	if (iterTid)
 	{
-		asIScriptFunction* f = rangeTypeInfo->GetMethodByName(END_NAME, true);
-		if (f && (!isConstRange || f->IsReadOnly())
-			&& f->GetReturnTypeId() == asTYPEID_BOOL
-			&& f->GetParamCount() == 1)
-		{
-			int param_tid;
-			f->GetParam(0, &param_tid);
-			if (param_tid == iterTid)
-				opForEndId = f->GetId();
-		}
-	}
+		asCArray<int> funcs;
+		builder->GetObjectMethodDescriptions(NEXT_NAME, CastToObjectType(rangeTypeInfo), funcs, isConstRange);
 
-	if (iterTid)
-	{
-		asIScriptFunction* f = rangeTypeInfo->GetMethodByName(NEXT_NAME, true);
-		if (f && (!isConstRange || f->IsReadOnly())
-			&& f->GetReturnTypeId() == iterTid
-			&& f->GetParamCount() == 1)
+		for (asUINT i = 0; i < funcs.GetLength(); i++)
 		{
-			int param_tid;
-			f->GetParam(0, &param_tid);
-			if (param_tid == iterTid)
-				opForNextId = f->GetId();
+			asIScriptFunction* f = engine->scriptFunctions[funcs[i]];
+			int paramTid;
+			if (f->GetParamCount() == 1 && f->GetReturnTypeId() == iterTid && f->GetParam(0, &paramTid) >= 0 && paramTid == iterTid)
+			{
+				if (opForNextId != 0 && !isConstRange)
+				{
+					// Is the new function a better match?
+					if (!f->IsReadOnly())
+						opForNextId = funcs[i];
+				}
+				else
+					opForNextId = funcs[i];
+			}
 		}
 	}
 
@@ -5197,38 +5222,46 @@ void asCCompiler::CompileForEachStatement(asCScriptNode* node, asCByteCode* bc)
 			{
 				int opForValueIdN = 0;
 
-				asCString methodName;
+				asCArray<int> funcs;
 
 				// Special case for only one item
 				// try the opForValue without an index suffix at first
-				asIScriptFunction* f = 0;
-				if( itemCount == 1 )
-					f = rangeTypeInfo->GetMethodByName(VALUE_NAME, true);
-				if (f == 0)
+				asCString methodName;
+				if (itemCount == 1)
+					builder->GetObjectMethodDescriptions(VALUE_NAME, CastToObjectType(rangeTypeInfo), funcs, isConstRange);
+				if (funcs.GetLength() == 0)
 				{
 					methodName.Format("%s%d", VALUE_NAME, (int)i);
-					f = rangeTypeInfo->GetMethodByName(methodName.AddressOf(), true);
+					builder->GetObjectMethodDescriptions(methodName.AddressOf(), CastToObjectType(rangeTypeInfo), funcs, isConstRange);
 				}
 
-				if (f && (!isConstRange || f->IsReadOnly())
-					&& f->GetParamCount() == 1)
+				for (asUINT j = 0; j < funcs.GetLength(); j++)
 				{
-					int param_tid;
-					f->GetParam(0, &param_tid);
-					if (param_tid == iterTid)
+					asIScriptFunction* f = engine->scriptFunctions[funcs[j]];
+					int paramTid;
+					if (f->GetParamCount() == 1 && f->GetParam(0, &paramTid) >= 0 && paramTid == iterTid)
 					{
-						opForValueIdN = f->GetId();
-						opForValueNIds.PushLast(opForValueIdN);
+						if (opForValueIdN != 0 && !isConstRange)
+						{
+							// Is the new function a better match?
+							if (!f->IsReadOnly())
+								opForValueIdN = funcs[j];
+						}
+						else
+							opForValueIdN = funcs[j];
 					}
 				}
-				else
+
+				if (opForValueIdN == 0)
 					break;
+				else
+					opForValueNIds.PushLast(opForValueIdN);
 
 				// Resolve auto using return type of opForValueN
 				if (itemDataTypes[i].IsAuto())
 				{
 					asDWORD retFlags;
-					int retTid = f->GetReturnTypeId(&retFlags);
+					int retTid = engine->scriptFunctions[opForValueIdN]->GetReturnTypeId(&retFlags);
 
 					bool isConst = itemDataTypes[i].IsReadOnly() || retFlags & asTM_CONST;
 					asCDataType dt = asCDataType::CreateById(engine, retTid, isConst);
@@ -5274,8 +5307,6 @@ void asCCompiler::CompileForEachStatement(asCScriptNode* node, asCByteCode* bc)
 		return;
 	}
 
-	asCDataType iterDt = asCDataType::CreateById(engine, iterTid, isConstRange);
-
 	// The following part is majorly copied from CompileForStatement
 
 	// Add a variable scope that will be used by CompileBreak/Continue to know where to stop deallocating variables
@@ -5295,6 +5326,7 @@ void asCCompiler::CompileForEachStatement(asCScriptNode* node, asCByteCode* bc)
 	// Compile the initialization statement
 	asCByteCode initBC(engine);
 	LineInstr(&initBC, node->firstChild->tokenPos);
+	asCDataType iterDt = asCDataType::CreateById(engine, iterTid, false);
 	int iterOffset = AllocateVariable(iterDt, false);
 	if (DeclareVariable("", iterDt, iterOffset, &initBC, node) < 0)
 		return;
