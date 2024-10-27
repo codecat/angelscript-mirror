@@ -47,6 +47,8 @@ Get the exception string for the last exception thrown.
 The syntax for using arrays may differ for the application you're working with so consult the application's manual
 for more details.
 
+\todo Explain the foreach support
+
 It is possible to declare array variables with the array identifier followed by the type of the 
 elements within angle brackets. 
 
@@ -226,6 +228,8 @@ specific instances of objects are desired, and not just objects that happen to h
 If no match is found the methods will return a negative value.
 
 \subsection doc_datatypes_array_addon_example Script example
+  
+\todo update sample to use foreach
   
 <pre>
   int main()

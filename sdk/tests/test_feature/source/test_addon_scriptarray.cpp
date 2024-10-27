@@ -335,6 +335,84 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// Test foreach with array when the array is modified in the foreach loop
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterScriptArray(engine, false);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() { \n"
+			"  array<int> arr = {1,2,3,4,5,7}; \n"
+			"  int sum = 0; \n"
+			"  foreach( auto v, auto i : arr ) \n"
+			"    if( v & 1 == 1 ) arr.removeAt(i); \n"  // attempt to remove every impair number.
+			"  assert( arr == {2,4,7} ); \n" // the algorithm doesn't work because when the element is removed, the iterator skips the next element
+			"} \n");
+
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test foreach with array
+	{
+		engine = asCreateScriptEngine();
+
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		RegisterScriptArray(engine, false);
+		RegisterStdString(engine);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() {\n"
+			"  array<string> arr = {'hello', 'there'}; \n"
+			"  string value; \n"
+			"  foreach( auto v : arr ) \n"
+			"    value += v; \n"
+			"  assert( value == 'hellothere' ); \n"
+			"  const array<string> @c_arr = arr; \n"
+			"  string value2; \n"
+			"  foreach( auto v, auto i : c_arr ) \n"
+			"    value2 += i + ':' + v + ','; \n"
+			"  assert( value2 == '0:hello,1:there,' ); \n"
+			"} \n");
+
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test conversion when insert to array with handle
 	// Reported by Sam Tupy
 	{
