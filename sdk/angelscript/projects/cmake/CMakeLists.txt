@@ -4,6 +4,7 @@ project(angelscript)
 
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
 option(AS_NO_EXCEPTIONS "Disable exception handling in script context" OFF)
+option(AS_DISABLE_INSTALL "Disable installation of AngelScript" OFF)
 
 if(MSVC)
     set(MSVC_COMPILE_FLAGS "/MP" CACHE STRING "Compiler flags to use with MSVC")
@@ -173,7 +174,11 @@ endif()
 
 # Fix x64 issues on Linux
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64" AND UNIX AND NOT APPLE)
-    target_compile_options(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE -fPIC)
+	target_compile_options(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE -fPIC)
+endif()
+
+if(MSVC AND MSVC_COMPILE_FLAGS)
+	target_compile_options(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE $<$<COMPILE_LANGUAGE:C,CXX>:${MSVC_COMPILE_FLAGS}>)
 endif()
 
 # Don't override the default library output path to avoid conflicts when building for multiple target platforms
@@ -183,65 +188,63 @@ target_link_libraries(${ANGELSCRIPT_LIBRARY_NAME} Threads::Threads)
 set_target_properties(${ANGELSCRIPT_LIBRARY_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 
 if(BUILD_FRAMEWORK)
-    set_target_properties(${ANGELSCRIPT_LIBRARY_NAME} PROPERTIES
-        FRAMEWORK TRUE
-        FRAMEWORK_VERSION ${PROJECT_VERSION}
-        MACOSX_FRAMEWORK_IDENTIFIER com.angelcode.Angelscript
-        MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${PROJECT_VERSION}
-        MACOSX_FRAMEWORK_BUNDLE_VERSION ${PROJECT_VERSION}
-        XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
-        PUBLIC_HEADER ../../include/angelscript.h
-    )
+	set_target_properties(${ANGELSCRIPT_LIBRARY_NAME} PROPERTIES
+		FRAMEWORK TRUE
+		FRAMEWORK_VERSION ${PROJECT_VERSION}
+		MACOSX_FRAMEWORK_IDENTIFIER com.angelcode.Angelscript
+		MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${PROJECT_VERSION}
+		MACOSX_FRAMEWORK_BUNDLE_VERSION ${PROJECT_VERSION}
+		XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
+		PUBLIC_HEADER ../../include/angelscript.h
+	)
 endif()
 
-if(MSVC AND MSVC_COMPILE_FLAGS)
-	target_compile_options(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE "${MSVC_COMPILE_FLAGS}")
-endif()
+if(NOT AS_DISABLE_INSTALL)
+	# Don't override the default runtime output path to avoid conflicts when building for multiple target platforms
+	#set(RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/../../bin)
 
-# Don't override the default runtime output path to avoid conflicts when building for multiple target platforms
-#set(RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/../../bin)
+	#See https://cmake.org/cmake/help/latest/manual/cmake-packages.7.html#creating-packages for a detailed explanation about this part
+	install(TARGETS ${ANGELSCRIPT_LIBRARY_NAME} EXPORT AngelscriptTargets
+		RUNTIME DESTINATION bin
+		LIBRARY DESTINATION lib
+		ARCHIVE DESTINATION lib
+		INCLUDES DESTINATION include
+	)
 
-#See https://cmake.org/cmake/help/latest/manual/cmake-packages.7.html#creating-packages for a detailed explanation about this part
-install(TARGETS ${ANGELSCRIPT_LIBRARY_NAME} EXPORT AngelscriptTargets
-	RUNTIME DESTINATION bin
-	LIBRARY DESTINATION lib
-	ARCHIVE DESTINATION lib
-	INCLUDES DESTINATION include
-)
+	install(FILES
+		${CMAKE_CURRENT_SOURCE_DIR}/../../include/angelscript.h
+		DESTINATION include
+		COMPONENT Devel
+	)
 
-install(FILES
-	${CMAKE_CURRENT_SOURCE_DIR}/../../include/angelscript.h
-	DESTINATION include
-	COMPONENT Devel
-)
-
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-	"${CMAKE_CURRENT_BINARY_DIR}/Angelscript/AngelscriptConfigVersion.cmake"
-	VERSION ${PROJECT_VERSION}
-	COMPATIBILITY AnyNewerVersion
-)
-
-export(EXPORT AngelscriptTargets
-	FILE "${CMAKE_CURRENT_BINARY_DIR}/Angelscript/AngelscriptTargets.cmake"
-	NAMESPACE Angelscript::
-)
-configure_file(cmake/AngelscriptConfig.cmake
-	"${CMAKE_CURRENT_BINARY_DIR}/Angelscript/AngelscriptConfig.cmake"
-	COPYONLY
-)
-
-set(ConfigPackageLocation lib/cmake/Angelscript)
-install(EXPORT AngelscriptTargets
-	FILE AngelscriptTargets.cmake
-	NAMESPACE Angelscript::
-	DESTINATION ${ConfigPackageLocation}
-)
-install(
-	FILES
-		cmake/AngelscriptConfig.cmake
+	include(CMakePackageConfigHelpers)
+	write_basic_package_version_file(
 		"${CMAKE_CURRENT_BINARY_DIR}/Angelscript/AngelscriptConfigVersion.cmake"
-	DESTINATION ${ConfigPackageLocation}
-	COMPONENT Devel
-)
+		VERSION ${PROJECT_VERSION}
+		COMPATIBILITY AnyNewerVersion
+	)
+
+	export(EXPORT AngelscriptTargets
+		FILE "${CMAKE_CURRENT_BINARY_DIR}/Angelscript/AngelscriptTargets.cmake"
+		NAMESPACE Angelscript::
+	)
+	configure_file(cmake/AngelscriptConfig.cmake
+		"${CMAKE_CURRENT_BINARY_DIR}/Angelscript/AngelscriptConfig.cmake"
+		COPYONLY
+	)
+
+	set(ConfigPackageLocation lib/cmake/Angelscript)
+	install(EXPORT AngelscriptTargets
+		FILE AngelscriptTargets.cmake
+		NAMESPACE Angelscript::
+		DESTINATION ${ConfigPackageLocation}
+	)
+	install(
+		FILES
+			cmake/AngelscriptConfig.cmake
+			"${CMAKE_CURRENT_BINARY_DIR}/Angelscript/AngelscriptConfigVersion.cmake"
+		DESTINATION ${ConfigPackageLocation}
+		COMPONENT Devel
+	)
+endif()
 
