@@ -6358,7 +6358,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			}
 
 			// Make sure the sub type can be instantiated
-			if( !dt.CanBeInstantiated() )
+			if( !dt.CanBeInstantiated() || dt.IsAuto() )
 			{
 				if (reportError)
 				{

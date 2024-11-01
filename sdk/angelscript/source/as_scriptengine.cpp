@@ -5018,7 +5018,7 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dtIn) const
 		case ttDouble: return asTYPEID_DOUBLE;
 		default:
 			// All types should be covered by the above. The variable type is not really a type
-			asASSERT(dtIn.GetTokenType() == ttQuestion);
+			asASSERT(dtIn.GetTokenType() == ttQuestion || dtIn.IsAuto());
 			return -1;
 		}
 	}

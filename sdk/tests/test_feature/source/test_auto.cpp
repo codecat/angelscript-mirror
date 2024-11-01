@@ -18,6 +18,31 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 	
+	// Test auto with default array
+	// Reported by Sam Tupy
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, true);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"auto[] my_array;");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 5) : Error   : Data type can't be '<auto>'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test auto and constness
 	// Reported by Istvan Polyak
 	{

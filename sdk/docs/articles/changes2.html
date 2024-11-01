@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.38.0 WIP - 2024/10/27</h2>
+<h2>Version 2.38.0 WIP - 2024/10/31</h2>
 
 <ul>
 <li>Bug fixes
@@ -31,6 +31,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash in GetThisPointer on contexts with nested state (Thanks Patrick Jeeves)
 <li>Fixed compiler warning on fallthrough statement in as_context.cpp (Thanks Thomas Degener)
 <li>Fixed crash when doing implicit conversion from value type to ref type for a function argument expecting reference to handle (Thanks Sam Tupy)
+<li>Fixed crash when compiling script attempting to declare variable with type auto[] (Thanks Sam Tupy)
 </ul>
 <li>Library
 <ul>
@@ -66,7 +67,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>project
 <ul>
 <li>Fixed cmake project for compiling on Risc-V 64bit (Thanks Vixea 0)
-<li>Made installing the library optional in the cmakefile
+<li>Made installing the library optional in the cmakefile (Thanks 1vanK)
 </ul>
 </ul>
 
