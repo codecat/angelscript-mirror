@@ -65,6 +65,7 @@
 #define TXT_CANNOT_DEFINE_FUNC_THAT_IS_DELETED     "Conflict with explicit declaration of function and deleted function"
 #define TXT_CANNOT_FORM_ARRAY_OF_s                 "Can't form arrays of subtype '%s'"
 #define TXT_CANNOT_IMPLEMENT_SELF                  "Can't implement itself, or another interface that implements this interface"
+#define TXT_CANNOT_IMPLICITLY_CALL_EXPLICIT_COPY_CONSTR   "Can't implicitly call explicit copy constructor"
 #define TXT_CANNOT_INHERIT_FROM_s_FINAL            "Can't inherit from class '%s' marked as final"
 #define TXT_CANNOT_INHERIT_FROM_MULTIPLE_CLASSES   "Can't inherit from multiple classes"
 #define TXT_CANNOT_INHERIT_FROM_SELF               "Can't inherit from itself, or another class that inherits from this class"

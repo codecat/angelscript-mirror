@@ -79,6 +79,45 @@ bool Test()
 	asIScriptModule* mod;
 	int r;
 
+	// Test copy constructor marked as explicit cannot be implicitly called
+	// Reported by Patrick Jeeves
+	{
+		engine = asCreateScriptEngine();
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME,
+			"class Foo {\n"
+			"	Foo() {}\n"
+			"	Foo(const Foo &in x) explicit {}\n" // explicit copy constructor
+			"   Foo &opAssign(const Foo &in x) delete;\n" // remove the opAssign method
+			"}\n"
+			"void Bar(Foo &in y) {}\n"
+			"void main() {\n"
+			"  Foo p;\n"
+			"  Bar(p);\n"         // NOK. Copy constructor is implicitly called
+			"  Bar(Foo(p));\n"    // OK. Copy constructor is explicitly called
+			"  Foo q = p;\n"      // NOK. Copy constructor is implicitly called
+			"  Foo s(p);\n"       // OK. Copy constructor is explicitly called
+			"}\n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != 
+			"TestConstructor (7, 1) : Info    : Compiling void main()\n"
+			"TestConstructor (9, 7) : Error   : Can't implicitly call explicit copy constructor\n"
+			"TestConstructor (11, 7) : Error   : No appropriate opAssign method found in 'Foo' for value assignment\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test auto generated copy constructor with registered pod value type
 	// https://www.gamedev.net/forums/topic/715625-copy-constructors-appear-to-be-broken/5461794/
 	{

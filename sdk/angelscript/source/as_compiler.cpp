@@ -1635,6 +1635,11 @@ void asCCompiler::CompileInitAsCopy(asCDataType &dt, int offset, asCExprContext 
 	asCObjectType *ot = CastToObjectType(dt.GetTypeInfo());
 	if(!dt.IsObjectHandle() && ot && (ot->beh.copyconstruct || ot->beh.copyfactory))
 	{
+		// Make sure the copy constructor is not flagged as explicit
+		asCScriptFunction* func = ot->beh.copyconstruct ? engine->scriptFunctions[ot->beh.copyconstruct] : engine->scriptFunctions[ot->beh.copyfactory];
+		if (func->traits.GetTrait(asTRAIT_EXPLICIT))
+			Error(TXT_CANNOT_IMPLICITLY_CALL_EXPLICIT_COPY_CONSTR, node);
+
 		PrepareForAssignment(&dt, arg, node, true);
 		int r = CallCopyConstructor(dt, offset, isObjectOnHeap, ctx, arg, node, isVarGlobOrMem, derefDestination);
 		if( r < 0 && tempVariables.Exists(offset) )
@@ -3385,11 +3390,15 @@ bool asCCompiler::CompileInitializationWithAssignment(asCByteCode* bc, const asC
 		args.PushLast(rexpr);
 		MatchFunctions(funcs, args, rnode, str.AddressOf(), 0, 0, 0, true);
 
-		// Make sure the argument is of the right type (and not just compatible with the expression)
 		if (funcs.GetLength() == 1)
 		{
 			asCScriptFunction* f = engine->scriptFunctions[funcs[0]];
-			if (!f->parameterTypes[0].IsEqualExceptRefAndConst(rexpr->type.dataType))
+
+			// Don't allow the constructor to be used if it is marked as explicit
+			if (f->traits.GetTrait(asTRAIT_EXPLICIT))
+				funcs.PopLast();
+			// Make sure the argument is of the right type (and not just compatible with the expression)
+			else if (!f->parameterTypes[0].IsEqualExceptRefAndConst(rexpr->type.dataType))
 				funcs.PopLast();
 		}
 	}

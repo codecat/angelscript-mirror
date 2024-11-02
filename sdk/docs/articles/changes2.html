@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.38.0 WIP - 2024/10/31</h2>
+<h2>Version 2.38.0 WIP - 2024/11/02</h2>
 
 <ul>
 <li>Bug fixes
@@ -32,6 +32,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed compiler warning on fallthrough statement in as_context.cpp (Thanks Thomas Degener)
 <li>Fixed crash when doing implicit conversion from value type to ref type for a function argument expecting reference to handle (Thanks Sam Tupy)
 <li>Fixed crash when compiling script attempting to declare variable with type auto[] (Thanks Sam Tupy)
+<li>Explicit copy constructor is no longer used implicitly by compiler (Thanks Patrick Jeeves)
 </ul>
 <li>Library
 <ul>
