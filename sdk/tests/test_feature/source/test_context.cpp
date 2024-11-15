@@ -489,11 +489,235 @@ public:
 	asIScriptContext* m_ctx;
 };
 
+asIScriptObject* CreateScriptClassObject(asIScriptEngine* pEngine, asIScriptContext* pContext, const std::string& ClassName)
+{
+	asIScriptFunction* factory = nullptr;
+	{
+		asIScriptModule* module = pEngine->GetModule("test");
+		asITypeInfo* type = module->GetTypeInfoByDecl((const char*)ClassName.c_str());
+		if (!type)
+		{
+			assert(false);
+			return nullptr;
+		}
+
+		auto FactoryDecl = ClassName;
+		FactoryDecl += " @";
+		FactoryDecl += ClassName;
+		FactoryDecl += "()";
+		factory = type->GetFactoryByDecl((const char*)FactoryDecl.c_str());
+		if (!factory)
+		{
+			assert(false);
+			return nullptr;
+		}
+	}
+
+	pContext->Prepare(factory);
+
+	pContext->Execute();
+
+	asIScriptObject* obj = *(asIScriptObject**)pContext->GetAddressOfReturnValue();
+
+	obj->AddRef();
+
+	return obj;
+}
+
+
+class GameComponentBase {
+public:
+	GameComponentBase() = default;
+	GameComponentBase(asIScriptObject* pScriptObj) : m_pScriptObj(pScriptObj) {};
+	virtual ~GameComponentBase()
+	{
+		m_pScriptObj->Release();
+	}
+
+	virtual int Update(asIScriptContext* pContext, float fDeltaT)
+	{
+		auto pTypeInfo = m_pScriptObj->GetObjectType();
+		asIScriptFunction* pFunc = pTypeInfo->GetMethodByDecl("void Update( float )");
+
+		auto r = pContext->Prepare(pFunc); assert(r >= 0);
+		r = pContext->SetObject(m_pScriptObj); assert(r >= 0);
+		r = pContext->SetArgFloat(0, fDeltaT); assert(r >= 0);
+		r = pContext->Execute(); assert(r == 0);
+
+		return r;
+	}
+
+protected:
+	asIScriptObject* m_pScriptObj;
+};
+
+// A class to increase the stack size used by scripts.
+class TestData
+{
+public:
+
+private:
+	float TEST[1024 * 4];
+};
+
+template< typename T > static void ConstructorFunc(void* memory)
+{
+	// Initialize the pre-allocated memory by calling the
+	// object constructor with the placement-new operator
+	new(memory) T();
+}
+template< typename T > static void DestructorFunc(void* memory)
+{
+	// Uninitialize the memory by calling the object destructor
+	((T*)memory)->~T();
+}
+
+template< typename T > bool RegisterClassConstructAndDestruct(asIScriptEngine* pEngine, const char* pClassName)
+{
+	auto r = pEngine->RegisterObjectBehaviour(pClassName, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstructorFunc<T>), asCALL_CDECL_OBJLAST);
+	assert(r >= 0);
+	r = pEngine->RegisterObjectBehaviour(pClassName, asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructorFunc<T>), asCALL_CDECL_OBJLAST);
+	assert(r >= 0);
+
+	return true;
+}
+
+template< typename T > bool RegisterClassOpAssign(asIScriptEngine* pEngine, const char* pClassName)
+{
+	std::string opFunc = pClassName;
+	opFunc += "& opAssign(const ";
+	opFunc += pClassName;
+	opFunc += " &in )";
+	auto r = pEngine->RegisterObjectMethod(pClassName, opFunc.c_str(), asMETHODPR(T, operator =, (const T&), T&), asCALL_THISCALL); assert(r >= 0);
+
+	return true;
+}
+
 bool Test()
 {
 	bool fail = false;
 	CBufferedOutStream bout;
 	int r;
+
+	// Test reuse of context after the stack has grown
+	// Reported by Doi Hiroshi
+	{
+		auto engine = asCreateScriptEngine();
+
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+
+		// regist game use type and function.
+		{
+			r = engine->RegisterInterface("IGameComponentScript"); assert(r >= 0);
+
+			r = engine->RegisterObjectType("TestData", sizeof(TestData), asOBJ_VALUE | asGetTypeTraits<TestData>()); assert(r >= 0);
+			RegisterClassConstructAndDestruct<TestData>(engine, "TestData");
+			RegisterClassOpAssign<TestData>(engine, "TestData");
+		}
+
+		// build script.
+		{
+			auto mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+
+			mod->AddScriptSection("char",
+				R"(
+class Character : GameComponentScriptBase
+{
+	private TestData m_TEST;
+
+	bool Init() override	
+	{
+		return true;
+	}
+	void Term() override {}
+
+	void Update( float fDeltaT ) override
+	{
+		TestData TEST;// = m_TEST;
+	}
+
+	void Draw() override {}
+
+}
+
+class Enemy : GameComponentScriptBase
+{
+	private TestData m_TEST;
+
+	bool Init() override	
+	{
+		return true;
+	}
+	void Term() override {}
+
+	void Update( float fDeltaT ) override
+	{
+		TestData TEST = m_TEST;
+	}
+
+	void Draw() override {}
+
+})");
+			mod->AddScriptSection("game",
+				R"(
+class GameComponentScriptBase : IGameComponentScript
+{
+	bool Init() { return true; }
+	void Term() {}
+
+	void Update( float fDeltaT ){}
+	void Draw(){}
+}
+)");
+			r = mod->Build();
+			if (r < 0)
+				TEST_FAILED;
+		}
+
+		// create context.
+		asIScriptContext* m_pContext = engine->CreateContext();
+
+		// run.
+		{
+			// create game object.
+			GameComponentBase Chara(CreateScriptClassObject(engine, m_pContext, "Character"));
+			GameComponentBase Enemy(CreateScriptClassObject(engine, m_pContext, "Enemy"));
+
+			float fDeltaT = 0.166666f;
+
+			// When you run this script, the StackIndex will increase to 3.
+			r = Chara.Update(m_pContext, fDeltaT);
+			if (r != asEXECUTION_FINISHED)
+				TEST_FAILED;
+
+			asDWORD stackIndex = 0;
+			m_pContext->GetCallStateRegisters(0, 0, 0, 0, 0, &stackIndex);
+			if (stackIndex != 3)
+				TEST_FAILED;
+
+			// If you run this script,
+			// the StackIndex will start at 3 and memory will be corrupted.
+			r = Enemy.Update(m_pContext, fDeltaT);
+			if (r != asEXECUTION_FINISHED)
+				TEST_FAILED;
+		}
+
+		// shutdown.
+		{
+			m_pContext->Release();
+			engine->ShutDownAndRelease();
+
+			if (bout.buffer != "")
+			{
+				PRINTF("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
+		}
+	}
 
 	// TODO: The serialized context must be 32bit/64bit agnostic, both for program pointer and stack pointer
 	// TODO: Test serializing contexts with nested calls. Although technically possible, it would be a very odd situation since a nested call means the lower execution is actually active, and it isn't possible to deserialize a context in active state since when deserializing it will finish in suspended state

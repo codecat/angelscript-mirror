@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.38.0 WIP - 2024/11/02</h2>
+<h2>Version 2.38.0 WIP - 2024/11/15</h2>
 
 <ul>
 <li>Bug fixes
@@ -33,6 +33,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash when doing implicit conversion from value type to ref type for a function argument expecting reference to handle (Thanks Sam Tupy)
 <li>Fixed crash when compiling script attempting to declare variable with type auto[] (Thanks Sam Tupy)
 <li>Explicit copy constructor is no longer used implicitly by compiler (Thanks Patrick Jeeves)
+<li>Fixed memory invasion that could happen if a context was reused after the stack had grown (Thanks Doi Hiroshi)
 </ul>
 <li>Library
 <ul>

@@ -190,6 +190,7 @@ asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 	m_status                    = asEXECUTION_UNINITIALIZED;
 	m_stackBlockSize            = 0;
 	m_originalStackPointer      = 0;
+	m_originalStackIndex        = 0;
 	m_inExceptionHandler        = false;
 	m_isStackMemoryNotAllocated = false;
 	m_needToCleanupArgs         = false;
@@ -549,6 +550,14 @@ int asCContext::SetStateRegisters(asUINT stackLevel, asIScriptFunction *callingS
 		m_callingSystemFunction = reinterpret_cast<asCScriptFunction*>(callingSystemFunction);
 		m_initialFunction       = reinterpret_cast<asCScriptFunction*>(initialFunction);
 		m_originalStackPointer  = DeserializeStackPointer(originalStackPointer);
+		m_originalStackIndex    = DetermineStackIndex(m_originalStackPointer);
+		if (m_originalStackIndex >= m_stackBlocks.GetLength())
+		{
+			asCString str;
+			str.Format(TXT_FAILED_IN_FUNC_s_s_d, "SetStateRegisters", errorNames[-asCONTEXT_ACTIVE], asCONTEXT_ACTIVE);
+			m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+			return asINVALID_ARG;
+		}
 		m_argumentsSize         = argumentsSize; // TODO: Calculate this from the initialFunction so it doesn't need to be serialized
 
 		// Need to push the value of registers so they can be restored
@@ -640,6 +649,20 @@ int asCContext::SetCallStateRegisters(asUINT stackLevel, asDWORD stackFramePoint
 	return asSUCCESS;
 }
 
+// internal
+int asCContext::DetermineStackIndex(asDWORD* ptr) const
+{
+	for (asUINT n = 0; n < m_stackBlocks.GetLength(); n++)
+	{
+		asUINT blockSize = m_engine->ep.initContextStackSize << n;
+		asINT64 delta = ptr - m_stackBlocks[n];
+		if (delta <= blockSize && delta > 0)
+			return n;
+	}
+
+	return asERROR;
+}
+
 // interface
 int asCContext::Prepare(asIScriptFunction *func)
 {
@@ -666,32 +689,33 @@ int asCContext::Prepare(asIScriptFunction *func)
 	// Release the returned object (if any)
 	CleanReturnObject();
 
-	// Release the object if it is a script object
-	if( m_initialFunction && m_initialFunction->objectType && (m_initialFunction->objectType->flags & asOBJ_SCRIPT_OBJECT) )
+	// Check if there has been a previous function prepared
+	if (m_initialFunction)
 	{
-		asCScriptObject *obj = *(asCScriptObject**)&m_regs.stackFramePointer[0];
-		if( obj )
-			obj->Release();
+		// Release the previous object, if it is a script object
+		if (m_initialFunction && m_initialFunction->objectType && (m_initialFunction->objectType->flags & asOBJ_SCRIPT_OBJECT))
+		{
+			asCScriptObject* obj = *(asCScriptObject**)&m_regs.stackFramePointer[0];
+			if (obj)
+				obj->Release();
 
-		*(asPWORD*)&m_regs.stackFramePointer[0] = 0;
+			*(asPWORD*)&m_regs.stackFramePointer[0] = 0;
+		}
+
+		// Reset stack pointer
+		m_regs.stackPointer = m_originalStackPointer;
+		m_stackIndex = m_originalStackIndex;
+
+		asASSERT(int(m_stackIndex) == DetermineStackIndex(m_regs.stackPointer));
 	}
 
 	if( m_initialFunction && m_initialFunction == func )
 	{
 		// If the same function is executed again, we can skip a lot of the setup
 		m_currentFunction = m_initialFunction;
-
-		// Reset stack pointer
-		m_regs.stackPointer = m_originalStackPointer;
-
-		// Make sure the stack pointer is pointing to the original position,
-		// otherwise something is wrong with the way it is being updated
-		asASSERT( IsNested() || m_stackIndex > 0 || (m_regs.stackPointer == m_stackBlocks[0] + m_stackBlockSize) );
 	}
 	else
 	{
-		asASSERT( m_engine );
-
 		// Make sure the function is from the same engine as the context to avoid mixups
 		if( m_engine != func->GetEngine() )
 		{
@@ -702,16 +726,7 @@ int asCContext::Prepare(asIScriptFunction *func)
 		}
 
 		if( m_initialFunction )
-		{
 			m_initialFunction->Release();
-
-			// Reset stack pointer
-			m_regs.stackPointer = m_originalStackPointer;
-
-			// Make sure the stack pointer is pointing to the original position,
-			// otherwise something is wrong with the way it is being updated
-			asASSERT( IsNested() || m_stackIndex > 0 || (m_regs.stackPointer == m_stackBlocks[0] + m_stackBlockSize) );
-		}
 
 		// We trust the application not to pass anything else but a asCScriptFunction
 		m_initialFunction = reinterpret_cast<asCScriptFunction *>(func);
@@ -761,6 +776,7 @@ int asCContext::Prepare(asIScriptFunction *func)
 	// Reserve space for the arguments and return value
 	m_regs.stackFramePointer = m_regs.stackPointer - m_argumentsSize - m_returnValueSize;
 	m_originalStackPointer   = m_regs.stackPointer;
+	m_originalStackIndex     = m_stackIndex;
 	m_regs.stackPointer      = m_regs.stackFramePointer;
 
 	// Set arguments to 0
@@ -820,10 +836,7 @@ int asCContext::Unprepare()
 
 		// Reset stack pointer
 		m_regs.stackPointer = m_originalStackPointer;
-
-		// Make sure the stack pointer is pointing to the original position,
-		// otherwise something is wrong with the way it is being updated
-		asASSERT( IsNested() || m_stackIndex > 0 || (m_regs.stackPointer == m_stackBlocks[0] + m_stackBlockSize) );
+		m_stackIndex = m_originalStackIndex;
 	}
 
 	// Clear function pointers
@@ -1763,6 +1776,7 @@ int asCContext::PopState()
 	// Restore the previous initial function and the associated values
 	m_initialFunction      = reinterpret_cast<asCScriptFunction*>(tmp[2]);
 	m_originalStackPointer = (asDWORD*)tmp[3];
+	m_originalStackIndex   = DetermineStackIndex(m_originalStackPointer);
 	m_argumentsSize        = (int)tmp[4];
 
 	m_regs.valueRegister   = asQWORD(asDWORD(tmp[5]));
@@ -6211,25 +6225,14 @@ asDWORD asCContext::SerializeStackPointer(asDWORD *v) const
 	asASSERT(v != 0);
 	asASSERT(m_stackBlocks.GetLength());
 
-	asQWORD min = ~0llu;
-	int best     = -1;
-
 	// Find the stack block that is used, and the offset into that block
-	for(asUINT i = 0; i < m_stackBlocks.GetLength(); ++i)
-	{
-		asQWORD delta = v - m_stackBlocks[i];
+	asUINT stackIndex = DetermineStackIndex(v);
+	asQWORD offset    = asQWORD(v - m_stackBlocks[stackIndex]);
 
-		if(delta < min)
-		{
-			min = delta;
-			best = i;
-		}
-	}
-
-	asASSERT(min < 0x03FFFFFF && (asUINT)best < 0x3F);
+	asASSERT(offset < 0x03FFFFFF && (asUINT)stackIndex < 0x3F);
 
 	// Return the seriaized pointer as the offset in the lower 26 bits + the index of the stack block in the upper 6 bits
-	return (min & 0x03FFFFFF) | (( best & 0x3F) << (32-6));
+	return (offset & 0x03FFFFFF) | ((stackIndex & 0x3F) << (32-6));
 }
 
 // interface
