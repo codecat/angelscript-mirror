@@ -780,7 +780,7 @@ asCScriptNode *asCParser::ParseIdentifier()
 	return node;
 }
 
-// BNF:3: PARAMLIST     ::= '(' ['void' | (TYPE TYPEMOD [IDENTIFIER] ['=' EXPR] {',' TYPE TYPEMOD [IDENTIFIER] ['=' EXPR]})] ')'
+// BNF:3: PARAMLIST     ::= '(' ['void' | (TYPE TYPEMOD ('...' | [IDENTIFIER] ['=' EXPR]) {',' TYPE TYPEMOD ('...' | [IDENTIFIER] ['=' EXPR])})] ')'
 asCScriptNode *asCParser::ParseParameterList()
 {
 	asCScriptNode *node = CreateNode(snParameterList);
@@ -830,27 +830,53 @@ asCScriptNode *asCParser::ParseParameterList()
 			node->AddChildLast(ParseTypeMod(true));
 			if( isSyntaxError ) return node;
 
-			// Parse optional identifier
 			GetToken(&t1);
-			if( t1.type == ttIdentifier )
+
+			// Variadic
+			if (t1.type == ttVariadic)
 			{
-				RewindTo(&t1);
+				node->AddChildLast(CreateNode(snVariadic));
+				
+				sToken t2;
+				GetToken(&t2);
 
-				node->AddChildLast(ParseIdentifier());
-				if( isSyntaxError ) return node;
+				// Variadic must be the last argument
+				if (t2.type == ttCloseParenthesis)
+				{
+					node->UpdateSourcePos(t2.pos, t2.length);
 
-				GetToken(&t1);
+					return node;
+				}
+				else
+				{
+					Error(ExpectedToken(")"), &t2);
+					Error(InsteadFound(t2), &t2);
+					return node;
+				}
 			}
-
-			// Parse optional expression for the default arg
-			if( t1.type == ttAssignment )
+			else
 			{
-				// Do a superficial parsing of the default argument
-				// The actual parsing will be done when the argument is compiled for a function call
-				node->AddChildLast(SuperficiallyParseExpression());
-				if( isSyntaxError ) return node;
+				// Parse optional identifier
+				if( t1.type == ttIdentifier )
+				{
+					RewindTo(&t1);
 
-				GetToken(&t1);
+					node->AddChildLast(ParseIdentifier());
+					if( isSyntaxError ) return node;
+
+					GetToken(&t1);
+				}
+
+				// Parse optional expression for the default arg
+				if( t1.type == ttAssignment )
+				{
+					// Do a superficial parsing of the default argument
+					// The actual parsing will be done when the argument is compiled for a function call
+					node->AddChildLast(SuperficiallyParseExpression());
+					if( isSyntaxError ) return node;
+
+					GetToken(&t1);
+				}
 			}
 
 			// Check if list continues

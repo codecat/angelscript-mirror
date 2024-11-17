@@ -411,6 +411,8 @@ an uninitialized value of the desired type is returned.
 
 \page doc_script_stdlib_string string
 
+\todo Add format and scan
+
 \note Strings are only available in the scripts if the application \ref doc_addon_std_string "registers the support for them". 
 The syntax for using strings may differ for the application you're working with so consult the application's manual
 for more details.

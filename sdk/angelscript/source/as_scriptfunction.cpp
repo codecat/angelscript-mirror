@@ -790,6 +790,11 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 		}
 	}
 
+	if (IsVariadic())
+	{
+		str += "...";
+	}
+
 	str += ")";
 
 	if( IsReadOnly() )
@@ -1802,6 +1807,12 @@ bool asCScriptFunction::IsExplicit() const
 bool asCScriptFunction::IsProperty() const
 {
 	return traits.GetTrait(asTRAIT_PROPERTY);
+}
+
+// interface
+bool asCScriptFunction::IsVariadic() const
+{
+	return traits.GetTrait(asTRAIT_VARIADIC);
 }
 
 // internal

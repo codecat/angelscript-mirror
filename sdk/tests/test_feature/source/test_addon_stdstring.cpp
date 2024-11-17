@@ -26,6 +26,80 @@ namespace Test_Addon_StdString
 		COutStream out;
 		CBufferedOutStream bout;
 
+		// scan
+		{
+			asIScriptEngine* engine = asCreateScriptEngine();
+			engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+			RegisterStdString(engine);
+			engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_GENERIC);
+
+			bout.buffer = "";
+
+			engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+			g_buf = "";
+			asIScriptContext* ctx = engine->CreateContext();
+			r = ExecuteString(engine,
+				"int i; float f; string s;\n"
+				"uint scanned = scan('123 3.14 hello', i, f, s);\n"
+				"print('Scanned ' +  scanned + ' result(s): ' + i + ', ' + f + ', ' + s);\n"
+				"assert(i == 123);\n"
+				"float diff = f - 3.14f; assert(diff * diff < 0.00001f);\n"
+				"assert(s == 'hello');"
+			);
+			if (r != asEXECUTION_FINISHED)
+			{
+				TEST_FAILED;
+				if (r == asEXECUTION_EXCEPTION)
+				{
+					PRINTF("%s\n", GetExceptionInfo(ctx).c_str());
+				}
+			}
+			if (g_buf != "Scanned 3 result(s): 123, 3.14, hello\n")
+			{
+				TEST_FAILED;
+				PRINTF("%s\n", g_buf.c_str());
+			}
+			ctx->Release();
+
+			engine->ShutDownAndRelease();
+		}
+
+		// format
+		{
+			asIScriptEngine* engine = asCreateScriptEngine();
+			engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+			RegisterStdString(engine);
+			engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_GENERIC);
+
+			bout.buffer = "";
+
+			engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+			g_buf = "";
+			asIScriptContext* ctx = engine->CreateContext();
+			r = ExecuteString(engine,
+				"string result = format('{} {} {}', 123, true, 'hello');\n"
+				"print(result);"
+			);
+			if (r != asEXECUTION_FINISHED)
+			{
+				TEST_FAILED;
+				if (r == asEXECUTION_EXCEPTION)
+				{
+					PRINTF("%s\n", GetExceptionInfo(ctx).c_str());
+				}
+			}
+			if (g_buf != "123 true hello\n")
+			{
+				TEST_FAILED;
+				PRINTF("%s\n", g_buf.c_str());
+			}
+			ctx->Release();
+
+			engine->ShutDownAndRelease();
+		}
+
 		// Test regexFind
 		{
 			asIScriptEngine* engine = asCreateScriptEngine();
@@ -135,6 +209,7 @@ namespace Test_Addon_StdString
 				TEST_FAILED;
 			}
 
+			g_buf = "";
 			r = ExecuteString(engine, "Main()", mod);
 			if (r != asEXECUTION_FINISHED)
 				TEST_FAILED;

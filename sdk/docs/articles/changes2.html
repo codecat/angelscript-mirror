@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.38.0 WIP - 2024/11/15</h2>
+<h2>Version 2.38.0 WIP - 2024/11/17</h2>
 
 <ul>
 <li>Bug fixes
@@ -42,6 +42,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added engine property asEP_MEMBER_INIT_MODE to allow backwards compatiblity for how class members are initialized
 <li>Added engine property asEP_BOOL_CONVERSION_MODE to enable or disable contextual conversion to bool
 <li>Added engine property asEP_FOREACH_SUPPORT to allow turning off the foreach loops for backwards compatibility
+<li>Implemented support for registering functions with variadic arguments using generic calling convention (Thanks HenryAWE)
 </ul>
 <li>Library interface
 <ul>
@@ -65,6 +66,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added get_weekDay to datetime add-on
 <li>Implemented a string::regexFind method for the std::string add-on
 <li>Implemented support for foreach on script arrays and dictionary
+<li>Implemented format and scan with variadic args for std::string add-on (Thanks HenryAWE)
 </ul>
 <li>project
 <ul>

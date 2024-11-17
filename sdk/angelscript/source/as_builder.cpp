@@ -1308,6 +1308,9 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 	n = paramList->firstChild;
 	while( n )
 	{
+		if (n && n->nodeType == snVariadic)
+			break; // Should be the last argument
+		
 		paramCount++;
 		n = n->next->next;
 		if( n && n->nodeType == snIdentifier )
@@ -1361,6 +1364,11 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 
 		// Move to next parameter
 		n = n->next->next;
+		if (n && n->nodeType == snVariadic)
+		{
+			func->SetVariadic(true);
+			break;
+		}
 		if( n && n->nodeType == snIdentifier )
 		{
 			func->parameterNames[index] = asCString(&source.code[n->tokenPos], n->tokenLength);

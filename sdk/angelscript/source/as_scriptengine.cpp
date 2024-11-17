@@ -2951,6 +2951,13 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 			return ConfigError(asNOT_SUPPORTED, "RegisterObjectMethod", declaration, 0);
 	}
 
+	if (func->IsVariadic())
+	{
+		// Variadic functions are only supported for generic calling convention
+		if (callConv != asCALL_GENERIC)
+			return ConfigError(asNOT_SUPPORTED, "RegisterGlobalFunction", declaration, 0);
+	}
+
 	// Check name conflicts
 	r = bld.CheckNameConflictMember(objectType, func->name.AddressOf(), 0, 0, false, false);
 	if( r < 0 )
@@ -3080,6 +3087,13 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 
 		// Template functions are only supported for generic calling convention
 		if (callConv != asCALL_GENERIC)
+			return ConfigError(asNOT_SUPPORTED, "RegisterGlobalFunction", declaration, 0);
+	}
+
+	if (func->IsVariadic())
+	{
+		// Variadic functions are only supported for generic calling convention
+		if(callConv != asCALL_GENERIC)
 			return ConfigError(asNOT_SUPPORTED, "RegisterGlobalFunction", declaration, 0);
 	}
 

@@ -112,7 +112,8 @@ enum asEFuncTrait
 	asTRAIT_EXTERNAL    = 1<<8,  // function
 	asTRAIT_EXPLICIT    = 1<<9,  // method
 	asTRAIT_PROPERTY    = 1<<10, // method/function
-	asTRAIT_DELETED     = 1<<11  // method
+	asTRAIT_DELETED     = 1<<11, // method
+	asTRAIT_VARIADIC    = 1<<12  // method/function
 };
 
 struct asSFunctionTraits
@@ -179,6 +180,7 @@ public:
 	bool                 IsShared() const;
 	bool                 IsExplicit() const;
 	bool                 IsProperty() const;
+	bool                 IsVariadic() const;
 	asUINT               GetParamCount() const;
 	int                  GetParam(asUINT index, int *typeId, asDWORD *flags = 0, const char **name = 0, const char **defaultArg = 0) const;
 	int                  GetReturnTypeId(asDWORD *flags = 0) const;
@@ -225,6 +227,7 @@ public:
 	void SetProtected(bool set) { traits.SetTrait(asTRAIT_PROTECTED, set); }
 	void SetPrivate(bool set) { traits.SetTrait(asTRAIT_PRIVATE, set); }
 	void SetProperty(bool set) { traits.SetTrait(asTRAIT_PROPERTY, set); }
+	void SetVariadic(bool set) { traits.SetTrait(asTRAIT_VARIADIC, set); }
 	bool IsFactory() const;
 
 	asCScriptFunction(asCScriptEngine *engine, asCModule *mod, asEFuncType funcType);

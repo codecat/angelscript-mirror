@@ -88,6 +88,8 @@ xor<br>
 
 \todo Add foreach
 
+\todo Separate reserved keywords and context sensitive keywords
+
 <small>* Not really a reserved keyword, but is recognized by the compiler as a built-in keyword.</small>
 
 These are the non-alphabetical tokens that are also used in the language syntax.
@@ -154,6 +156,8 @@ These are the non-alphabetical tokens that are also used in the language syntax.
 </code></td>
 </tr>
 </table>
+
+\todo Add ...
 
 Other than the above tokens there are also numerical, string, identifier, and comment tokens.
 

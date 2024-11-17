@@ -637,6 +637,169 @@ static string formatFloat(double value, const string &options, asUINT width, asU
 	return buf;
 }
 
+// TODO: variadic: review
+static void StringFormat(asIScriptGeneric* gen)
+{
+	const string& fmt = *(string*)gen->GetArgAddress(0);
+	string result;
+
+	asUINT defaultArgIdx = 1; // Skip the first argument which is the fmt
+	for (asUINT i = 0; i < fmt.size(); ++i)
+	{
+		char ch = fmt[i];
+		if (ch == '{')
+		{
+			if (i + 1 >= (asUINT)fmt.size())
+			{
+				asGetActiveContext()->SetException("Invalid format string");
+				return;
+			}
+
+			if (fmt[i + 1] == '{')
+			{
+				i += 1;
+				result += '{';
+			}
+			else
+			{
+				// TODO: Parse optional argument index to support for relocating argument
+				// e.g. "{1} {0}".format("there", "hello") == "hello there"
+				asUINT argIdx = defaultArgIdx++;
+				if (argIdx >= (asUINT)gen->GetArgCount())
+				{
+					asGetActiveContext()->SetException("Index out of range");
+					return;
+				}
+				int typeId = gen->GetArgTypeId(argIdx);
+				void* ref = gen->GetArgAddress(argIdx);
+
+				switch (typeId)
+				{
+				case asTYPEID_BOOL:
+					result += *(bool*)ref ? "true" : "false";
+					break;
+
+#define AS_STRING_FORMAT_IMPL(tid, type) \
+	case tid: result += to_string(*(type*)ref); break
+
+					AS_STRING_FORMAT_IMPL(asTYPEID_INT8, int8_t);
+					AS_STRING_FORMAT_IMPL(asTYPEID_INT16, int16_t);
+					AS_STRING_FORMAT_IMPL(asTYPEID_INT32, int32_t);
+					AS_STRING_FORMAT_IMPL(asTYPEID_INT64, int64_t);
+
+					AS_STRING_FORMAT_IMPL(asTYPEID_UINT8, uint8_t);
+					AS_STRING_FORMAT_IMPL(asTYPEID_UINT16, uint16_t);
+					AS_STRING_FORMAT_IMPL(asTYPEID_UINT32, uint32_t);
+					AS_STRING_FORMAT_IMPL(asTYPEID_UINT64, uint64_t);
+
+					AS_STRING_FORMAT_IMPL(asTYPEID_FLOAT, float);
+					AS_STRING_FORMAT_IMPL(asTYPEID_DOUBLE, double);
+
+				default:
+					if (typeId & ~asTYPEID_MASK_SEQNBR)
+					{
+						asIScriptEngine* engine = gen->GetEngine();
+						int stringTypeId = engine->GetStringFactory();
+						if (typeId == stringTypeId)
+						{
+							result += *(string*)ref;
+						}
+						else
+						{
+							// TODO: Better explanation
+							asGetActiveContext()->SetException("Unformattable");
+							return;
+						}
+					}
+					else // enums
+					{
+						// TODO: Format enum name
+						result += to_string(*(int*)ref);
+					}
+				}
+			}
+		}
+		else if (ch == '}')
+		{
+			if (i + 1 < (asUINT)fmt.size() && fmt[i + 1] == '}')
+			{
+				i += 1;
+				result += '}';
+			}
+		}
+		else
+		{
+			// Ordinary character
+			result += ch;
+		}
+	}
+
+	new(gen->GetAddressOfReturnLocation()) string(std::move(result));
+}
+
+// TODO: variadic: review
+static void StringScan(asIScriptGeneric* gen)
+{
+	asIScriptEngine* engine = gen->GetEngine();
+
+	stringstream ss(*(string*)gen->GetArgObject(0));
+	asUINT scanned = 0;
+
+	for (asUINT i = 1; i < (asUINT)gen->GetArgCount(); ++i)
+	{
+		int typeId = gen->GetArgTypeId(i);
+		if (!(typeId & ~asTYPEID_MASK_SEQNBR))
+		{
+#define AS_STRING_SCAN_IMPL(tid, type) \
+	case tid:\
+	do {\
+		type val;\
+		ss >> val;\
+		if(!ss) goto end_scan;\
+		void* ref = gen->GetArgAddress(i); \
+		*(type*)ref = val;\
+	} while(0); \
+	break
+
+			switch (typeId)
+			{
+				AS_STRING_SCAN_IMPL(asTYPEID_BOOL, bool);
+
+				AS_STRING_SCAN_IMPL(asTYPEID_INT16, int16_t);
+			default: // enum
+				AS_STRING_SCAN_IMPL(asTYPEID_INT32, int32_t);
+				AS_STRING_SCAN_IMPL(asTYPEID_INT64, int64_t);
+
+				AS_STRING_SCAN_IMPL(asTYPEID_UINT8, uint8_t);
+				AS_STRING_SCAN_IMPL(asTYPEID_UINT16, uint16_t);
+				AS_STRING_SCAN_IMPL(asTYPEID_UINT32, uint32_t);
+				AS_STRING_SCAN_IMPL(asTYPEID_UINT64, uint64_t);
+
+				AS_STRING_SCAN_IMPL(asTYPEID_FLOAT, float);
+				AS_STRING_SCAN_IMPL(asTYPEID_DOUBLE, double);
+			}
+		}
+		else if (typeId == engine->GetStringFactory())
+		{
+			string val;
+			ss >> val;
+			if (!ss) goto end_scan;
+
+			void* ref = gen->GetArgAddress(i);
+			*(string*)ref = std::move(val);
+		}
+		else // Invalid type
+		{
+			goto end_scan;
+		}
+
+		++scanned;
+	}
+
+end_scan:
+	gen->SetReturnDWord(scanned);
+}
+
 // AngelScript signature:
 // int64 parseInt(const string &in val, uint base = 10, uint &out byteCount = 0)
 static asINT64 parseInt(const string &val, asUINT base, asUINT *byteCount)
@@ -902,6 +1065,8 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("string", "void erase(uint pos, int count = -1)", asFUNCTION(StringErase), asCALL_CDECL_OBJLAST); assert(r >= 0);
 	r = engine->RegisterObjectMethod("string", "int regexFind(const string  &in regex, uint start = 0, uint &out lengthOfMatch = void) const", asFUNCTION(StringRegexFind), asCALL_CDECL_OBJLAST); assert(r >= 0);
 
+	r = engine->RegisterGlobalFunction("uint scan(const string&in str, ?&out ...)", asFUNCTION(StringScan), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("string format(const string&in fmt, const ?&in ...)", asFUNCTION(StringFormat), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterGlobalFunction("string formatInt(int64 val, const string &in options = \"\", uint width = 0)", asFUNCTION(formatInt), asCALL_CDECL); assert(r >= 0);
 	r = engine->RegisterGlobalFunction("string formatUInt(uint64 val, const string &in options = \"\", uint width = 0)", asFUNCTION(formatUInt), asCALL_CDECL); assert(r >= 0);
 	r = engine->RegisterGlobalFunction("string formatFloat(double val, const string &in options = \"\", uint width = 0, uint precision = 0)", asFUNCTION(formatFloat), asCALL_CDECL); assert(r >= 0);
@@ -1422,7 +1587,8 @@ void RegisterStdString_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("string", "void insert(uint pos, const string &in other)", asFUNCTION(StringInsert_Generic), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterObjectMethod("string", "void erase(uint pos, int count = -1)", asFUNCTION(StringErase_Generic), asCALL_GENERIC); assert(r >= 0);
 
-
+	r = engine->RegisterGlobalFunction("uint scan(const string&in str, ?&out ...)", asFUNCTION(StringScan), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("string format(const string&in fmt, const ?&in ...)", asFUNCTION(StringFormat), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterGlobalFunction("string formatInt(int64 val, const string &in options = \"\", uint width = 0)", asFUNCTION(formatInt_Generic), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterGlobalFunction("string formatUInt(uint64 val, const string &in options = \"\", uint width = 0)", asFUNCTION(formatUInt_Generic), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterGlobalFunction("string formatFloat(double val, const string &in options = \"\", uint width = 0, uint precision = 0)", asFUNCTION(formatFloat_Generic), asCALL_GENERIC); assert(r >= 0);

@@ -5827,7 +5827,20 @@ int asCContext::CallGeneric(asCScriptFunction *descr)
 		popSize += AS_PTR_SIZE;
 	}
 
-	asCGeneric gen(m_engine, descr, currentObject, args);
+	asDWORD varArgCount = 0;
+	if (descr->IsVariadic())
+	{
+		varArgCount = *args;
+
+		args += 1;
+		popSize += 1;
+	}
+
+	// TODO: variadic: Put them in different branch. Do we really need a separate object for variadics?
+	asCGeneric genOrdinary(m_engine, descr, currentObject, args);
+	asCGenericVariadic genVar(m_engine, descr, currentObject, args, varArgCount);
+
+	asCGeneric& gen = descr->IsVariadic() ? genVar : genOrdinary;
 
 	m_callingSystemFunction = descr;
 #ifdef AS_NO_EXCEPTIONS

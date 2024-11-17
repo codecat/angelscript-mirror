@@ -312,6 +312,8 @@ void DumpModule(asIScriptModule *mod)
 		"reg prop: float f group: <null>\n"
 		"reg prop: const float myConst group: <null>\n"
 		"reg typedef: myFloat => float\n"
+		"reg func: uint scan(const string&in, ?&out...) group: <null>\n"
+		"reg func: string format(const string&in, const ?&in...) group: <null>\n"
 		"reg func: string formatInt(int64, const string&in = \"\", uint = 0) group: <null>\n"
 		"reg func: string formatUInt(uint64, const string&in = \"\", uint = 0) group: <null>\n"
 		"reg func: string formatFloat(double, const string&in = \"\", uint = 0, uint = 0) group: <null>\n"
