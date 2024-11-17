@@ -78,6 +78,7 @@ void CScriptDictionary::Init(asIScriptEngine *e)
 	// We start with one reference
 	refCount = 1;
 	gcFlag = false;
+	iterGuard = 0;
 
 	// Keep a reference to the engine for as long as we live
 	// We don't increment the reference counter, because the
@@ -310,8 +311,11 @@ void CScriptDictionary::Set(const dictKey_t &key, void *value, int typeId)
 {
 	dictMap_t::iterator it;
 	it = dict.find(key);
-	if( it == dict.end() )
+	if (it == dict.end())
+	{
 		it = dict.insert(dictMap_t::value_type(key, CScriptDictValue())).first;
+		iterGuard++;
+	}
 
 	it->second.Set(engine, value, typeId);
 }
@@ -402,6 +406,7 @@ bool CScriptDictionary::Delete(const dictKey_t &key)
 	{
 		it->second.FreeValue(engine);
 		dict.erase(it);
+		iterGuard++;
 		return true;
 	}
 
@@ -415,6 +420,7 @@ void CScriptDictionary::DeleteAll()
 		it->second.FreeValue(engine);
 
 	dict.clear();
+	iterGuard++;
 }
 
 CScriptArray* CScriptDictionary::GetKeys() const
@@ -1057,7 +1063,7 @@ static void CScriptDictValue_FreeValue_Generic(asIScriptGeneric *gen)
 
 //----------------------------------------------------------------------------
 // Foreach support
-CScriptDictionary::CScriptDictIter::CScriptDictIter(const CScriptDictionary* dict) : iter(dict->begin()), refCount(1) {}
+CScriptDictionary::CScriptDictIter::CScriptDictIter(const CScriptDictionary* dict) : iter(dict->begin()), refCount(1), iterGuard(dict->iterGuard) {}
 CScriptDictionary::CScriptDictIter::~CScriptDictIter() {}
 
 void CScriptDictionary::CScriptDictIter::AddRef() const
@@ -1084,6 +1090,9 @@ CScriptDictionary::CScriptDictIter* CScriptDictionary::opForBegin() const
 
 bool CScriptDictionary::opForEnd(const CScriptDictionary::CScriptDictIter& iter) const
 {
+	if (iter.iterGuard != iterGuard)
+		return true;
+
 	if (iter.iter == end())
 		return true;
 
@@ -1092,7 +1101,10 @@ bool CScriptDictionary::opForEnd(const CScriptDictionary::CScriptDictIter& iter)
 
 CScriptDictionary::CScriptDictIter* CScriptDictionary::opForNext(CScriptDictionary::CScriptDictIter& iter) const
 {
-	++iter.iter;
+	if (iter.iterGuard != iterGuard)
+		iter.iter = end();
+	else
+		++iter.iter;
 	return &iter;
 }
 

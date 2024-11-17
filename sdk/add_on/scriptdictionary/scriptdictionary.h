@@ -208,7 +208,8 @@ public:
 		friend class CScriptDictionary;
 
 		CIterator iter;
-		mutable int      refCount;
+		mutable int refCount;
+		asUINT iterGuard;
 
 		CScriptDictIter(const CScriptDictionary* dict);
 		~CScriptDictIter();
@@ -245,6 +246,7 @@ protected:
 	mutable int      refCount;
 	mutable bool     gcFlag;
 	dictMap_t        dict;
+	asUINT           iterGuard;
 };
 
 // This function will determine the configuration of the engine
