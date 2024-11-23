@@ -109,6 +109,35 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// Test passing a function pointer to a function expecting a ref@
+	// https://www.gamedev.net/forums/topic/717716-registering-a-function-to-handle-a-script-specific-class/
+	{
+		engine = asCreateScriptEngine();
+		RegisterScriptHandle(engine);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterGlobalFunction("void ReceiveRefByVal(ref@)", asFUNCTION(ReceiveRefByValue), asCALL_CDECL);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() { \n"
+			"  ReceiveRefByVal(main); \n"
+			"  ReceiveRefByVal(@main); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test returning a newly registered function 
 	// https://www.gamedev.net/forums/topic/715598-calling-a-dll-function/
 	SKIP_ON_MAX_PORT

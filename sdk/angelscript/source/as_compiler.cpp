@@ -8462,6 +8462,8 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 		{
 			if( generateCode )
 			{
+				DetermineSingleFunc(ctx, node);
+
 				asASSERT( ctx->type.dataType.IsObjectHandle() );
 
 				// If the input type is a handle, then a simple ref copy is enough

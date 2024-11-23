@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.38.0 WIP - 2024/11/17</h2>
+<h2>Version 2.38.0 WIP - 2024/11/22</h2>
 
 <ul>
 <li>Bug fixes
@@ -34,6 +34,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash when compiling script attempting to declare variable with type auto[] (Thanks Sam Tupy)
 <li>Explicit copy constructor is no longer used implicitly by compiler (Thanks Patrick Jeeves)
 <li>Fixed memory invasion that could happen if a context was reused after the stack had grown (Thanks Doi Hiroshi)
+<li>Fixed crash when passing function pointer without @ prefix to argument expecting asOBJ_ASHANDLE (Thanks johannesg)
 </ul>
 <li>Library
 <ul>
