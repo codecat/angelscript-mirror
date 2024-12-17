@@ -94,6 +94,35 @@ bool TestCondition()
 	CBufferedOutStream bout;
 	asIScriptEngine* engine;
 
+	// Test proper error handling in condition
+	// https://www.gamedev.net/forums/topic/717777-opimplconv-with-different-return-types-crashes-application-in-ternary-operator-assignment/5467648/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Thing {\n"
+			"    int opImplConv() { return 0; }\n"
+			"    float opImplConv() { return 0; }\n"
+			"} \n"
+			"void Main() {\n"
+			"    auto foo = true ? Thing() : null;\n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test condition with objects. Should return handle for better efficiency. TODO: Can this be done in all scenarios?
 	// https://www.gamedev.net/forums/topic/711022-ternary-operators-stopped-paying-attention-to-expected-return-type/
 	{

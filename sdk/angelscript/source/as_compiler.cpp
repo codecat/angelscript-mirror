@@ -7546,6 +7546,10 @@ asUINT asCCompiler::ImplicitConversion(asCExprContext *ctx, const asCDataType &t
 		      ctx->type.dataType.IsNullHandle() ||
 		      ctx->IsAnonymousInitList() );
 
+	// No conversion to null handle
+	if (to.IsNullHandle())
+		return asCC_NO_CONV;
+
 	if( to.IsFuncdef() && ctx->IsLambda() )
 		return ImplicitConvLambdaToFunc(ctx, to, node, convType, generateCode);
 
@@ -16888,9 +16892,9 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asCExprContext *
 
 	// Implicitly convert null to the other type
 	asCDataType to;
-	if( lctx->type.IsNullConstant() )
+	if( lctx->type.dataType.IsNullHandle() )
 		to = rctx->type.dataType;
-	else if( rctx->type.IsNullConstant() )
+	else if( rctx->type.dataType.IsNullHandle() )
 		to = lctx->type.dataType;
 	else
 	{
