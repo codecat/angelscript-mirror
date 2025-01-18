@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.38.0 WIP - 2024/12/16</h2>
+<h2>Version 2.38.0 WIP - 2025/01/18</h2>
 
 <ul>
 <li>Bug fixes
@@ -36,6 +36,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed memory invasion that could happen if a context was reused after the stack had grown (Thanks Doi Hiroshi)
 <li>Fixed crash when passing function pointer without @ prefix to argument expecting asOBJ_ASHANDLE (Thanks johannesg)
 <li>Fixed incorrect attempt to convert to null handle in ternary condition (Thanks ezio416)
+<li>Fixed assert on invalid assign with literal constant (Thanks Miss)
 </ul>
 <li>Library
 <ul>

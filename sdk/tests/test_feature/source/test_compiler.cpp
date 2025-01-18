@@ -181,6 +181,31 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Assign with invalid type
+	// https://www.gamedev.net/forums/topic/717831-failed-assertion-on-const-type-w-invalid-assignment/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Foo {}\n"
+			"void Main() {\n"
+			"  const Foo f = 10; \n"
+			"}\n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "test (2, 1) : Info    : Compiling void Main()\n"
+						   "test (3, 17) : Error   : Can't implicitly convert from 'const int' to 'Foo&'.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		engine->ShutDownAndRelease();
+	}
+
 	// Attempt assigning 0 to null
 	// Reported by Sam Tupy
 	{

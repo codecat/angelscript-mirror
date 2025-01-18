@@ -94,7 +94,7 @@ bool TestCondition()
 	CBufferedOutStream bout;
 	asIScriptEngine* engine;
 
-	// Test proper error handling in condition
+	// Test proper conversion of null in condition
 	// https://www.gamedev.net/forums/topic/717777-opimplconv-with-different-return-types-crashes-application-in-ternary-operator-assignment/5467648/
 	{
 		engine = asCreateScriptEngine();
