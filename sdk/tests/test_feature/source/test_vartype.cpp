@@ -190,6 +190,52 @@ bool Test()
 	asIScriptModule *mod = 0;
 	asIScriptContext *ctx = 0;
 
+	// Test issue with variadic and stack size
+	// Reported by Paril
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterStdString(engine);
+
+		bout.buffer = "";
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"string func(string a, string b, string c) { \n"
+			"  assert( a == 'a' ); \n"
+			"  assert( b == 'b' ); \n"
+			"  assert( c == '1;2;' ); \n"
+			"  return a + b + c; \n"
+			"} \n"
+			"void main() {\n"
+			"  string t = func('a', 'b', format('{};{};', 1, 2) ); \n"
+			"  assert( t == 'ab1;2;' ); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptContext* ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+		{
+			TEST_FAILED;
+			if (r == asEXECUTION_EXCEPTION)
+				PRINTF("%s\n", GetExceptionInfo(ctx, true).c_str());
+		}
+		ctx->Release();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test variadic with fixed type
 	{
 		engine = asCreateScriptEngine();

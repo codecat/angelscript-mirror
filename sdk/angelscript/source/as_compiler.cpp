@@ -17054,6 +17054,21 @@ void asCCompiler::PerformFunctionCall(int funcId, asCExprContext *ctx, bool isCo
 	}
 
 	int argSize = descr->GetSpaceNeededForArguments();
+	if (descr->IsVariadic())
+	{
+		// Compute the additional space used for the variadic args
+		asCDataType variadicType = descr->parameterTypes[descr->parameterTypes.GetLength() - 1];
+		int sizeOfVariadicArg = variadicType.GetSizeOnStackDWords();
+
+		// GetSpaceNeededForArguments already added one variadic arg for the ..., but there might not actually be any
+		argSize -= sizeOfVariadicArg;
+
+		// Add 1 for the arg count
+		argSize++;
+
+		// Add the actual space used for the variadic args
+		argSize += sizeOfVariadicArg * (args->GetLength() - descr->parameterTypes.GetLength() + 1);
+	}
 
 	// If we're calling a class method we must make sure the object is guaranteed to stay
 	// alive throughout the call by holding on to a reference in a local variable. This must
