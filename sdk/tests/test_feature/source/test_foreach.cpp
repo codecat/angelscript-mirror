@@ -41,6 +41,57 @@ bool Test()
 	int r;
 	CBufferedOutStream bout;
 
+	// Test foreach on array with script classes using auto@
+	// Reported by Paril
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void Print(const string &in)", asFUNCTION(Print_Generic), asCALL_GENERIC);
+		g_printBuffer = "";
+
+		const char* foreach1234 =
+			"class level_entry_t { \n"
+			" string map_name;\n"
+			"} \n"
+			"class game_locals_t { \n"
+			"  array<level_entry_t> level_entries; \n"
+			"} \n"
+			"game_locals_t game; \n"
+			"void Test()\n"
+			"{\n"
+			"   game.level_entries.insertLast(level_entry_t()); \n"
+			"	foreach(auto @entry, uint i : game.level_entries)   \n"
+			"	{											\n"
+			"		if (entry.map_name == '')				\n"
+			"           game.level_entries[i].map_name = 'test'; \n"
+			"	} \n"
+			"   Assert(game.level_entries[0].map_name == 'test'); \n"
+			"}\n";
+
+		asIScriptModule* mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("foreach1234", foreach1234);
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "Test()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			TEST_FAILED;
+			PRINTF("%s", bout.buffer.c_str());
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test const overload
 	{
 		asIScriptEngine* engine = asCreateScriptEngine();

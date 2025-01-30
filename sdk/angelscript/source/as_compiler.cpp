@@ -5132,7 +5132,7 @@ void asCCompiler::CompileForEachStatement(asCScriptNode* node, asCByteCode* bc)
 		asCDataType itemDt = builder->CreateDataTypeFromNode(rangeNode, script, outFunc->nameSpace, false, outFunc->objectType);
 		itemDataTypes.PushLast(itemDt);
 
-		// Indentifier
+		// Identifier
 		asASSERT(rangeNode->next->nodeType == snIdentifier);
 		itemNodes.PushLast(rangeNode->next);
 
@@ -5296,9 +5296,10 @@ void asCCompiler::CompileForEachStatement(asCScriptNode* node, asCByteCode* bc)
 					asDWORD retFlags;
 					int retTid = engine->scriptFunctions[opForValueIdN]->GetReturnTypeId(&retFlags);
 
-					bool isConst = itemDataTypes[i].IsReadOnly() || retFlags & asTM_CONST;
+					bool isConst = itemDataTypes[i].IsReadOnly() || (retFlags & asTM_CONST);
+					bool isHandle = itemDataTypes[i].IsObjectHandle() ;
 					asCDataType dt = asCDataType::CreateById(engine, retTid, isConst);
-
+					dt.MakeHandle(isHandle);
 					itemDataTypes[i] = dt;
 				}
 			}
@@ -5538,7 +5539,6 @@ void asCCompiler::CompileForEachStatement(asCScriptNode* node, asCByteCode* bc)
 		CompileInitializationWithAssignment(
 			&itemNBC, itemDt, itemNode->prev, itemOffset, NULL, asVGM_VARIABLE, rangeNode, &opForValueNExpr
 		);
-		ReleaseTemporaryVariable(opForValueNExpr.type, &itemNBC);
 
 		// Suppress the compiler warning of uninitialized variable
 		variables->GetVariableByOffset(itemOffset)->isInitialized = true;
