@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2024 Andreas Jonsson
+   Copyright (c) 2003-2025 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -497,7 +497,7 @@ void asCScriptFunction::DestroyInternal()
 	// Release template sub types
 	for (asUINT n = 0; n < templateSubTypes.GetLength(); n++)
 		if(templateSubTypes[n].GetTypeInfo())
-			templateSubTypes[n].GetTypeInfo()->Release();
+			templateSubTypes[n].GetTypeInfo()->ReleaseInternal();
 }
 
 // interface

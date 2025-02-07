@@ -5209,7 +5209,7 @@ void asCCompiler::CompileForEachStatement(asCScriptNode* node, asCByteCode* bc)
 			asIScriptFunction* f = engine->scriptFunctions[funcs[i]];
 			asDWORD flags;
 			int paramTid;
-			if (f->GetParamCount() == 1 && f->GetReturnTypeId(&flags) == asTYPEID_BOOL && !(flags && asTM_INOUTREF) && f->GetParam(0, &paramTid) >= 0 && paramTid == iterTid)
+			if (f->GetParamCount() == 1 && f->GetReturnTypeId(&flags) == asTYPEID_BOOL && !(flags & asTM_INOUTREF) && f->GetParam(0, &paramTid) >= 0 && paramTid == iterTid)
 			{
 				if (opForEndId != 0 && !isConstRange)
 				{

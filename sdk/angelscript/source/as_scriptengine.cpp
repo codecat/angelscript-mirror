@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2024 Andreas Jonsson
+   Copyright (c) 2003-2025 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -3188,13 +3188,6 @@ int asCScriptEngine::GetTemplateFunctionInstance(asCScriptFunction* baseFunc, co
 	newFunc->sysFuncIntf = asNEW(asSSystemFunctionInterface)(*baseFunc->sysFuncIntf);
 	newFunc->funcType = asFUNC_SYSTEM;
 
-	// Adjust the clean up instructions
-	if (newFunc->sysFuncIntf->callConv == ICC_GENERIC_FUNC ||
-		newFunc->sysFuncIntf->callConv == ICC_GENERIC_METHOD)
-		PrepareSystemFunctionGeneric(newFunc, newFunc->sysFuncIntf, this);
-	else
-		PrepareSystemFunction(newFunc, newFunc->sysFuncIntf, this);
-
 	// TODO: Need to know the module if it is a script that instantiates the template function
 	newFunc->returnType = DetermineTypeForTemplate(baseFunc->returnType, baseFunc->templateSubTypes, types, 0, 0, 0);
 	newFunc->parameterTypes.SetLength(baseFunc->parameterTypes.GetLength());
@@ -3204,13 +3197,20 @@ int asCScriptEngine::GetTemplateFunctionInstance(asCScriptFunction* baseFunc, co
 	newFunc->templateSubTypes = types;
 	for (asUINT t = 0; t < newFunc->templateSubTypes.GetLength(); t++)
 		if (newFunc->templateSubTypes[t].GetTypeInfo())
-			newFunc->templateSubTypes[t].GetTypeInfo()->AddRef();
+			newFunc->templateSubTypes[t].GetTypeInfo()->AddRefInternal();
 
 	newFunc->id = GetNextScriptFunctionId();
 	AddScriptFunction(newFunc);
 
 	// Keep track of template function instances
 	generatedTemplateFunctionInstances.PushLast(newFunc); // This holds a reference (constructor already set it to 1)
+
+	// Adjust the clean up instructions
+	if (newFunc->sysFuncIntf->callConv == ICC_GENERIC_FUNC ||
+		newFunc->sysFuncIntf->callConv == ICC_GENERIC_METHOD)
+		PrepareSystemFunctionGeneric(newFunc, newFunc->sysFuncIntf, this);
+	else
+		PrepareSystemFunction(newFunc, newFunc->sysFuncIntf, this);
 
 	return newFunc->id;
 }

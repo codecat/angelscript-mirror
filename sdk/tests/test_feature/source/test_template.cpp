@@ -250,6 +250,11 @@ void do_smth(asIScriptGeneric* gen)
 	do_smth_called_correctly = gen->GetArgTypeId(0) == asTYPEID_INT32 && arg == 100 && (*obj) == "Success";
 }
 
+void q2as_test_bug(asIScriptGeneric* gen) 
+{
+
+}
+
 bool Test()
 {
 	RET_ON_MAX_PORT
@@ -258,6 +263,49 @@ bool Test()
 	int r;
 	COutStream out;
 	CBufferedOutStream bout;
+
+	// Make sure object types are correctly released
+	// Reported by Paril
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		engine->RegisterGlobalFunction("T @+ test_bug<T>(T @+ from)", asFUNCTION(q2as_test_bug), asCALL_GENERIC);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void blocked2_f(ASEntity2 &, ASEntity2 &); \n"
+			"class moveinfo2_t \n"
+			"{ \n"
+			"	blocked2_f    @blocked; \n"
+			"} \n"
+			"class ASEntity2 \n"
+			"{ \n"
+			"	moveinfo2_t  moveinfo; \n"
+			"} \n"
+			"void testfunc() \n"
+			"{ \n"
+			"	ASEntity2 temp; \n"
+			"	test_bug<ASEntity2>(temp); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asITypeInfo *type = mod->GetTypeInfoByName("ASEntity2");
+
+		r = ExecuteString(engine, "testfunc()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
 
 	// Test parsing for template with multiple subtypes and auto declaration
 	// Reported by Patrick Jeeves
