@@ -1842,7 +1842,7 @@ asCScriptFunction* asCScriptFunction::FindNextFunctionCalled(asUINT startSearchF
 	// Find out which function that will be called
 	asCScriptFunction* calledFunc = 0;
 	int stackDelta = 0;
-	for (asUINT n = startSearchFromProgramPos; scriptData->byteCode.GetLength(); )
+	for (asUINT n = startSearchFromProgramPos; n < scriptData->byteCode.GetLength(); )
 	{
 		asBYTE bc = *(asBYTE*)&scriptData->byteCode[n];
 		if (bc == asBC_CALL ||
