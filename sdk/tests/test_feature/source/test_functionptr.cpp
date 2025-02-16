@@ -179,10 +179,10 @@ bool Test()
 			"test (7, 1) : Info    : Compiling void func()\n"
 			"test (9, 3) : Error   : No matching signatures to 'GUI::OnMouseButton($func@const)'\n" // TODO: Show the signature of the lambda function in the error message
 			"test (9, 3) : Info    : Candidates are:\n"
-			"test (9, 3) : Info    : void OnMouseButton(boolMouseEventCallback@)\n"
+			"test (9, 3) : Info    : void GUI::OnMouseButton(GUI::boolMouseEventCallback@)\n"
 			"test (10, 3) : Error   : No matching signatures to 'GUI::OnMouseButton($func@const)'\n" // TODO: Show the signature of the lambda function in the error message
 			"test (10, 3) : Info    : Candidates are:\n"
-			"test (10, 3) : Info    : void OnMouseButton(boolMouseEventCallback@)\n")
+			"test (10, 3) : Info    : void GUI::OnMouseButton(GUI::boolMouseEventCallback@)\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

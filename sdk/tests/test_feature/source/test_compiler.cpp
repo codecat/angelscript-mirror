@@ -4812,6 +4812,7 @@ bool Test()
 	}
 
 	//////////////
+	// Test that enum values are not found without the explicit scope if there are other symbols with the same name
 	{
 		const char *script =
 			"enum wf_type \n"

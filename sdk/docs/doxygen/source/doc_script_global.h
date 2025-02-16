@@ -225,4 +225,6 @@ namespace declare the same entity.
   }
 </pre>
 
+\todo Describe using namespace. Can be global and can be within namespace
+
 */

@@ -667,6 +667,13 @@ void asCBuilder::ParseScripts()
 
 	if (numErrors == 0)
 	{
+		// Register namespace visibility
+		for (n = 0; n < scripts.GetLength(); n++)
+		{
+			asCScriptNode* node = parsers[n]->GetScriptNode();
+			RegisterNamespaceVisibility(node, scripts[n], engine->nameSpaces[0]);
+		}
+		
 		// Find all type declarations
 		for (n = 0; n < scripts.GetLength(); n++)
 		{
@@ -871,6 +878,80 @@ void asCBuilder::RegisterTypesFromScript(asCScriptNode *node, asCScriptCode *scr
 
 		node = next;
 	}
+}
+
+void asCBuilder::RegisterNamespaceVisibility(asCScriptNode* node, asCScriptCode* script, asSNameSpace* ns)
+{
+	asASSERT(node->nodeType == snScript);
+
+	node = node->firstChild;
+	// First, register all namespaces
+	while ( node )
+	{
+		asCScriptNode* next = node->next;
+		if ( node->nodeType == snNamespace )
+		{
+			asCString nsName;
+			nsName.Assign(&script->code[node->firstChild->tokenPos], node->firstChild->tokenLength);
+			if ( ns->name != "" )
+				nsName = ns->name + "::" + nsName;
+
+			asSNameSpace* nsChild = engine->AddNameSpace(nsName.AddressOf());
+			RegisterNamespaceVisibility(node->lastChild, script, nsChild);
+		}
+		else if ( node->nodeType == snUsing )
+		{
+			node->DisconnectParent();
+			RegisterUsingNamespace(node, script, ns);
+		}
+		node = next;
+	}
+}
+
+// TODO: using: review
+void asCBuilder::AddVisibleNamespaces(asSNameSpace *ns, const asCArray<asSNameSpace*>& visited, asCArray<asSNameSpace*>& pending)
+{
+	asSMapNode<asSNameSpace*, asCArray<asSNameSpace*>>* cursor = 0;
+
+	if (namespaceVisibility.MoveTo(&cursor, ns))
+	{
+		asCArray<asSNameSpace*>& visibilityBuffer = namespaceVisibility.GetValue(cursor);
+		asUINT count = visibilityBuffer.GetLength();
+
+		for (asUINT i = 0; i < count; ++i)
+		{
+			asSNameSpace* visibleNameSpace = visibilityBuffer[i];
+			if (!visited.Exists(visibleNameSpace) && !pending.Exists(visibleNameSpace))
+			{
+				pending.PushLast(visibleNameSpace);
+			}
+		}
+	}
+}
+
+// TODO: using: review
+asSNameSpace *asCBuilder::FindNextVisibleNamespace(const asCArray<asSNameSpace*>& visited, asCArray<asSNameSpace*>& pending, asSNameSpace *parentNs, bool* checkAmbiguous)
+{
+	// First iterate through all pending namespaces that have been included with 'using namespace'
+	asSNameSpace* nextNs = 0;
+	while ( pending.GetLength() != 0 )
+	{
+		asSNameSpace *candidate = pending.PopLast();
+		if (!visited.Exists(candidate))
+		{
+			nextNs = candidate;
+			break;
+		}
+	}
+
+	// Even if the parent namespace has already been visited, it still needs to be traversed
+	if (nextNs == 0)
+		nextNs = parentNs;
+
+	if (checkAmbiguous && !(*checkAmbiguous))
+		*checkAmbiguous = nextNs == engine->nameSpaces[0];
+
+	return nextNs;
 }
 
 void asCBuilder::RegisterNonTypesFromScript(asCScriptNode *node, asCScriptCode *script, asSNameSpace *ns)
@@ -2174,6 +2255,37 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSN
 	return 0;
 }
 
+int asCBuilder::RegisterUsingNamespace(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns)
+{
+	asCScriptNode* n = node->firstChild;
+	asCString name(&file->code[n->tokenPos], n->tokenLength);
+
+	while (n->next)
+	{
+	    n = n->next;
+	    name += "::" + asCString(&file->code[n->tokenPos], n->tokenLength);
+	}
+
+	asSNameSpace* visibleNamespace = engine->AddNameSpace(name.AddressOf());
+	asSMapNode<asSNameSpace*, asCArray<asSNameSpace*>>* cursor = 0;
+
+	if (namespaceVisibility.MoveTo(&cursor, ns))
+	{
+		asCArray<asSNameSpace*>& visibleNamespaces = namespaceVisibility.GetValue(cursor);
+		if (!visibleNamespaces.Exists(visibleNamespace))
+			namespaceVisibility.GetValue(cursor).PushLast(visibleNamespace);
+	}
+	else
+	{
+		asCArray<asSNameSpace*> tmp;
+		tmp.PushLast(visibleNamespace);
+		namespaceVisibility.Insert(ns, tmp);
+	}
+
+	node->Destroy(engine);
+	return 0;
+}
+
 int asCBuilder::RegisterMixinClass(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns)
 {
 	asCScriptNode *cl = node->firstChild;
@@ -2899,14 +3011,12 @@ void asCBuilder::CleanupEnumValues()
 	}
 }
 
-int asCBuilder::GetNamespaceAndNameFromNode(asCScriptNode *n, asCScriptCode *script, asSNameSpace *implicitNs, asSNameSpace *&outNs, asCString &outName)
+int asCBuilder::GetNamespaceAndNameFromNode(asCScriptNode *n, asCScriptCode *script, asSNameSpace *implicitNs, asSNameSpace *&outNs, asCString &outName, bool *isExplicitNs)
 {
-	// TODO: child funcdef: The node might be a snScope now
 	asASSERT( n->nodeType == snIdentifier );
 
 	// Get the optional scope from the node
-	// TODO: child funcdef: The parentType will be set if the scope is actually a type rather than a namespace
-	asSNameSpace *ns = GetNameSpaceFromNode(n->firstChild, script, implicitNs, 0);
+	asSNameSpace *ns = GetNameSpaceFromNode(n->firstChild, script, implicitNs, 0, 0, isExplicitNs);
 	if( ns == 0 )
 		return -1;
 
@@ -3128,39 +3238,83 @@ void asCBuilder::DetermineTypeRelations()
 		{
 			asSNameSpace *ns;
 			asCString name;
-			if (GetNamespaceAndNameFromNode(node, intfDecl->script, intfType->nameSpace, ns, name) < 0)
+			bool isExplicitNs = false;
+			if (GetNamespaceAndNameFromNode(node, intfDecl->script, intfType->nameSpace, ns, name, &isExplicitNs) < 0)
 			{
 				node = node->next;
 				continue;
 			}
 
+			bool ok = true;
+			asCArray<asSNameSpace*> pendingNamespaces;
+			asCArray<asSNameSpace*> visitedNamespaces;
+			bool checkAmbiguousSymbols = !isExplicitNs;
+			asSNameSpace* parentNs = engine->GetParentNameSpace(ns);
+
+			// TODO: using: Can't this use symbol lookup?
 			// Find the object type for the interface
 			asCObjectType *objType = 0;
 			while (ns)
 			{
-				objType = GetObjectType(name.AddressOf(), ns);
-				if (objType) break;
+				if (!visitedNamespaces.Exists(ns))
+				{
+					visitedNamespaces.PushLast(ns);
 
-				ns = engine->GetParentNameSpace(ns);
+					if (!checkAmbiguousSymbols)
+					{
+						objType = GetObjectType(name.AddressOf(), ns);
+						if (objType)
+							break;
+					}
+					else
+					{
+						asCObjectType* ot = GetObjectType(name.AddressOf(), ns);
+
+						if (objType && ot)
+						{
+							asCString msg;
+							msg.Format(TXT_AMBIGUOUS_SYMBOL_NAME_s, name.AddressOf());
+							WriteError(msg, intfDecl->script, node);
+							objType = 0;
+							ok = false;
+							break;
+						}
+
+						objType = ot;
+					}
+				}
+
+				AddVisibleNamespaces(ns, visitedNamespaces, pendingNamespaces);
+				ns = FindNextVisibleNamespace(visitedNamespaces, pendingNamespaces, parentNs, &checkAmbiguousSymbols);
+				if (ns == parentNs)
+				{
+					// Only move to the parent namespace if the object type hasn't been found yet
+					if (objType)
+						break;
+
+					parentNs = engine->GetParentNameSpace(ns);
+				}
 			}
 
 			// Check that the object type is an interface
-			bool ok = true;
-			if (objType && objType->IsInterface())
+			if (ok)
 			{
-				// Check that the implemented interface is shared if the base interface is shared
-				if (intfType->IsShared() && !objType->IsShared())
+				if (objType && objType->IsInterface())
 				{
-					asCString str;
-					str.Format(TXT_SHARED_CANNOT_IMPLEMENT_NON_SHARED_s, objType->GetName());
-					WriteError(str, intfDecl->script, node);
+					// Check that the implemented interface is shared if the base interface is shared
+					if (intfType->IsShared() && !objType->IsShared())
+					{
+						asCString str;
+						str.Format(TXT_SHARED_CANNOT_IMPLEMENT_NON_SHARED_s, objType->GetName());
+						WriteError(str, intfDecl->script, node);
+						ok = false;
+					}
+				}
+				else
+				{
+					WriteError(TXT_INTERFACE_CAN_ONLY_IMPLEMENT_INTERFACE, intfDecl->script, node);
 					ok = false;
 				}
-			}
-			else
-			{
-				WriteError(TXT_INTERFACE_CAN_ONLY_IMPLEMENT_INTERFACE, intfDecl->script, node);
-				ok = false;
 			}
 
 			if (ok)
@@ -3221,7 +3375,9 @@ void asCBuilder::DetermineTypeRelations()
 		{
 			asSNameSpace *ns;
 			asCString name;
-			if (GetNamespaceAndNameFromNode(node, file, decl->typeInfo->nameSpace, ns, name) < 0)
+			bool ok = true;
+			bool isExplicitNs = false;
+			if (GetNamespaceAndNameFromNode(node, file, decl->typeInfo->nameSpace, ns, name, &isExplicitNs) < 0)
 			{
 				node = node->next;
 				continue;
@@ -3231,105 +3387,155 @@ void asCBuilder::DetermineTypeRelations()
 			asCObjectType *objType = 0;
 			sMixinClass *mixin = 0;
 			asSNameSpace *origNs = ns;
+			
+			asCArray<asSNameSpace*> pendingNamespaces;
+			asCArray<asSNameSpace*> visitedNamespaces;
+
+			bool checkAmbiguousTypes = !isExplicitNs;
+			asSNameSpace* parentNs = engine->GetParentNameSpace(ns);
+			
+			// TODO: clean up: Can't this use symbol lookup?
 			while (ns)
 			{
-				objType = GetObjectType(name.AddressOf(), ns);
-				if (objType == 0)
-					mixin = GetMixinClass(name.AddressOf(), ns);
-
-				if (objType || mixin)
-					break;
-
-				ns = engine->GetParentNameSpace(ns);
-			}
-
-			if (objType == 0 && mixin == 0)
-			{
-				asCString str;
-				if (origNs->name == "")
-					str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_GLOBAL_NS, name.AddressOf());
-				else
-					str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_NS_s, name.AddressOf(), origNs->name.AddressOf());
-				WriteError(str, file, node);
-			}
-			else if (mixin)
-			{
-				AddInterfaceFromMixinToClass(decl, node, mixin);
-			}
-			else if (!(objType->flags & asOBJ_SCRIPT_OBJECT) ||
-				(objType->flags & asOBJ_NOINHERIT))
-			{
-				// Either the class is not a script class or interface
-				// or the class has been declared as 'final'
-				asCString str;
-				str.Format(TXT_CANNOT_INHERIT_FROM_s_FINAL, objType->name.AddressOf());
-				WriteError(str, file, node);
-			}
-			else if (objType->size != 0)
-			{
-				// The class inherits from another script class
-				if (!decl->isExistingShared && CastToObjectType(decl->typeInfo)->derivedFrom != 0)
+				if (!visitedNamespaces.Exists(ns))
 				{
-					if (!multipleInheritance)
+					visitedNamespaces.PushLast(ns);
+
+					if (!checkAmbiguousTypes)
 					{
-						WriteError(TXT_CANNOT_INHERIT_FROM_MULTIPLE_CLASSES, file, node);
-						multipleInheritance = true;
+						objType = GetObjectType(name.AddressOf(), ns);
+						if (objType == 0)
+							mixin = GetMixinClass(name.AddressOf(), ns);
+
+						if (objType || mixin)
+							break;
 					}
-				}
-				else
-				{
-					// Make sure none of the base classes inherit from this one
-					asCObjectType *base = objType;
-					bool error = false;
-					while (base != 0)
+					else
 					{
-						if (base == decl->typeInfo)
+						asCObjectType* resultObjType = GetObjectType(name.AddressOf(), ns);
+						sMixinClass* resultMixin = 0;
+
+						if (resultObjType == 0)
+							resultMixin = GetMixinClass(name.AddressOf(), ns);
+
+						if ((objType || mixin) && resultObjType)
 						{
-							WriteError(TXT_CANNOT_INHERIT_FROM_SELF, file, node);
-							error = true;
+							asCString msg;
+							msg.Format(TXT_AMBIGUOUS_SYMBOL_NAME_s, name.AddressOf());
+							WriteError(msg, file, node);
+							ok = false;
+							objType = 0;
+							mixin = 0;
 							break;
 						}
 
-						base = base->derivedFrom;
+						objType = resultObjType;
+						mixin = resultMixin;
 					}
+				}
 
-					if (!error)
+				AddVisibleNamespaces(ns, visitedNamespaces, pendingNamespaces);
+				ns = FindNextVisibleNamespace(visitedNamespaces, pendingNamespaces, parentNs, &checkAmbiguousTypes);
+				if (ns == parentNs)
+				{
+					// Only move to the parent namespace if the object type hasn't been found yet
+					if (objType || mixin)
+						break;
+
+					parentNs = engine->GetParentNameSpace(ns);
+				}
+			}
+
+			if (ok)
+			{
+				if (objType == 0 && mixin == 0)
+				{
+					asCString str;
+					if (origNs->name == "")
+						str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_GLOBAL_NS, name.AddressOf());
+					else
+						str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_NS_s, name.AddressOf(), origNs->name.AddressOf());
+					WriteError(str, file, node);
+				}
+				else if (mixin)
+				{
+					AddInterfaceFromMixinToClass(decl, node, mixin);
+				}
+				else if (!(objType->flags & asOBJ_SCRIPT_OBJECT) ||
+					(objType->flags & asOBJ_NOINHERIT))
+				{
+					// Either the class is not a script class or interface
+					// or the class has been declared as 'final'
+					asCString str;
+					str.Format(TXT_CANNOT_INHERIT_FROM_s_FINAL, objType->name.AddressOf());
+					WriteError(str, file, node);
+				}
+				else if (objType->size != 0)
+				{
+					// The class inherits from another script class
+					if (!decl->isExistingShared && CastToObjectType(decl->typeInfo)->derivedFrom != 0)
 					{
-						// A shared type may only inherit from other shared types
-						if ((decl->typeInfo->IsShared()) && !(objType->IsShared()))
+						if (!multipleInheritance)
 						{
-							asCString msg;
-							msg.Format(TXT_SHARED_CANNOT_INHERIT_FROM_NON_SHARED_s, objType->name.AddressOf());
-							WriteError(msg, file, node);
-							error = true;
+							WriteError(TXT_CANNOT_INHERIT_FROM_MULTIPLE_CLASSES, file, node);
+							multipleInheritance = true;
 						}
 					}
-
-					if (!error)
+					else
 					{
-						if (decl->isExistingShared)
+						// Make sure none of the base classes inherit from this one
+						asCObjectType* base = objType;
+						bool error = false;
+						while (base != 0)
 						{
-							// Verify that the base class is the same as the original shared type
-							if (CastToObjectType(decl->typeInfo)->derivedFrom != objType)
+							if (base == decl->typeInfo)
 							{
-								asCString str;
-								str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, decl->typeInfo->GetName());
-								WriteError(str, file, node);
+								WriteError(TXT_CANNOT_INHERIT_FROM_SELF, file, node);
+								error = true;
+								break;
+							}
+
+							base = base->derivedFrom;
+						}
+
+						if (!error)
+						{
+							// A shared type may only inherit from other shared types
+							if ((decl->typeInfo->IsShared()) && !(objType->IsShared()))
+							{
+								asCString msg;
+								msg.Format(TXT_SHARED_CANNOT_INHERIT_FROM_NON_SHARED_s, objType->name.AddressOf());
+								WriteError(msg, file, node);
+								error = true;
 							}
 						}
-						else
+
+						if (!error)
 						{
-							// Set the base class
-							CastToObjectType(decl->typeInfo)->derivedFrom = objType;
-							objType->AddRefInternal();
+							if (decl->isExistingShared)
+							{
+								// Verify that the base class is the same as the original shared type
+								if (CastToObjectType(decl->typeInfo)->derivedFrom != objType)
+								{
+									asCString str;
+									str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, decl->typeInfo->GetName());
+									WriteError(str, file, node);
+								}
+							}
+							else
+							{
+								// Set the base class
+								CastToObjectType(decl->typeInfo)->derivedFrom = objType;
+								objType->AddRefInternal();
+							}
 						}
 					}
 				}
-			}
-			else
-			{
-				// The class implements an interface
-				AddInterfaceToClass(decl, node, objType);
+				else
+				{
+					// The class implements an interface
+					AddInterfaceToClass(decl, node, objType);
+				}
 			}
 
 			node = node->next;
@@ -5993,7 +6199,7 @@ asCString asCBuilder::GetScopeFromNode(asCScriptNode *node, asCScriptCode *scrip
 	return scope;
 }
 
-asSNameSpace *asCBuilder::GetNameSpaceFromNode(asCScriptNode *node, asCScriptCode *script, asSNameSpace *implicitNs, asCScriptNode **next, asCObjectType **objType)
+asSNameSpace *asCBuilder::GetNameSpaceFromNode(asCScriptNode *node, asCScriptCode *script, asSNameSpace *implicitNs, asCScriptNode **next, asCObjectType **objType, bool *isExplicitNs)
 {
 	if (objType)
 		*objType = 0;
@@ -6003,8 +6209,13 @@ asSNameSpace *asCBuilder::GetNameSpaceFromNode(asCScriptNode *node, asCScriptCod
 	{
 		if (next)
 			*next = node;
+		if (isExplicitNs) 
+			*isExplicitNs = false;
 		return implicitNs ? implicitNs : engine->nameSpaces[0];
 	}
+
+	if (isExplicitNs)
+		*isExplicitNs = true;
 
 	if (next)
 		*next = node->next;
@@ -6131,7 +6342,7 @@ asSNameSpace *asCBuilder::GetNameSpaceByString(const asCString &nsName, asSNameS
 	return ns;
 }
 
-asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, asSNameSpace *implicitNamespace, bool acceptHandleForScope, asCObjectType *currentType, bool reportError, bool *isValid, asCArray<asCDataType> *templSubTypes)
+asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, asSNameSpace *implicitNamespace, bool acceptHandleForScope, asCObjectType *currentType, bool reportError, bool *isValid, asCArray<asCDataType> *templSubTypes, asCArray<asSNameSpace*>* scopeVisibleNamespaces)
 {
 	asASSERT(node->nodeType == snDataType || node->nodeType == snIdentifier || node->nodeType == snScope );
 
@@ -6177,32 +6388,30 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 		// Recursively search parent namespaces for matching type
 		asSNameSpace *origNs = ns;
 		asCObjectType *origParentType = parentType;
-		while( (ns || parentType) && !found )
-		{
-			asCTypeInfo *ti = 0;
+		asCArray<asSNameSpace*> pendingNamespaces;
+		asCArray<asSNameSpace*> visitedNamespaces;
+		bool checkAmbiguousSymbols = ns == engine->nameSpaces[0];
 
-			if (templSubTypes)
+		if (scopeVisibleNamespaces)
+		{
+			pendingNamespaces = *scopeVisibleNamespaces;
+		}
+
+		asSNameSpace* parentNs = engine->GetParentNameSpace(ns);
+		while( (ns || parentType) && (!found || checkAmbiguousSymbols))
+		{
+			if (!visitedNamespaces.Exists(ns) || parentType)
 			{
-				// If a list of templSubTypes is provided then first check if the identifier matches any of them
-				for (asUINT subtypeIndex = 0; subtypeIndex < templSubTypes->GetLength(); subtypeIndex++)
+				visitedNamespaces.PushLast(ns);
+				asCTypeInfo* ti = 0;
+				bool canContinue = true;
+
+				if (templSubTypes)
 				{
-					asCTypeInfo* type = ((*templSubTypes)[subtypeIndex]).GetTypeInfo();
-					if (type && str == type->name)
+					// If a list of templSubTypes is provided then first check if the identifier matches any of them
+					for (asUINT subtypeIndex = 0; subtypeIndex < templSubTypes->GetLength(); subtypeIndex++)
 					{
-						ti = type;
-						break;
-					}
-				}
-			}
-			if (ti == 0 && currentType)
-			{
-				// If this is for a template type, then we must first determine if the
-				// identifier matches any of the template subtypes
-				if (currentType->flags & asOBJ_TEMPLATE)
-				{
-					for (asUINT subtypeIndex = 0; subtypeIndex < currentType->templateSubTypes.GetLength(); subtypeIndex++)
-					{
-						asCTypeInfo *type = currentType->templateSubTypes[subtypeIndex].GetTypeInfo();
+						asCTypeInfo* type = ((*templSubTypes)[subtypeIndex]).GetTypeInfo();
 						if (type && str == type->name)
 						{
 							ti = type;
@@ -6210,100 +6419,142 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 						}
 					}
 				}
-
-				if (ti == 0)
+				if (ti == 0 && currentType)
 				{
-					// Check if the type is a child type of the current type
-					ti = GetFuncDef(str.AddressOf(), 0, currentType);
-					if (ti)
+					// If this is for a template type, then we must first determine if the
+					// identifier matches any of the template subtypes
+					if (currentType->flags & asOBJ_TEMPLATE)
 					{
-						dt = asCDataType::CreateType(ti, false);
-						found = true;
+						for (asUINT subtypeIndex = 0; subtypeIndex < currentType->templateSubTypes.GetLength(); subtypeIndex++)
+						{
+							asCTypeInfo* type = currentType->templateSubTypes[subtypeIndex].GetTypeInfo();
+							if (type && str == type->name)
+							{
+								ti = type;
+								break;
+							}
+						}
+					}
+
+					if (ti == 0)
+					{
+						// Check if the type is a child type of the current type
+						ti = GetFuncDef(str.AddressOf(), 0, currentType);
+						if (ti)
+						{
+							if (dt.GetTypeInfo() != 0)
+							{
+								asCString msg;
+								msg.Format(TXT_AMBIGUOUS_SYMBOL_NAME_s, str.AddressOf());
+								WriteError(msg, file, node);
+
+								// Return a dummy
+								return asCDataType::CreatePrimitive(ttInt, isConst);
+							}
+
+							dt = asCDataType::CreateType(ti, false);
+							found = true;
+							canContinue = false;
+						}
 					}
 				}
-			}
 
-			if( ti == 0 )
-				ti = GetType(str.AddressOf(), ns, parentType);
-			if( ti == 0 && !module && currentType )
-				ti = GetTypeFromTypesKnownByObject(str.AddressOf(), currentType);
+				if (ti == 0)
+					ti = GetType(str.AddressOf(), ns, parentType);
+				if (ti == 0 && !module && currentType)
+					ti = GetTypeFromTypesKnownByObject(str.AddressOf(), currentType);
 
-			if( ti && !found )
-			{
-				found = true;
-
-				if( ti->flags & asOBJ_IMPLICIT_HANDLE )
-					isImplicitHandle = true;
-
-				// Make sure the module has access to the object type
-				if( !module || (module->m_accessMask & ti->accessMask) )
+				if (ti && (!found || checkAmbiguousSymbols) && canContinue)
 				{
-					if( asOBJ_TYPEDEF == (ti->flags & asOBJ_TYPEDEF) )
+					if (dt.GetTypeInfo() != 0)
 					{
-						// TODO: typedef: A typedef should be considered different from the original type (though with implicit conversions between the two)
-						// Create primitive data type based on object flags
-						dt = CastToTypedefType(ti)->aliasForType;
-						dt.MakeReadOnly(isConst);
+						asCString msg;
+						msg.Format(TXT_AMBIGUOUS_SYMBOL_NAME_s, str.AddressOf());
+						WriteError(msg, file, node);
+
+						// Return a dummy
+						return asCDataType::CreatePrimitive(ttInt, isConst);
 					}
-					else
+
+					found = true;
+
+					if (ti->flags & asOBJ_IMPLICIT_HANDLE)
+						isImplicitHandle = true;
+
+					// Make sure the module has access to the object type
+					if (!module || (module->m_accessMask & ti->accessMask))
 					{
-						if( ti->flags & asOBJ_TEMPLATE )
+						if (asOBJ_TYPEDEF == (ti->flags & asOBJ_TYPEDEF))
 						{
-							ti = GetTemplateInstanceFromNode(n, file, CastToObjectType(ti), implicitNamespace, currentType, &n);
-							if (ti == 0)
+							// TODO: typedef: A typedef should be considered different from the original type (though with implicit conversions between the two)
+							// Create primitive data type based on object flags
+							dt = CastToTypedefType(ti)->aliasForType;
+							dt.MakeReadOnly(isConst);
+						}
+						else
+						{
+							if (ti->flags & asOBJ_TEMPLATE)
 							{
+								ti = GetTemplateInstanceFromNode(n, file, CastToObjectType(ti), implicitNamespace, currentType, &n);
+								if (ti == 0)
+								{
+									if (isValid)
+										*isValid = false;
+
+									// Return a dummy
+									return asCDataType::CreatePrimitive(ttInt, false);
+								}
+							}
+							else if (n && n->next && n->next->nodeType == snDataType)
+							{
+								if (reportError)
+								{
+									asCString msg;
+									msg.Format(TXT_TYPE_s_NOT_TEMPLATE, ti->name.AddressOf());
+									WriteError(msg, file, n);
+								}
 								if (isValid)
 									*isValid = false;
 
 								// Return a dummy
 								return asCDataType::CreatePrimitive(ttInt, false);
 							}
-						}
-						else if( n && n->next && n->next->nodeType == snDataType )
-						{
-							if (reportError)
-							{
-								asCString msg;
-								msg.Format(TXT_TYPE_s_NOT_TEMPLATE, ti->name.AddressOf());
-								WriteError(msg, file, n);
-							}
-							if (isValid)
-								*isValid = false;
 
-							// Return a dummy
-							return asCDataType::CreatePrimitive(ttInt, false);
+							// Create object data type
+							if (ti)
+								dt = asCDataType::CreateType(ti, isConst);
+							else
+								dt = asCDataType::CreatePrimitive(ttInt, isConst);
 						}
-
-						// Create object data type
-						if( ti )
-							dt = asCDataType::CreateType(ti, isConst);
-						else
-							dt = asCDataType::CreatePrimitive(ttInt, isConst);
 					}
-				}
-				else
-				{
-					if (reportError)
+					else
 					{
-						asCString msg;
-						msg.Format(TXT_TYPE_s_NOT_AVAILABLE_FOR_MODULE, (const char *)str.AddressOf());
-						WriteError(msg, file, n);
+						if (reportError)
+						{
+							asCString msg;
+							msg.Format(TXT_TYPE_s_NOT_AVAILABLE_FOR_MODULE, (const char*)str.AddressOf());
+							WriteError(msg, file, n);
+						}
+
+						dt.SetTokenType(ttInt);
+						if (isValid)
+							*isValid = false;
+
+						// Return a dummy
+						return asCDataType::CreatePrimitive(ttInt, false);
 					}
-
-					dt.SetTokenType(ttInt);
-					if (isValid)
-						*isValid = false;
-
-					// Return a dummy
-					return asCDataType::CreatePrimitive(ttInt, false);
 				}
 			}
 
-			if( !found )
+			if( !found || checkAmbiguousSymbols )
 			{
+				AddVisibleNamespaces(ns, visitedNamespaces, pendingNamespaces);
+				
 				// Try to find it in the parent namespace
-				if( ns )
-					ns = engine->GetParentNameSpace(ns);
+				ns = FindNextVisibleNamespace(visitedNamespaces, pendingNamespaces, parentNs, &checkAmbiguousSymbols);
+				if (parentNs == ns)
+					parentNs = engine->GetParentNameSpace(ns);
+				
 				if (parentType)
 					parentType = 0;
 			}

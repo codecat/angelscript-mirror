@@ -22,7 +22,7 @@ The type of the return value should be specified before the name of the function
 the type should be defined as 'void'. After the function name, the list of parameters is specified between parenthesis. 
 Each parameter is defined by its type and name.
 
-
+\todo describe using namespace within statement block
 
 
 

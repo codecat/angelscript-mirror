@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2024 Andreas Jonsson
+   Copyright (c) 2003-2025 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -124,6 +124,7 @@ protected:
 	asCScriptNode *ParseImport();
 	asCScriptNode *ParseScript(bool inBlock);
 	asCScriptNode *ParseNamespace();
+	asCScriptNode *ParseUsing();
 	asCScriptNode *ParseFunction(bool isMethod = false);
 	asCScriptNode *ParseFuncDef();
 	asCScriptNode *ParseClass();

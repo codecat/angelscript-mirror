@@ -86,7 +86,7 @@ xor<br>
 </tr>
 </table>
 
-\todo Add foreach
+\todo Add foreach and using
 
 \todo Separate reserved keywords and context sensitive keywords
 

@@ -6071,7 +6071,7 @@ asCFuncdefType *asCScriptEngine::FindMatchingFuncdef(asCScriptFunction *func, as
 	{
 		// Create a matching funcdef
 		asCScriptFunction *fd = asNEW(asCScriptFunction)(this, 0, asFUNC_FUNCDEF);
-		fd->name = func->name;
+		fd->name = "$func_" + func->name; // Add a prefix to avoid name conflicts with explicitly declared funcdefs
 		fd->nameSpace = func->nameSpace;
 		fd->SetShared(func->IsShared());
 

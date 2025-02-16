@@ -11,7 +11,7 @@
  - \ref block
  - \ref try
 
-
+\todo describe using namespace within statement block. Should it be a statement?
 
 
 

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2024 Andreas Jonsson
+   Copyright (c) 2003-2025 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -2585,7 +2585,7 @@ asCScriptNode *asCParser::ParseImport()
 	return node;
 }
 
-// BNF:0: SCRIPT        ::= {IMPORT | ENUM | TYPEDEF | CLASS | MIXIN | INTERFACE | FUNCDEF | VIRTPROP | VAR | FUNC | NAMESPACE | ';'}
+// BNF:0: SCRIPT        ::= {IMPORT | ENUM | TYPEDEF | CLASS | MIXIN | INTERFACE | FUNCDEF | VIRTPROP | VAR | FUNC | NAMESPACE | USING | ';'}
 asCScriptNode *asCParser::ParseScript(bool inBlock)
 {
 	asCScriptNode *node = CreateNode(snScript);
@@ -2638,6 +2638,8 @@ asCScriptNode *asCParser::ParseScript(bool inBlock)
 			}
 			else if( t1.type == ttNamespace )
 				node->AddChildLast(ParseNamespace());
+			else if( t1.type == ttUsing )
+				node->AddChildLast(ParseUsing());
 			else if( t1.type == ttEnd )
 				return node;
 			else if( inBlock && t1.type == ttEndStatementBlock )
@@ -2680,6 +2682,43 @@ asCScriptNode *asCParser::ParseScript(bool inBlock)
 		}
 	}
 	UNREACHABLE_RETURN;
+}
+
+// BNF:1: USING     ::= 'using' 'namespace' IDENTIFIER {'::' IDENTIFIER} ';'
+asCScriptNode *asCParser::ParseUsing()
+{
+	asCScriptNode *node = CreateNode(snUsing);
+	if( node == 0 ) return 0;
+
+	sToken t;
+	GetToken(&t);
+	node->UpdateSourcePos(t.pos, t.length);
+
+	GetToken(&t);
+	if( t.type != ttNamespace )
+	{
+		Error(ExpectedToken(asCTokenizer::GetDefinition(ttNamespace)), &t);
+		Error(InsteadFound(t), &t);
+		return node;
+	}
+
+	do
+	{
+		node->AddChildLast(ParseIdentifier());
+		if (isSyntaxError)
+			return node;
+
+		GetToken(&t);
+	} while (t.type == ttScope);
+
+	if( t.type != ttEndStatement )
+	{
+		Error(ExpectedToken(asCTokenizer::GetDefinition(ttEndStatement)), &t);
+		Error(InsteadFound(t), &t);
+		return node;
+	}
+
+	return node;
 }
 
 // BNF:1: NAMESPACE     ::= 'namespace' IDENTIFIER {'::' IDENTIFIER} '{' SCRIPT '}'
@@ -3883,7 +3922,7 @@ asCScriptNode *asCParser::SuperficiallyParseStatementBlock()
 	return node;
 }
 
-// BNF:2: STATBLOCK     ::= '{' {VAR | STATEMENT} '}'
+// BNF:2: STATBLOCK     ::= '{' {VAR | STATEMENT | USING} '}'
 asCScriptNode *asCParser::ParseStatementBlock()
 {
 	asCScriptNode *node = CreateNode(snStatementBlock);
@@ -3914,6 +3953,11 @@ asCScriptNode *asCParser::ParseStatementBlock()
 
 				// Statement block is finished
 				return node;
+			}
+			else if( t1.type == ttUsing )
+			{
+				RewindTo(&t1);
+				node->AddChildLast(ParseUsing());
 			}
 			else
 			{

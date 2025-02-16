@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2024 Andreas Jonsson
+   Copyright (c) 2003-2025 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -167,6 +167,7 @@ struct asCExprContext
 	asCScriptNode  *exprNode;
 	asCExprContext *origExpr;
 	asCScriptCode *origCode;
+	asCExprContext* next;
 	// TODO: cleanup: use ambiguousName and an enum to say if it is a method, global func, or enum value
 	asCString methodName;
 	asCString enumValue;
@@ -356,7 +357,8 @@ protected:
 		SL_ERROR = -1
 	};
 
-	SYMBOLTYPE SymbolLookup(const asCString &name, const asCString &scope, asCObjectType *objType, asCExprContext *outResult);
+	bool isAmbiguousSymbol(const asCString &name, asCScriptNode* errNode, SYMBOLTYPE& currentType, SYMBOLTYPE nextType);
+	SYMBOLTYPE SymbolLookup(const asCString &name, const asCString &scope, asCObjectType *objType, asCExprContext *outResult, asCScriptNode* errNode);
 	SYMBOLTYPE SymbolLookupLocalVar(const asCString &name, asCExprContext *outResult);
 	SYMBOLTYPE SymbolLookupMember(const asCString &name, asCObjectType *objType, asCExprContext *outResult);
 
@@ -404,6 +406,7 @@ protected:
 	bool                         m_isConstructorCalled;
 	bool                         m_hasReturned;
 	asCArray<asCObjectProperty*> m_initializedProperties; // Doesn't hold reference
+	asCArray<asSNameSpace*>      m_namespaceVisibility;
 	asCMap<asCObjectProperty*, asUINT> m_propertyAccessCount; // Doesn't hold reference
 	sClassDeclaration           *m_classDecl;
 	sGlobalVariableDescription  *m_globalVar;

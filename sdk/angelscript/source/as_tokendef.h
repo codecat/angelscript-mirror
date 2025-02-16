@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2024 Andreas Jonsson
+   Copyright (c) 2003-2025 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -178,7 +178,8 @@ enum eTokenType
 	ttMixin,               // mixin
 	ttAuto,                // auto
 	ttTry,                 // try
-	ttCatch                // catch
+	ttCatch,               // catch
+	ttUsing                // using
 };
 
 struct sTokenWord
@@ -298,6 +299,7 @@ sTokenWord const tokenWords[] =
 	asTokenDef("uint16"    , ttUInt16),
 	asTokenDef("uint32"    , ttUInt),
 	asTokenDef("uint64"    , ttUInt64),
+	asTokenDef("using"     , ttUsing),
 	asTokenDef("void"      , ttVoid),
 	asTokenDef("while"     , ttWhile),
 	asTokenDef("xor"       , ttXor),

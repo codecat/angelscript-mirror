@@ -521,19 +521,30 @@ bool Test()
 			"{ \n"
 			"//  alert('hello!', x); \n"
 			"} \n"
+			"void set_current_value2(int x) \n"
+			"{ \n"
+			"  string str=''+x; \n"
+			"  set_current_value(str); \n"
+			"} \n"
+			"void set_current_value2(string x) \n"
+			"{ \n"
+			"//  alert('hello!', x); \n"
+			"} \n"
 			"void main() \n"
 			"{ \n"
 			"  set_current_value(35); \n"
 			"  set_current_value('I will kill you!'); \n"
 			"  current_value(); \n"
+			"  current_value2 = 23; \n"
 			"} \n");
-		r = mod->Build(); // TODO: Symbol lookup should identify current_value as a property accessor, even though there are multiple ones. asCCompiler::FindPropertyAccessor needs to have separate error codes for different situations, so SymbolLookup can properly interpret the result.
+		r = mod->Build();
 		if (r >= 0)
 			TEST_FAILED;
-		if (bout.buffer != "test (16, 1) : Info    : Compiling void main()\n"
-						   "test (20, 3) : Error   : Found multiple set accessors for property 'current_value'\n"
-						   "test (20, 3) : Info    : void set_current_value(int x)\n"
-						   "test (20, 3) : Info    : void set_current_value(string x)\n")
+		if (bout.buffer != "test (25, 1) : Info    : Compiling void main()\n"
+						   "test (29, 3) : Error   : Ambiguous symbol name 'current_value'\n"
+						   "test (30, 3) : Error   : Found multiple set accessors for property 'current_value2'\n"
+						   "test (30, 3) : Info    : void set_current_value2(int x)\n"
+						   "test (30, 3) : Info    : void set_current_value2(string x)\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -1762,27 +1773,30 @@ bool Test()
 	}
 
 	// Test accessor with property of the same name
-	const char *script19 = 
-		"int direction; \n"
-		"void set_direction(int val) property { direction = val; } \n"
-		"void test_set() \n"
-		"{ \n"
-		"  direction = 9; \n" // calls the set_direction property accessor
-		"} \n"
-		"void test_get() \n"
-		"{ \n"
-		"  assert( direction == 9 ); \n" // fails, since there is no get accessor
-		"} \n";
-	mod->AddScriptSection("script", script19);
-	bout.buffer = "";
-	r = mod->Build();
-	if( r >= 0 )
-		TEST_FAILED;
-	if( bout.buffer != "script (7, 1) : Info    : Compiling void test_get()\n"
-	                   "script (9, 21) : Error   : The property has no get accessor\n" )
+	// The accessor hides the real property
 	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
+		const char* script19 =
+			"int direction; \n"
+			"void set_direction(int val) property { direction = val; } \n"
+			"void test_set() \n"
+			"{ \n"
+			"  direction = 9; \n" // calls the set_direction property accessor
+			"} \n"
+			"void test_get() \n"
+			"{ \n"
+			"  assert( direction == 9 ); \n" // fails, since there is no get accessor
+			"} \n";
+		mod->AddScriptSection("script", script19);
+		bout.buffer = "";
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "script (7, 1) : Info    : Compiling void test_get()\n"
+						   "script (9, 21) : Error   : The property has no get accessor\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 	}
 
 	const char *script20 = 
