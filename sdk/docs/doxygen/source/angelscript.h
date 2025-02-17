@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2024 Andreas Jonsson
+   Copyright (c) 2003-2025 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -3019,6 +3019,8 @@ public:
 	//! This method returns a pointer to the argument on the stack for assignment. For object handles, you
 	//! should increment the reference counter. For object values, you should pass a pointer to a copy of the
 	//! object.
+	//!
+	//! \todo Explain better the difference of this compared to GetArgAddress and GetArgObject
 	virtual void *GetAddressOfArg(asUINT arg) = 0;
 	//! \}	
 
@@ -3060,6 +3062,8 @@ public:
 	virtual void   *GetReturnObject() = 0;
 	//! \brief Returns the address of the returned value
 	//! \return A pointer to the return value returned from the script function, or 0 on error.
+	//!
+	//! \todo Explain better the difference of this compared to GetReturnAddress and GetReturnObject
 	virtual void   *GetAddressOfReturnValue() = 0;
 	//! \}
 
@@ -3540,6 +3544,8 @@ public:
 	//! \brief Returns a pointer to the argument value.
 	//! \param[in] arg The argument index.
 	//! \return A pointer to the argument value.
+	//!
+	//! \todo Explain better the difference of this compared to GetArgAddress and GetArgObject
 	virtual void   *GetAddressOfArg(asUINT arg) = 0;
 	//! \}
 

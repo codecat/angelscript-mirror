@@ -50,11 +50,13 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added engine property asEP_BOOL_CONVERSION_MODE to enable or disable contextual conversion to bool
 <li>Added engine property asEP_FOREACH_SUPPORT to allow turning off the foreach loops for backwards compatibility
 <li>Implemented support for registering functions with variadic arguments using generic calling convention (Thanks HenryAWE)
+<li>Removed unnecessary spaces in default argument expression returned with asIScriptFunction::GetDeclaration (Thanks Jan Krassnigg)
 </ul>
 <li>Library interface
 <ul>
 <li>Deprecated GetStringFactoryReturnTypeId, and implemented GetStringFactory instead (Thanks HenryAWE)
 <li>Included GetSubTypeCount, GetSubTypeId, GetSubType to asIScriptFunction for template functions
+<li>Changed the destructor of asIScriptFactory to public as it doesn't have to be reference counted (Thanks Jan Krassnigg)
 </ul>
 <li>Script language
 <ul>

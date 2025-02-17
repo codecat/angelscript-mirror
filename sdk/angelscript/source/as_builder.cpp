@@ -5232,11 +5232,16 @@ asCString asCBuilder::GetCleanExpressionString(asCScriptNode *node, asCScriptCod
 	{
 		asUINT len = 0;
 		asETokenClass tok = engine->ParseToken(str.AddressOf() + n, str.GetLength() - n, &len);
-		if( tok != asTC_COMMENT && tok != asTC_WHITESPACE )
+
+		// Replace comments and whitespace with a single space
+		if (tok == asTC_COMMENT || tok == asTC_WHITESPACE)
 		{
-			if( cleanStr.GetLength() ) cleanStr += " ";
-			cleanStr.Concatenate(str.AddressOf() + n, len);
+			if (cleanStr.GetLength() && cleanStr[cleanStr.GetLength() - 1] != ' ')
+				cleanStr += " ";
 		}
+		else
+			cleanStr.Concatenate(str.AddressOf() + n, len);
+
 		n += len;
 	}
 
