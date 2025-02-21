@@ -146,8 +146,17 @@ if(${ARCHFLAGS} MATCHES "riscv64")
     endif()
 endif()
 
+if(${ARCHFLAGS} MATCHES "^e2k")
+    enable_language(ASM)
+    if(CMAKE_ASM_COMPILER_WORKS)
+        set(ANGELSCRIPT_SOURCE ${ANGELSCRIPT_SOURCE} ../../source/as_callfunc_e2k.cpp ../../source/as_callfunc_e2k.S)
+    else()
+        message(FATAL ERROR "E2K target requires a working assembler")
+    endif()
+endif()
+
 if(MSVC)
-    set(CMAKE_DEBUG_POSTFIX "d")  
+    set(CMAKE_DEBUG_POSTFIX "d")
 endif()
 
 if(NOT BUILD_FRAMEWORK)
