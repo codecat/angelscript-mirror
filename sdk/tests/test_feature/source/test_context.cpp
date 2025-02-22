@@ -128,7 +128,7 @@ public:
 					asETypeModifiers typeModifiers;
 					ctx->GetVar(v, n, 0, &typeId, &typeModifiers);
 					void* var = ctx->GetAddressOfVar(v, n);
-					if (typeModifiers == asTM_NONE)
+					if (!(typeModifiers & asTM_INOUTREF))
 					{
 						bool isValue = true;
 						storage.Write(&isValue, sizeof(isValue));
