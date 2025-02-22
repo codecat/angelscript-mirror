@@ -307,7 +307,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 			{
 #ifdef RETURN_VALUE_MAX_SIZE
 				if( func->returnType.GetSizeInMemoryDWords() > RETURN_VALUE_MAX_SIZE )
-#elif HAS_128_BIT_PRIMITIVES
+#elif defined(HAS_128_BIT_PRIMITIVES)
 				if( func->returnType.GetSizeInMemoryDWords() > 4 )
 #else
 				if( func->returnType.GetSizeInMemoryDWords() > 2 )
