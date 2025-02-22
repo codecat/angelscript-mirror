@@ -177,6 +177,12 @@ void testFuncSI_generic(asIScriptGeneric *gen)
 }
 
 
+void testSetReturnObject(asIScriptGeneric* gen)
+{
+	std::string t = "test";
+	gen->SetReturnObject(&t);
+}
+
 
 bool Test()
 {
@@ -189,6 +195,31 @@ bool Test()
  	asIScriptEngine *engine = 0;
 	asIScriptModule *mod = 0;
 	asIScriptContext *ctx = 0;
+
+	// Test issue with asIGeneric::SetReturnObject
+	// https://www.gamedev.net/forums/topic/717861-returning-an-object-on-the-stack-in-a-variadic-function-causes-a-crash/5468071/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterStdString(engine);
+
+		bout.buffer = "";
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("string test(const ?&in ...)", asFUNCTION(testSetReturnObject), asCALL_GENERIC);
+
+		r = ExecuteString(engine, "assert( test(1,2) == 'test' );");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
 
 	// Test issue with variadic and stack size
 	// Reported by Paril
