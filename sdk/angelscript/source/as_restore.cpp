@@ -3062,6 +3062,11 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 
 			// The adjuster also needs to know the list type so it can know the type of the elements
 			asCObjectType *ot = CastToObjectType(func->GetTypeInfoOfLocalVar(asBC_SWORDARG0(&bc[n])));
+			if( !ot )
+			{
+				Error(TXT_INVALID_BYTECODE_d);
+				return;
+			}
 			listAdjusters.PushLast(asNEW(SListAdjuster)(this, &bc[n], ot));
 		}
 		else if( c == asBC_FREE )
@@ -3221,15 +3226,20 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 	CalculateStackNeeded(func);
 }
 
-asCReader::SListAdjuster::SListAdjuster(asCReader *rd, asDWORD *bc, asCObjectType *listType) :
-	reader(rd), allocMemBC(bc), maxOffset(0), patternType(listType), repeatCount(0), lastOffset(-1), nextOffset(0), nextTypeId(-1)
+asCReader::SListAdjuster::SListAdjuster(asCReader* rd, asDWORD* bc, asCObjectType* listType) :
+	reader(rd), allocMemBC(bc), maxOffset(0), patternType(listType), repeatCount(0), lastOffset(-1), nextOffset(0), nextTypeId(-1), patternNode(0)
 {
 	asASSERT( patternType && (patternType->flags & asOBJ_LIST_PATTERN) );
 
 	// Find the first expected value in the list
-	asSListPatternNode *node = patternType->engine->scriptFunctions[patternType->templateSubTypes[0].GetBehaviour()->listFactory]->listPattern;
-	asASSERT( node && node->type == asLPT_START );
-	patternNode = node->next;
+	if (patternType && (patternType->flags & asOBJ_LIST_PATTERN) )
+	{
+		asSListPatternNode* node = patternType->engine->scriptFunctions[patternType->templateSubTypes[0].GetBehaviour()->listFactory]->listPattern;
+		asASSERT(node && node->type == asLPT_START);
+		patternNode = node->next;
+	}
+	else
+		reader->Error(TXT_INVALID_BYTECODE_d);
 }
 
 int asCReader::SListAdjuster::AdjustOffset(int offset)
