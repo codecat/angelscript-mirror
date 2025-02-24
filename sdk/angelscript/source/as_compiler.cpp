@@ -12626,6 +12626,7 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 
 int asCCompiler::InstantiateTemplateFunctions(asCArray<int>& funcs, asCScriptNode* types)
 {
+	asCScriptNode* startNode = types;
 	for ( asUINT i = 0; i < funcs.GetLength(); i++ )
 	{
 		asCScriptFunction* func = builder->GetFunctionDescription(funcs[i]);
@@ -12633,13 +12634,29 @@ int asCCompiler::InstantiateTemplateFunctions(asCArray<int>& funcs, asCScriptNod
 		// TODO: If types for template instance has been given in the node, and no matching template function exists then an error must be given
 		if (numTypes == 0) continue;
 		asCArray<asCDataType> dataTypes;
-		// TODO: If the number of types doesn't match the template then give an error 
-		// (or if there is more than one template function with the same name, then use only the one that matches)
+		// TODO: If there is more than one template function with the same name, then use only the one that matches
 		for (asUINT j = 0; j < numTypes; j++)
 		{
+			// If the number of types doesn't match the template then give an error 
+			if (types == 0 || types->nodeType == snArgList)
+			{
+				asCString msg;
+				msg.Format(TXT_TMPL_s_EXPECTS_d_SUBTYPES, func->GetName(), numTypes);
+				Error(msg, startNode);
+				return -1;
+			}
 			dataTypes.PushLast(builder->CreateDataTypeFromNode(types, script, func->nameSpace, func->objectType, 0, true, 0, 0, &m_namespaceVisibility));
 			types = types->next;
 		}
+		// Check that there isn't additional types
+		if (types == 0 || types->nodeType != snArgList)
+		{
+			asCString msg;
+			msg.Format(TXT_TMPL_s_EXPECTS_d_SUBTYPES, func->GetName(), numTypes);
+			Error(msg, startNode);
+			return -1;
+		}
+
 		funcs[i] = engine->GetTemplateFunctionInstance(func, dataTypes);
 	}
 

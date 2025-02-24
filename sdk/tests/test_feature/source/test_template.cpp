@@ -264,6 +264,36 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test passing a null argument to a template function
+	// Reported by Paril
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("T @+find_by_str<T>(T @+from, const string &in member, const string &in value)", asFUNCTION(0), asCALL_GENERIC);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void testfunc() \n"
+			"{ \n"
+			"	find_by_str(null, '', ''); \n"  // Compiler cannot deduce the type from a null pointer
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "test (1, 1) : Info    : Compiling void testfunc()\n"
+						   "test (3, 13) : Error   : Template 'find_by_str' expects 1 sub type(s)\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
+
 	// Make sure object types are correctly released
 	// Reported by Paril
 	{
