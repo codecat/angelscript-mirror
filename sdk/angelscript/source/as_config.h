@@ -183,8 +183,9 @@
 // Local (or Little) C Compiler
 // __LCC__ is defined
 
-// MCST eLbrus C Compiler
+// MCST LCC (eLbrus Compiler Collection)
 // __LCC__ is defined
+// __MCST__ is defined
 
 
 
@@ -1058,7 +1059,7 @@
 
 			#define RETURN_VALUE_MAX_SIZE 16
 			#define HAS_128_BIT_PRIMITIVES
-			
+
 			// STDCALL is not available on 64bit Linux
 			#undef STDCALL
 			#define STDCALL

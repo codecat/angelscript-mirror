@@ -135,6 +135,9 @@
     <ClCompile Include="..\..\source\as_callfunc_riscv64.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\as_callfunc_e2k.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\angelscript.h">
@@ -280,6 +283,9 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="..\..\source\as_callfunc_arm64_xcode.S">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="..\..\source\as_callfunc_e2k.S">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

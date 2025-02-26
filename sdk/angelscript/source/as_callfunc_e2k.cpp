@@ -34,7 +34,6 @@
  * Author: Denis Drakhnia <numas13@gmail.com>
  */
 
-#include "angelscript.h"
 #include "as_config.h"
 
 #ifndef AS_MAX_PORTABILITY

@@ -74,10 +74,10 @@ CallFunctionE2K:
     {
         addd,1      %r5, 0, %g16
         addd,2      %r1, 0x38, %g17
-        ct          %ctpr2 ? %pred0             // do not copy arguments to memory
+        ct          %ctpr2 ? %pred0             // 1f, do not copy arguments to memory
+        nop 1 // wait %lsr
     }
-        nop // wait %lsr
-0:
+ 0:
     {
         alc         alcf=1, alct=1
         abn         abnf=1, abnt=1
@@ -85,37 +85,38 @@ CallFunctionE2K:
         ldd,2       %g17, 0, %b[0]
         addd,4      %g16, 8, %g16
         std,5       %b[14], %g16, 0
-        ct          %ctpr3 ? #NOT_LOOP_END
+        ct          %ctpr3 ? #NOT_LOOP_END      // 0b
     }
 1:
     {
         setwd       wsz=8, nfx=1, dbl=0
         setbn       rsz=3, rbs=4, rcur=0
-    }
-    {
-        ldd,0       %r1, 0x00, %b[0]            // load arguments to registers
-        ldd,2       %r1, 0x08, %b[1]
-        ldd,3       %r1, 0x10, %b[2]
-        ldd,5       %r1, 0x18, %b[3]
+        ldd,0       %r1, 0x00, %r8              // load arguments to registers
+        ldd,2       %r1, 0x08, %r9
+        ldd,3       %r1, 0x10, %r10
+        ldd,5       %r1, 0x18, %r11
     }
     {
         ldd,0       %r1, 0x20, %b[4]
         ldd,2       %r1, 0x28, %b[5]
         ldd,3       %r1, 0x30, %b[6]
         ldd,5       %r1, 0x38, %b[7]
-        call        %ctpr1, wbs=4
-        nop 2
+        call        %ctpr1, wbs=4               // %r0
     }
     {
+        shld,0      1, 37, %g16                 // lsr.vlc
         std,2,sm    %b[0], %r3, 0x00 ? %pred1
         std,5,sm    %b[1], %r3, 0x08 ? %pred1
         return      %ctpr3
     }
     {
+        ord,0       %r4, %g16, %g16             // lsr
         std,2,sm    %b[2], %r3, 0x10 ? %pred1
         std,5,sm    %b[3], %r3, 0x18 ? %pred1
+        disp        %ctpr1, 0f
     }
     {
+        rwd,0       %g16, %lsr
         std,2,sm    %b[4], %r3, 0x20 ? %pred1
         std,5,sm    %b[5], %r3, 0x28 ? %pred1
     }
@@ -124,30 +125,24 @@ CallFunctionE2K:
         std,5,sm    %b[7], %r3, 0x38 ? %pred1
     }
     {
-        ct          %ctpr3 ? %pred1
-    }
-    {
         setwd       wsz=16, nfx=1, dbl=0
         setbn       rsz=7, rbs=4, rcur=0
-        shld,0      1, 37, %g16                 // lsr.vlc
-        disp        %ctpr1, 0f
-    }
-    {
-        ord,1       %r4, %g16, %g16             // lsr
-        ldw,0,sm    %r5, 0x00, %b[14]           // loop prologue
-        ldw,2,sm    %r5, 0x04, %b[12]
-        ldw,3,sm    %r5, 0x08, %b[10]
-        ldw,5,sm    %r5, 0x0c, %b[8]
-    }
-    {
-        rwd,0       %g16, %lsr
-        ldw,2,sm    %r5, 0x10, %b[6]
-        ldw,3,sm    %r5, 0x14, %b[4]
-        ldw,5,sm    %r5, 0x18, %b[2]
+        ldw,0,sm    %r5, 0x00, %r22             // %b[14] loop prologue
+        ldw,2,sm    %r5, 0x04, %r20             // %b[12]
+        ldw,3,sm    %r5, 0x08, %r18             // %b[10]
+        ldw,5,sm    %r5, 0x0c, %r16             // %b[8]
+        ct          %ctpr3 ? %pred1             // return
     }
     {
         addd,1      %r5, 0x1c, %r5
-        nop 2
+        ldw,2,sm    %r5, 0x10, %b[6]
+        ldw,3,sm    %r5, 0x14, %b[4]
+        ldw,5,sm    %r5, 0x18, %b[2]
+#if __iset__ > 5
+        nop 3
+#else
+        nop 1
+#endif
     }
 0:
     {
@@ -157,12 +152,10 @@ CallFunctionE2K:
         stw,2       %b[14], %r3, 0
         addd,3      %r5, 4, %r5
         ldw,5,sm    %r5, 0, %b[0]
-        nop 2
-        ct          %ctpr1 ? #NOT_LOOP_END
+        ct          %ctpr1 ? #NOT_LOOP_END      // 0b
     }
     {
-        addd,0      0, 0, %r0
-        ct          %ctpr3
+        ct          %ctpr3                      // return
     }
     .size CallFunctionE2K, .-CallFunctionE2K
 

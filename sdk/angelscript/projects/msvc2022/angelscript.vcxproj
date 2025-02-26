@@ -439,6 +439,7 @@
     <ClCompile Include="..\..\source\as_callfunc.cpp" />
     <ClCompile Include="..\..\source\as_callfunc_arm.cpp" />
     <ClCompile Include="..\..\source\as_callfunc_arm64.cpp" />
+    <ClCompile Include="..\..\source\as_callfunc_e2k.cpp" />
     <ClCompile Include="..\..\source\as_callfunc_mips.cpp" />
     <ClCompile Include="..\..\source\as_callfunc_ppc.cpp" />
     <ClCompile Include="..\..\source\as_callfunc_ppc_64.cpp" />
@@ -549,6 +550,7 @@
     </CustomBuild>
     <None Include="..\..\source\as_callfunc_arm_vita.S" />
     <None Include="..\..\source\as_callfunc_arm_xcode.S" />
+    <None Include="..\..\source\as_callfunc_e2k.S" />
     <None Include="..\..\source\as_callfunc_riscv64_gcc.S" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
