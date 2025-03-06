@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.38.0 WIP - 2025/02/24</h2>
+<h2>Version 2.38.0 WIP - 2025/03/06</h2>
 
 <ul>
 <li>Bug fixes
@@ -45,6 +45,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash in asIScriptGeneric::SetReturnObject for variadic functions (Thanks Programier)
 <li>Fixed crash in bytecode loader when it tries to translate a list factory in invalid bytecode (Thanks Peter Wester)
 <li>Fixed crash in compiler when attempting to use template function without informing the subtypes (Thanks Paril)
+<li>Fixed invalid bytecode when passing function pointer to functions expecting ?&amp; (Thanks Paril)
+<li>Fixed error for invalid scripts attempting to pass anonymous functions to functions expecting ?&amp; (Thanks Paril)
 </ul>
 <li>Library
 <ul>

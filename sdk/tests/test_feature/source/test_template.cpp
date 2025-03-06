@@ -255,6 +255,18 @@ void q2as_test_bug(asIScriptGeneric* gen)
 
 }
 
+static void ScriptTestGen(asIScriptGeneric* gen)
+{
+	gen->SetReturnDWord(gen->GetArgDWord(0));
+}
+
+bool error = false;
+void print(void* p, int typeId)
+{
+	error = error || (typeId != asTYPEID_INT32);
+	error = error || (*(int*)p != 10);
+}
+
 bool Test()
 {
 	RET_ON_MAX_PORT
@@ -263,6 +275,34 @@ bool Test()
 	int r;
 	COutStream out;
 	CBufferedOutStream bout;
+
+	// https://www.gamedev.net/forums/topic/717373-support-for-template-functions-is-now-implemented-in-2380-wip/5466542/
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		engine->RegisterGlobalFunction("T Test<T>(T v)", asFUNCTION(ScriptTestGen), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void print(?&in)", asFUNCTION(print), asCALL_CDECL);
+
+		r = ExecuteString(engine, 
+			"auto n = Test<int>(10);\n"
+			"print(n); \n"// This works and will print 10.
+			"print(Test<int>(10));\n" // This forces typeId to be 10, and the print function fails
+		);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (error)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
 
 	// Test passing a null argument to a template function
 	// Reported by Paril

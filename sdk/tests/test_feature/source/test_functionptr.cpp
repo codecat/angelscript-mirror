@@ -4,6 +4,7 @@
 #include "../../../add_on/scriptstdstring/scriptstdstring.h"
 #include "../../../add_on/scriptarray/scriptarray.h"
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
+#include "../../../add_on/scriptany/scriptany.h"
 
 namespace TestFunctionPtr
 {
@@ -84,6 +85,137 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptContext *ctx;
 	CBufferedOutStream bout;
+
+	// Test cast from non-handle (should implicitly add the handle)
+	// Reported by Paril
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptAny(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", R"(
+funcdef bool test_function_f(int);
+
+void test()
+{
+    any st_any;
+    st_any.store(cast<test_function_f>(function(v) { return false; }));
+
+    test_function_f @func;
+    st_any.retrieve(@func);
+
+    func(1);
+}
+)");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "test()", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+		{
+			if (r == asEXECUTION_EXCEPTION)
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
+	// Test storing anonymous functions in dictionary
+	// Reported by Paril
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", R"(
+const dictionary st_fields = {
+    { "lip", function(v) { return false; } }
+};
+
+void test()
+{
+    dictionary @x;
+    st_fields.get("lip", @x);
+}
+)");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != 
+			"test (2, 18) : Info    : Compiling const dictionary st_fields\n"
+			"test (3, 26) : Error   : Invalid expression: stand-alone anonymous function\n"
+			"test (2, 30) : Error   : Previous error occurred while attempting to compile initialization list for type 'const dictionary'\n"
+			"test (6, 1) : Info    : Compiling void test()\n"
+			"test (9, 5) : Error   : Use of uninitialized global variable 'st_fields'.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
+	// Test storing anonymous functions in any
+	// Reported by Paril
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptAny(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", R"(
+funcdef bool test_function_f(int);
+
+void test()
+{
+    any st_any;
+    st_any.store(@function(v) { return false; });
+
+    test_function_f @func;
+    st_any.retrieve(@func);
+}
+)");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != 
+			"test (4, 1) : Info    : Compiling void test()\n"
+			"test (7, 31) : Error   : Invalid expression: stand-alone anonymous function\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
 
 	// Test dynamically compiling new functions containing lambda's multiple times
 	// Reported by gmp3 labs

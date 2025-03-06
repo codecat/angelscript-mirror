@@ -1751,7 +1751,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 
 		// Since the function is expecting a var type ?, then we don't want to convert the argument to anything else
 		param = ctx->type.dataType;
-		param.MakeHandle(ctx->type.isExplicitHandle || ctx->type.IsNullConstant());
+		param.MakeHandle(ctx->type.isExplicitHandle || ctx->type.IsNullConstant() || CastToFuncdefType(ctx->type.dataType.GetTypeInfo()));
 
 		// Treat the void expression like a null handle when working with var types
 		if( ctx->IsVoidExpression() )
@@ -1764,6 +1764,9 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 		{
 			param.MakeHandle(true);
 		}
+		
+		// Ensure the expression is treated as an explicit handle
+		ctx->type.isExplicitHandle = param.IsObjectHandle();
 
 		param.MakeReference(paramType->IsReference());
 		param.MakeReadOnly(paramType->IsReadOnly());
@@ -1789,6 +1792,13 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 			if( paramType->GetTokenType() == ttQuestion )
 			{
 				asCByteCode tmpBC(engine);
+
+				// Make sure the type is deterministic
+				if (param.GetTypeInfo() == &engine->functionBehaviours)
+				{
+					Error(TXT_INVALID_EXPRESSION_LAMBDA, node);
+					return -1;
+				}
 
 				// Place the type id on the stack as a hidden parameter
 				tmpBC.InstrDWORD(asBC_TYPEID, engine->GetTypeIdFromDataType(param));
@@ -4087,6 +4097,13 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 					// When value assignment for reference types us disabled, make sure all ref types are passed in as handles
 					if (engine->ep.disallowValueAssignForRefType && dt.SupportHandles())
 						dt.MakeHandle(true);
+
+					// Make sure the type is deterministic
+					if (dt.GetTypeInfo() == &engine->functionBehaviours)
+					{
+						Error(TXT_INVALID_EXPRESSION_LAMBDA, valueNode);
+						return -1;
+					}
 
 					// Place the type id in the buffer
 					bcInit.InstrSHORT_DW_DW(asBC_SetListType, bufferVar, bufferSize, engine->GetTypeIdFromDataType(dt));
