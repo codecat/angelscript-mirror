@@ -13,6 +13,28 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Child funcdefs should first look for matching type names in parent object
+	// Reported by Rémy Stivani
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		r = engine->RegisterObjectType("array<T>", 0, asOBJ_REF | asOBJ_TEMPLATE);
+		r = engine->SetDefaultNamespace("IO");
+		r = engine->RegisterFuncdef("bool array<T>::less(const T&in, const T&in)");
+		if (r < 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
 	// Test using namespace
 	// https://www.gamedev.net/forums/topic/717687-using-namespace-support/
 	{

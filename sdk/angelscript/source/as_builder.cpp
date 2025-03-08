@@ -6254,7 +6254,55 @@ asSNameSpace *asCBuilder::GetNameSpaceFromNode(asCScriptNode *node, asCScriptCod
 				ns = engine->FindNameSpace(scope.AddressOf());
 
 			asCString templateName(&script->code[sn->tokenPos], sn->tokenLength);
-			asCObjectType *templateType = GetObjectType(templateName.AddressOf(), ns);
+
+			// If not explicit scope, then search the visible namespaces, then search the parent namespaces
+			asCArray<asSNameSpace*> pendingNamespaces;
+			asCArray<asSNameSpace*> visitedNamespaces;
+			bool checkAmbiguousSymbols = scope == "";
+			asSNameSpace* parentNs = engine->GetParentNameSpace(ns);
+
+			asCObjectType* templateType = 0;
+			while (ns)
+			{
+				if (!visitedNamespaces.Exists(ns))
+				{
+					visitedNamespaces.PushLast(ns);
+
+					if (!checkAmbiguousSymbols)
+					{
+						templateType = GetObjectType(templateName.AddressOf(), ns);
+						if (templateType)
+							break;
+					}
+					else
+					{
+						asCObjectType* ot = GetObjectType(templateName.AddressOf(), ns);
+
+						if (templateType && ot)
+						{
+							asCString msg;
+							msg.Format(TXT_AMBIGUOUS_SYMBOL_NAME_s, templateName.AddressOf());
+							WriteError(msg, script, node);
+							objType = 0;
+							return 0;
+						}
+
+						templateType = ot;
+					}
+				}
+
+				AddVisibleNamespaces(ns, visitedNamespaces, pendingNamespaces);
+				ns = FindNextVisibleNamespace(visitedNamespaces, pendingNamespaces, parentNs, &checkAmbiguousSymbols);
+				if (ns == parentNs)
+				{
+					// Only move to the parent namespace if the object type hasn't been found yet
+					if (templateType)
+						break;
+
+					parentNs = engine->GetParentNameSpace(ns);
+				}
+			}
+
 			if (templateType == 0 || (templateType->flags & asOBJ_TEMPLATE) == 0)
 			{
 				// TODO: child funcdef: Report error
