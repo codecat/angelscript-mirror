@@ -10672,33 +10672,33 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 
 			// If the scope contains ::identifier, then use the last identifier as the class name and the rest of it as the namespace
 			// TODO: child funcdef: A scope can include a template type, e.g. array<ns::type>
-				int n = currScope.FindLast("::");
-				asCString typeName = n >= 0 ? currScope.SubString(n + 2) : currScope;
-				asCString nsName = n >= 0 ? currScope.SubString(0, n) : asCString("");
+			int n = currScope.FindLast("::");
+			asCString typeName = n >= 0 ? currScope.SubString(n + 2) : currScope;
+			asCString nsName = n >= 0 ? currScope.SubString(0, n) : asCString("");
 
-				// If the scope represents a type that the current class inherits
-				// from then that should be used instead of going through the namespaces
-				if (nsName == "" && (outFunc && outFunc->objectType))
+			// If the scope represents a type that the current class inherits
+			// from then that should be used instead of going through the namespaces
+			if (nsName == "" && (outFunc && outFunc->objectType))
+			{
+				asCObjectType* ot = outFunc->objectType;
+				while (ot)
 				{
-					asCObjectType* ot = outFunc->objectType;
-					while (ot)
+					if (ot->name == typeName)
 					{
-						if (ot->name == typeName)
+						SYMBOLTYPE r = SymbolLookupMember(name, ot, outResult);
+						if (r != 0)
 						{
-							SYMBOLTYPE r = SymbolLookupMember(name, ot, outResult);
-							if (r != 0)
-							{
-								if (!checkAmbiguousSymbols)
-									return r;
+							if (!checkAmbiguousSymbols)
+								return r;
 
-								if (isAmbiguousSymbol(name, errNode, resultSymbolType, r))
-									return SL_ERROR;
-							}
+							if (isAmbiguousSymbol(name, errNode, resultSymbolType, r))
+								return SL_ERROR;
 						}
-
-						ot = ot->derivedFrom;
 					}
+
+					ot = ot->derivedFrom;
 				}
+			}
 
 			// If the scope starts with :: then search from the global scope
 			if (currScope.GetLength() < 2 || currScope[0] != ':')
