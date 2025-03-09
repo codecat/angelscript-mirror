@@ -6656,7 +6656,7 @@ void asCScriptEngine::SetScriptObjectUserDataCleanupCallback(asCLEANSCRIPTOBJECT
 }
 
 // interface
-int asCScriptEngine::SetTranslateAppExceptionCallback(asSFuncPtr callback, void *param, int callConv)
+int asCScriptEngine::SetTranslateAppExceptionCallback(const asSFuncPtr &callback, void *param, int callConv)
 {
 #ifdef AS_NO_EXCEPTIONS
 	return asNOT_SUPPORTED;

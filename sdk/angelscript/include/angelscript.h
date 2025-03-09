@@ -802,7 +802,7 @@ public:
 	virtual void  SetScriptObjectUserDataCleanupCallback(asCLEANSCRIPTOBJECTFUNC_t callback, asPWORD type = 0) = 0;
 
 	// Exception handling
-	virtual int SetTranslateAppExceptionCallback(asSFuncPtr callback, void *param, int callConv) = 0;
+	virtual int SetTranslateAppExceptionCallback(const asSFuncPtr &callback, void *param, int callConv) = 0;
 
 protected:
 	virtual ~asIScriptEngine() {}
@@ -949,11 +949,11 @@ public:
 	virtual asIScriptFunction *GetExceptionFunction() = 0;
 	virtual const char *       GetExceptionString() = 0;
 	virtual bool               WillExceptionBeCaught() = 0;
-	virtual int                SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
+	virtual int                SetExceptionCallback(const asSFuncPtr &callback, void *obj, int callConv) = 0;
 	virtual void               ClearExceptionCallback() = 0;
 
 	// Debugging
-	virtual int                SetLineCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
+	virtual int                SetLineCallback(const asSFuncPtr &callback, void *obj, int callConv) = 0;
 	virtual void               ClearLineCallback() = 0;
 	virtual asUINT             GetCallstackSize() const = 0;
 	virtual asIScriptFunction *GetFunction(asUINT stackLevel = 0) = 0;
