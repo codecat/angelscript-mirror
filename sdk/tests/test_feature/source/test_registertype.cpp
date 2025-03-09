@@ -416,6 +416,20 @@ int* factory_func(int* aux)
 	return new int();
 }
 
+// Factory copy func (registered with asOBJ_CDECL_OBJLAST + auxiliary pointer)
+int* factory_copy_func(int* obj, int* aux)
+{
+	(*aux)++;
+	return new int();
+}
+
+// Factory copy func (registered with asOBJ_CDECL_OBJFIRST + auxiliary pointer)
+int* factory_copy_func2(int* aux, int* obj)
+{
+	(*aux)++;
+	return new int();
+}
+
 void release_func(int* obj)
 {
 	delete obj;
@@ -543,6 +557,50 @@ bool Test()
 
 		engine->ShutDownAndRelease();
 	}
+
+	// Test factory functions with auxiliary pointers using asOBJ_CDECL_OBJLAST and asOBJ_CDECL_OBJFIRST
+	// https://www.gamedev.net/forums/topic/717287-auxiliary-object-not-provided-when-using-type-in-template-array/5465594/
+SKIP_ON_MAX_PORT
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		int aux = 0;
+		engine->RegisterObjectType("boo", 0, asOBJ_REF | asOBJ_SCOPED);
+		// even though factory functions are really global functions, it is possible to use asCALL_CDECL_OBJLAST with an auxiliary object that will be passed to the factory function
+		engine->RegisterObjectBehaviour("boo", asBEHAVE_FACTORY, "boo @f()", asFUNCTION(factory_func), asCALL_CDECL_OBJLAST, &aux);
+		engine->RegisterObjectBehaviour("boo", asBEHAVE_FACTORY, "boo @f(const boo &in)", asFUNCTION(factory_copy_func), asCALL_CDECL_OBJLAST, &aux);
+		engine->RegisterObjectBehaviour("boo", asBEHAVE_RELEASE, "void f()", asFUNCTION(release_func), asCALL_CDECL_OBJLAST);
+
+		engine->RegisterObjectType("foo", 0, asOBJ_REF | asOBJ_SCOPED);
+		// even though factory functions are really global functions, it is possible to use asCALL_CDECL_OBJFIRST with an auxiliary object that will be passed to the factory function
+		engine->RegisterObjectBehaviour("foo", asBEHAVE_FACTORY, "foo @f()", asFUNCTION(factory_func), asCALL_CDECL_OBJFIRST, &aux);
+		engine->RegisterObjectBehaviour("foo", asBEHAVE_FACTORY, "foo @f(const foo &in)", asFUNCTION(factory_copy_func2), asCALL_CDECL_OBJFIRST, &aux);
+		engine->RegisterObjectBehaviour("foo", asBEHAVE_RELEASE, "void f()", asFUNCTION(release_func), asCALL_CDECL_OBJLAST);
+
+		void *boo = engine->CreateScriptObject(engine->GetTypeInfoByName("boo"));
+		void* boo2 = engine->CreateScriptObjectCopy(boo, engine->GetTypeInfoByName("boo"));
+		release_func((int*)boo);
+		release_func((int*)boo2);
+
+		void* foo = engine->CreateScriptObject(engine->GetTypeInfoByName("foo"));
+		void* foo2 = engine->CreateScriptObjectCopy(foo, engine->GetTypeInfoByName("foo"));
+		release_func((int*)foo);
+		release_func((int*)foo2);
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		if (aux != 4)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 
 	// Test with incorrect opImplCast signature
 	// Reported by Patrick Jeeves

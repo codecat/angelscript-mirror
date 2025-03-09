@@ -4732,6 +4732,11 @@ void *asCScriptEngine::CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, a
 		func_t f = (func_t)(i->func);
 		return f();
 	}
+	else if (i->callConv == ICC_CDECL_OBJFIRST || i->callConv == ICC_CDECL_OBJLAST)
+	{
+		void* (*f)(void*) = (void* (*)(void*))(i->func);
+		return f(i->auxiliary);
+	}
 	else
 	{
 		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, 0, 0);
@@ -4753,6 +4758,16 @@ void *asCScriptEngine::CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, a
 		typedef void *(STDCALL *func_t)(void *);
 		func_t f = (func_t)(i->func);
 		return f(param1);
+	}
+	else if (i->callConv == ICC_CDECL_OBJFIRST )
+	{
+		void* (*f)(void*,void*) = (void* (*)(void*,void*))(i->func);
+		return f(i->auxiliary,param1);
+	}
+	else if (i->callConv == ICC_CDECL_OBJLAST)
+	{
+		void* (*f)(void*,void*) = (void* (*)(void*,void*))(i->func);
+		return f(param1,i->auxiliary);
 	}
 	else
 	{

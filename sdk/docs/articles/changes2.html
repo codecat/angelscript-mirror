@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.38.0 WIP - 2025/03/07</h2>
+<h2>Version 2.38.0 WIP - 2025/03/09</h2>
 
 <ul>
 <li>Bug fixes
@@ -48,6 +48,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed invalid bytecode when passing function pointer to functions expecting ?&amp; (Thanks Paril)
 <li>Fixed error for invalid scripts attempting to pass anonymous functions to functions expecting ?&amp; (Thanks Paril)
 <li>Fixed lookup of template subtypes when registering child funcdefs with different namespace set (Thanks Remy Stivani)
+<li>Fixed crash in CreateScriptObject with asCALL_CDECL_OBJFIRST|LAST and auxiliary pointer (Thanks bhair)
 </ul>
 <li>Library
 <ul>

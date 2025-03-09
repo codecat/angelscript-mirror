@@ -171,6 +171,31 @@ void *NullFactory()
 	return 0;
 }
 
+class CTestStringFactory : public asIStringFactory
+{
+public:
+	CTestStringFactory() {};
+	~CTestStringFactory() {};
+	const void* GetStringConstant(const char* data, asUINT length)
+	{
+		return &test;
+	}
+	int  ReleaseStringConstant(const void* str)
+	{
+		return 0;
+	}
+	int  GetRawStringData(const void* str, char* data, asUINT* length) const
+	{
+		if( data )
+			memcpy(data, test.c_str(), test.length());
+		*length = test.length();
+		return 0;
+	}
+	string test;
+};
+
+CTestStringFactory testStringFactory;
+
 bool Test()
 {
 	bool fail = false;
@@ -180,6 +205,39 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
 	asIScriptModule *mod;
+
+	// Passing value types by value to constructors
+	// https://www.gamedev.net/forums/topic/717880-asbehave_construct-with-custom-pod-string-type-requires-const/5468147/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterObjectType("string", 1, asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterStringFactory("const string", &testStringFactory);
+		engine->RegisterObjectType("type", 1, asOBJ_VALUE);
+		engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f(string)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("type", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void test(string)", asFUNCTION(0), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() { \n"
+			"  type t('test'); \n"
+			"  test('test'); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
 
 	// Assign with invalid type
 	// https://www.gamedev.net/forums/topic/717831-failed-assertion-on-const-type-w-invalid-assignment/
