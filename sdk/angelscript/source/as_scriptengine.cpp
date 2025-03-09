@@ -1203,14 +1203,14 @@ const char *asCScriptEngine::GetDefaultNamespace() const
 	return defaultNamespace->name.AddressOf();
 }
 
-// interface
-int asCScriptEngine::SetDefaultNamespace(const char *nameSpace)
+// internal
+int asCScriptEngine::ParseNamespace(const char* nameSpace, asCArray<asCString>& nsStrings) const
 {
-	if( nameSpace == 0 )
-		return ConfigError(asINVALID_ARG, "SetDefaultNamespace", nameSpace, 0);
+	if (nameSpace == 0)
+		return asINVALID_ARG;
 
 	asCString ns = nameSpace;
-	if( ns != "" )
+	if (ns != "")
 	{
 		// Make sure the namespace is composed of alternating identifier and ::
 		size_t pos = 0;
@@ -1218,25 +1218,39 @@ int asCScriptEngine::SetDefaultNamespace(const char *nameSpace)
 		size_t len;
 		eTokenType t = ttIdentifier;
 
-		for( ; pos < ns.GetLength(); pos += len)
+		for (; pos < ns.GetLength(); pos += len)
 		{
 			t = tok.GetToken(ns.AddressOf() + pos, ns.GetLength() - pos, &len);
-			if( (expectIdentifier && t != ttIdentifier) || (!expectIdentifier && t != ttScope) )
-				return ConfigError(asINVALID_DECLARATION, "SetDefaultNamespace", nameSpace, 0);
+			if ((expectIdentifier && t != ttIdentifier) || (!expectIdentifier && t != ttScope))
+				return asINVALID_DECLARATION;
 
 			// Make sure parent namespaces are registred in case of nested namespaces
 			if (expectIdentifier)
-				AddNameSpace(ns.SubString(0, pos + len).AddressOf());
+				nsStrings.PushLast(ns.SubString(0, pos + len));
 
 			expectIdentifier = !expectIdentifier;
 		}
 
 		// If the namespace ends with :: then strip it off
-		if( t == ttScope )
-			ns.SetLength(ns.GetLength()-2);
+		if (t == ttScope)
+			ns.SetLength(ns.GetLength() - 2);
 	}
 
-	defaultNamespace = AddNameSpace(ns.AddressOf());
+	nsStrings.PushLast(ns);
+
+	return asSUCCESS;
+}
+
+// interface
+int asCScriptEngine::SetDefaultNamespace(const char *nameSpace)
+{
+	asCArray<asCString> nsStrings;
+	int r = ParseNamespace(nameSpace, nsStrings);
+	if( r < 0 )
+		return ConfigError(r, "SetDefaultNamespace", nameSpace, 0);
+
+	for( asUINT n = 0; n < nsStrings.GetLength(); n++ )
+		defaultNamespace = AddNameSpace(nsStrings[n].AddressOf());
 
 	return 0;
 }

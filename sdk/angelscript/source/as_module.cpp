@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2024 Andreas Jonsson
+   Copyright (c) 2003-2025 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -214,34 +214,13 @@ const char *asCModule::GetDefaultNamespace() const
 // interface
 int asCModule::SetDefaultNamespace(const char *nameSpace)
 {
-	// TODO: cleanup: This function is similar to asCScriptEngine::SetDefaultNamespace. Can we reuse the code?
-	if( nameSpace == 0 )
-		return asINVALID_ARG;
+	asCArray<asCString> nsStrings;
+	int r = m_engine->ParseNamespace(nameSpace, nsStrings);
+	if (r < 0)
+		return r;
 
-	asCString ns = nameSpace;
-	if( ns != "" )
-	{
-		// Make sure the namespace is composed of alternating identifier and ::
-		size_t pos = 0;
-		bool expectIdentifier = true;
-		size_t len;
-		eTokenType t = ttIdentifier;
-
-		for( ; pos < ns.GetLength(); pos += len )
-		{
-			t = m_engine->tok.GetToken(ns.AddressOf() + pos, ns.GetLength() - pos, &len);
-			if( (expectIdentifier && t != ttIdentifier) || (!expectIdentifier && t != ttScope) )
-				return asINVALID_DECLARATION;
-
-			expectIdentifier = !expectIdentifier;
-		}
-
-		// If the namespace ends with :: then strip it off
-		if( t == ttScope )
-			ns.SetLength(ns.GetLength()-2);
-	}
-
-	m_defaultNamespace = m_engine->AddNameSpace(ns.AddressOf());
+	for (asUINT n = 0; n < nsStrings.GetLength(); n++)
+		m_defaultNamespace = m_engine->AddNameSpace(nsStrings[n].AddressOf());
 
 	return 0;
 }

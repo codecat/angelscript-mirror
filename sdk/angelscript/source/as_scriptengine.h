@@ -275,6 +275,7 @@ public:
 
 	int AddBehaviourFunction(asCScriptFunction &func, asSSystemFunctionInterface &internal);
 
+	int ParseNamespace(const char* ns, asCArray<asCString>& nsStrings) const;
 	asCString GetFunctionDeclaration(int funcId);
 
 	asCScriptFunction *GetScriptFunction(int funcId) const;
