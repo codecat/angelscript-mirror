@@ -1665,6 +1665,10 @@ void asCCompiler::CompileInitAsCopy(asCDataType &dt, int offset, asCExprContext 
 		if (func->traits.GetTrait(asTRAIT_EXPLICIT))
 			Error(TXT_CANNOT_IMPLICITLY_CALL_EXPLICIT_COPY_CONSTR, node);
 
+		// Consider the argument as non-const already to avoid PrepareForAssignment 
+		// trying to make another copy, leading to infinite recursive loop
+		arg->type.dataType.MakeReadOnly(false);
+		
 		PrepareForAssignment(&dt, arg, node, true);
 		int r = CallCopyConstructor(dt, offset, isObjectOnHeap, ctx, arg, node, isVarGlobOrMem, derefDestination);
 		if( r < 0 && tempVariables.Exists(offset) )
@@ -1687,6 +1691,10 @@ void asCCompiler::CompileInitAsCopy(asCDataType &dt, int offset, asCExprContext 
 
 		tmpBC.AddCode(&ctx->bc);
 		ctx->bc.AddCode(&tmpBC);
+
+		// Consider the argument as non-const already to avoid PrepareForAssignment 
+		// trying to make another copy, leading to infinite recursive loop
+		arg->type.dataType.MakeReadOnly(false);
 
 		// Assign the evaluated expression to the temporary variable
 		PrepareForAssignment(&dt, arg, node, true);
@@ -8181,6 +8189,7 @@ asUINT asCCompiler::ImplicitConvObjectValue(asCExprContext *ctx, const asCDataTy
 				asCArray<asCExprContext *> args;
 				args.PushLast(ctx);
 
+				// Don't allow making copy of argument here, else the compiler can enter an infinite recursive loop
 				cost = asCC_TO_OBJECT_CONV + MatchFunctions(funcs, args, node, 0, 0, 0, false, true, false);
 
 				// Did we find a matching constructor?
@@ -8570,8 +8579,7 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 			}
 
 			// A const object can be converted to a non-const object through a copy
-			if( ctx->type.dataType.IsReadOnly() && !to.IsReadOnly() &&
-				allowObjectConstruct )
+			if( ctx->type.dataType.IsReadOnly() && !to.IsReadOnly() )
 			{
 				// Does the object type allow a copy to be made?
 				if( ctx->type.dataType.CanBeCopied() )

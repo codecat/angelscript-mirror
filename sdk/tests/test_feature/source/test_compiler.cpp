@@ -176,19 +176,19 @@ class CTestStringFactory : public asIStringFactory
 public:
 	CTestStringFactory() {};
 	~CTestStringFactory() {};
-	const void* GetStringConstant(const char* data, asUINT length)
+	const void* GetStringConstant(const char* /*data*/, asUINT /*length*/)
 	{
 		return &test;
 	}
-	int  ReleaseStringConstant(const void* str)
+	int  ReleaseStringConstant(const void* /*str*/)
 	{
 		return 0;
 	}
-	int  GetRawStringData(const void* str, char* data, asUINT* length) const
+	int  GetRawStringData(const void* /*str*/, char* data, asUINT* length) const
 	{
 		if( data )
 			memcpy(data, test.c_str(), test.length());
-		*length = test.length();
+		*length = (asUINT)test.length();
 		return 0;
 	}
 	string test;
@@ -206,19 +206,20 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
-	// Passing value types by value to constructors
+	// Passing const value types by value to constructors as implicit conversion
 	// https://www.gamedev.net/forums/topic/717880-asbehave_construct-with-custom-pod-string-type-requires-const/5468147/
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
-		engine->RegisterObjectType("string", 1, asOBJ_VALUE | asOBJ_POD);
-		engine->RegisterStringFactory("const string", &testStringFactory);
+		engine->RegisterObjectType("string_view", 1, asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterStringFactory("const string_view", &testStringFactory);
 		engine->RegisterObjectType("type", 1, asOBJ_VALUE);
-		engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f(string)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f(const type &in)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f(string_view)", asFUNCTION(0), asCALL_GENERIC);
 		engine->RegisterObjectBehaviour("type", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
-		engine->RegisterGlobalFunction("void test(string)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void test(type)", asFUNCTION(0), asCALL_GENERIC);
 
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
