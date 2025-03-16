@@ -5,6 +5,8 @@
 
 \todo Update BNF with function templates, foreach, and variadic
 
+\todo Update to EBNF syntax compatible with Railroad Diagram Generator https://github.com/GuntherRademacher/rr
+
 This is language grammar in Backus-Naur Form (BNF).
 
 The following convention is used:
