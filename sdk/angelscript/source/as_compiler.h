@@ -408,6 +408,7 @@ protected:
 	asCArray<asCObjectProperty*> m_initializedProperties; // Doesn't hold reference
 	asCArray<asSNameSpace*>      m_namespaceVisibility;
 	asCMap<asCObjectProperty*, asUINT> m_propertyAccessCount; // Doesn't hold reference
+	asCMap<asCObjectProperty*, asCScriptNode*> m_inheritedPropertyAccess; // Doesn't hold reference
 	sClassDeclaration           *m_classDecl;
 	sGlobalVariableDescription  *m_globalVar;
 

@@ -173,7 +173,7 @@
 #define TXT_INVALID_UNICODE_SEQUENCE_IN_SRC        "Invalid unicode sequence in source"
 #define TXT_INVALID_USE_OF_NAMED_ARGS              "Invalid use of named arguments"
 
-#define TXT_MEMBER_ACCESSED_BEFORE_INIT             "The member has been accessed before the initialization"
+#define TXT_MEMBER_s_ACCESSED_BEFORE_INIT           "The member '%s' is accessed before the initialization"
 #define TXT_METHOD_CANNOT_OVERRIDE_s                "Method '%s' declared as final and cannot be overridden"
 #define TXT_METHOD_CANT_HAVE_NAME_OF_CLASS          "The method cannot be named with the class name"
 #define TXT_METHOD_s_DOES_NOT_OVERRIDE              "Method '%s' marked as override but does not replace any base class or interface method"

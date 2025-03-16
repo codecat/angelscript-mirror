@@ -3232,6 +3232,12 @@ public:
 	//! \return Returns a negative value on error.
 	//! \retval asINVALID_ARG The index or stack level is invalid.
 	//! \retval asNOT_SUPPORTED The function is not a script function.
+	//!
+	//! If stackOffset <= 0 the returned variable is one of the function arguments, else it is a local variable.
+	//!
+	//! Temporary variables will have no name.
+	//! 
+	//! Use \ref IsVarInScope to determine if the variable is visible at the current position.
 	virtual int                GetVar(asUINT varIndex, asUINT stackLevel, const char** name, int* typeId = 0, asETypeModifiers* typeModifiers = 0, bool* isVarOnHeap = 0, int* stackOffset = 0) = 0;
 #ifdef AS_DEPRECATED
 	// deprecated since 2022-05-04, 2.36.0

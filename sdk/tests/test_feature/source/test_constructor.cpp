@@ -79,6 +79,46 @@ bool Test()
 	asIScriptModule* mod;
 	int r;
 
+	// Test accessing parent's properties before calling super
+	// Reported by Sam Tupy
+	{
+		engine = asCreateScriptEngine();
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class ItemBase { \n"
+			"     string name; \n"
+			"     ItemBase(string name) {} \n"
+			"} \n"
+			"class Item: ItemBase { \n"
+			"     int fallingSpeed; \n"
+			"     Item(string Name, int fallingSpeed) { \n"
+			"         super(name); \n" // Must give error, as the property name is accessed before it is initialized by parent class
+			"         this.fallingSpeed = fallingSpeed; \n"
+			"     } \n"
+			"} \n"
+			"void main() { \n"
+			"     Item itm('Cardboard box', 400); \n"
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "test (7, 6) : Info    : Compiling Item::Item(string, int)\n"
+						   "test (8, 16) : Error   : The member 'name' is accessed before the initialization\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
 	// Test copy constructor marked as explicit cannot be implicitly called
 	// Reported by Patrick Jeeves
 	{
@@ -264,8 +304,8 @@ bool Test()
 
 		if (bout.buffer !=
 			"TestConstructor (9, 3) : Info    : Compiling Foo::Foo()\n"
-			"TestConstructor (11, 9) : Error   : The member has been accessed before the initialization\n"
-			"TestConstructor (13, 9) : Error   : The member has been accessed before the initialization\n")
+			"TestConstructor (11, 9) : Error   : The member 'a' is accessed before the initialization\n"
+			"TestConstructor (13, 9) : Error   : The member 'a' is accessed before the initialization\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

@@ -831,9 +831,25 @@ int asCCompiler::CompileFunction(asCBuilder *in_builder, asCScriptCode *in_scrip
 
 			// Add the initialization of the members with explicit expressions
 			CompileMemberInitialization(&byteCode, false);
+
+			// If the base class' constructor was explicitly called it must be validated 
+			// that the inherited properties weren't accessed before the constructor
+			if (m_isConstructorCalled)
+			{
+				asSMapNode<asCObjectProperty*, asCScriptNode*>* node;
+				m_inheritedPropertyAccess.MoveFirst(&node);
+				while( node )
+				{
+					asCString msg;
+					msg.Format(TXT_MEMBER_s_ACCESSED_BEFORE_INIT, node->key->name.AddressOf());
+					Error(msg, node->value);
+					m_inheritedPropertyAccess.MoveNext(&node, node);
+				}
+			}
 		}
 		else
 		{
+			// Pre 2.38.0, members with init expr in declaration are initialized after super()
 			if (outFunc->objectType->derivedFrom)
 			{
 				// Call the base class' default constructor unless called manually in the code
@@ -9533,7 +9549,11 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 					// Give an error if the member has been accessed before
 					asSMapNode<asCObjectProperty*, asUINT>* node;
 					if (m_propertyAccessCount.MoveTo(&node, prop) && node->value > 1)
-						Error(TXT_MEMBER_ACCESSED_BEFORE_INIT, opNode);
+					{
+						asCString msg;
+						msg.Format(TXT_MEMBER_s_ACCESSED_BEFORE_INIT, prop->name.AddressOf());
+						Error(msg, opNode);
+					}
 
 					// Give error if a return has already been compiled
 					if (m_hasReturned)
@@ -11151,6 +11171,16 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 					node->value++;
 				else
 					m_propertyAccessCount.Insert(prop, 1);
+
+				// Give error if attempting to access inherited property before the parent constructor is called
+				// This validation will be deferred to later, since it is not known with the parent constructor will
+				// be called implicitly at the beginning of the constructor or explicitly later
+				if (prop->isInherited && !m_isConstructorCalled)
+				{
+					asSMapNode<asCObjectProperty*, asCScriptNode*> *node2;
+					if (!m_inheritedPropertyAccess.MoveTo(&node2, prop))
+						m_inheritedPropertyAccess.Insert(prop, errNode);
+				}
 			}
 
 			// Is the property access allowed?
@@ -12814,11 +12844,10 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 				// If a break label is set we are either in a loop or a switch statements
 				Error(TXT_CANNOT_CALL_CONSTRUCTOR_IN_SWITCH, node);
 			}
-			else if (m_isConstructorCalled)
-			{
-				Error(TXT_CANNOT_CALL_CONSTRUCTOR_TWICE, node);
-			}
-			m_isConstructorCalled = true;
+
+			// Only set the m_isConstructorCalled after the call is actually made, so that we 
+			// can detect if the arguments access any inherited members too early
+			// m_isConstructorCalled = true;
 
 			// We need to initialize the class members, but only after all the deferred arguments have been completed
 			initializeMembers = true;
@@ -12977,6 +13006,13 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 				{
 					ctx->type.SetDummy();
 					isOK = false;
+				}
+				
+				if (m_isConstructor && name == SUPER_TOKEN)
+				{
+					if (m_isConstructorCalled)
+						Error(TXT_CANNOT_CALL_CONSTRUCTOR_TWICE, node);
+					m_isConstructorCalled = true;
 				}
 			}
 			else
