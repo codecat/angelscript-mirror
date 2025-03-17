@@ -99,8 +99,9 @@ declare such functions without the intention of them being used as virtual prope
 For backwards compatibility it is still possible to configure the engine to use this behaviour by setting the engine
 property asEP_PROPERTY_ACCESSOR_MODE to 2.
 
-If it also possible to disable virtual property accessors all together by setting the engine property to 0. Setting the 
-option to 1 only allows virtual property accessors for registered functions, but still without requiring the keyword 'property'.
+It is also possible to disable virtual property accessors all together by setting the engine property to 0.
+
+Setting the option to 1 only allows virtual property accessors for registered functions, but still without requiring the keyword 'property'.
 
 \ref asEP_DISALLOW_GLOBAL_VARS
 

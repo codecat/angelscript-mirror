@@ -2813,7 +2813,7 @@ public:
 	//! \retval asINVALID_ARG The function is from a different engine than the context.
 	//! \retval asOUT_OF_MEMORY The context ran out of memory while allocating call stack.
 	//!
-	//! This method prepares the context for executeion of a script function. It allocates
+	//! This method prepares the context for execution of a script function. It allocates
 	//! the stack space required and reserves space for return value and parameters. The
 	//! default value for parameters and return value is 0.
 	//!
@@ -2836,7 +2836,7 @@ public:
 	//! \retval asEXECUTION_EXCEPTION The execution ended with an exception.
 	//!
 	//! Executes the prepared function until the script returns. If the execution was previously 
-	//! suspended the function resumes where it left of.
+	//! suspended the function resumes where it left off.
 	//!
 	//! Note that if the script freezes, e.g. if trapped in a never ending loop, you may call 
 	//! \ref Abort from another thread to stop execution.
