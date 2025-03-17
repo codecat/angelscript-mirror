@@ -758,7 +758,7 @@ asCScriptNode *asCParser::ParseRealType()
 	return node;
 }
 
-// BNF:17: IDENTIFIER    ::= [A-Za-z_][A-Za-z0-9_]*  // single token:  starts with letter or _, can include any letter and digit, same as in C++
+// BNF:17: IDENTIFIER    ::= [A-Za-z_][A-Za-z0-9_]*            // single token:  starts with letter or _, can include any letter and digit, same as in C++
 asCScriptNode *asCParser::ParseIdentifier()
 {
 	asCScriptNode *node = CreateNode(snIdentifier);
@@ -1001,8 +1001,8 @@ asCScriptNode *asCParser::SuperficiallyParseExpression()
 	return node;
 }
 
-// BNF:18: COMMENT       ::= "//"[^#x0A]* | "/*" [^*]* "*/"  // single token:  starts with // and ends with new line or starts with /* and ends with */
-// BNF:18: WHITESPACE    ::= [ #x09#x0A#x0D]+  // single token:  spaces, tab, carriage return, line feed, and UTF8 byte-order-mark
+// BNF:18: COMMENT       ::= ('//'[^#x0A]*) | ('/*'[^*]*'*/')  // single token:  starts with // and ends with new line or starts with /* and ends with */
+// BNF:18: WHITESPACE    ::= [ #x09#x0A#x0D]+                  // single token:  spaces, tab, carriage return, line feed, and UTF8 byte-order-mark
 void asCParser::GetToken(sToken *token)
 {
 	// Check if the token has already been parsed
@@ -1716,9 +1716,9 @@ asCScriptNode *asCParser::ParseExprValue()
 }
 
 // BNF:12: LITERAL       ::= NUMBER | STRING | BITS | 'true' | 'false' | 'null'
-// BNF:17: NUMBER        ::= [0-9]+("."[0-9]+)?  // single token:  includes integers and real numbers, same as C++ 
-// BNF:17: STRING        ::= '"'("\\".|[^"#x0D#x0A\])*'"'  // single token:  single quoted ', double quoted ", or heredoc multi-line string """
-// BNF:17: BITS          ::= "0"[bBoOdDxX][0-9A-Fa-f]+  // single token:  binary 0b or 0B, octal 0o or 0O, decimal 0d or 0D, hexadecimal 0x or 0X
+// BNF:17: NUMBER        ::= [0-9]+("."[0-9]+)?                // single token:  includes integers and real numbers, same as C++ 
+// BNF:17: STRING        ::= '"' ("\". | [^"#x0D#x0A\\])* '"'   // single token:  single quoted ', double quoted ", or heredoc multi-line string """
+// BNF:17: BITS          ::= '0'[bBoOdDxX][0-9A-Fa-f]+         // single token:  binary 0b or 0B, octal 0o or 0O, decimal 0d or 0D, hexadecimal 0x or 0X
 asCScriptNode *asCParser::ParseConstant()
 {
 	asCScriptNode *node = CreateNode(snConstant);
