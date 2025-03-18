@@ -1308,10 +1308,28 @@ void *asCScriptEngine::GetUserData(asPWORD type) const
 }
 
 // interface
+int asCScriptEngine::GetMessageCallback(asSFuncPtr* callback, void** obj, asDWORD* callConv)
+{
+	if (!msgCallback)
+		return asNO_FUNCTION;
+
+	if (callback)
+		*callback = msgCallbackOriginalFuncPtr;
+	if (obj) 
+		*obj = msgCallbackObj;
+	if (callConv)
+		*callConv = msgCallbackOriginalCallConv;
+
+	return asSUCCESS;
+}
+
+// interface
 int asCScriptEngine::SetMessageCallback(const asSFuncPtr &callback, void *obj, asDWORD callConv)
 {
 	msgCallback = true;
 	msgCallbackObj = obj;
+	msgCallbackOriginalFuncPtr = callback;
+	msgCallbackOriginalCallConv = callConv;
 	bool isObj = false;
 	if( (unsigned)callConv == asCALL_GENERIC || (unsigned)callConv == asCALL_THISCALL_OBJFIRST || (unsigned)callConv == asCALL_THISCALL_OBJLAST )
 	{

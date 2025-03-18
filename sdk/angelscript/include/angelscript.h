@@ -677,6 +677,7 @@ public:
 
 	// Compiler messages
 	virtual int SetMessageCallback(const asSFuncPtr &callback, void *obj, asDWORD callConv) = 0;
+	virtual int GetMessageCallback(asSFuncPtr *callback, void **obj, asDWORD *callConv) = 0;
 	virtual int ClearMessageCallback() = 0;
 	virtual int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message) = 0;
 

@@ -79,6 +79,7 @@ public:
 
 	// Compiler messages
 	virtual int SetMessageCallback(const asSFuncPtr &callback, void *obj, asDWORD callConv);
+	virtual int GetMessageCallback(asSFuncPtr* callback, void** obj, asDWORD* callConv);
 	virtual int ClearMessageCallback();
 	virtual int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message);
 
@@ -438,6 +439,8 @@ public:
 	// Message callback
 	bool                        msgCallback;
 	asSSystemFunctionInterface  msgCallbackFunc;
+	asSFuncPtr                  msgCallbackOriginalFuncPtr;
+	asDWORD                     msgCallbackOriginalCallConv;
 	void                       *msgCallbackObj;
 	struct preMessage_t
 	{

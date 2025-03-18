@@ -86,6 +86,32 @@ bool Test()
 	asIScriptContext *ctx;
 	CBufferedOutStream bout;
 
+	// Test declaring a function to take funcdef by value must give error
+	// Reported by Sam Tupy
+	SKIP_KNOWN_BUG
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", R"(
+funcdef void func_callback();
+void set_callback(func_callback cb) { }
+)");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
 	// Test cast from non-handle (should implicitly add the handle)
 	// Reported by Paril
 	{
