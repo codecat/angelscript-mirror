@@ -88,7 +88,6 @@ bool Test()
 
 	// Test declaring a function to take funcdef by value must give error
 	// Reported by Sam Tupy
-	SKIP_KNOWN_BUG
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -105,7 +104,8 @@ void set_callback(func_callback cb) { }
 
 		engine->ShutDownAndRelease();
 
-		if (bout.buffer != "")
+		if (bout.buffer != "test (3, 1) : Info    : Compiling void set_callback(func_callback)\n"
+						   "test (3, 1) : Error   : Parameter type can't be 'func_callback', because the type cannot be instantiated.\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

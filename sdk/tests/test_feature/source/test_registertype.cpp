@@ -1543,9 +1543,7 @@ SKIP_ON_MAX_PORT
 			TEST_FAILED;
 		if (bout.buffer != "script (1, 1) : Info    : Compiling ref func(ref)\n"
 			"script (1, 1) : Error   : Return type can't be 'ref'\n"
-			"script (1, 1) : Error   : Parameter type can't be 'ref', because the type cannot be instantiated.\n"
-			"script (1, 23) : Error   : Data type can't be 'ref'\n"
-			"script (1, 34) : Error   : Data type can't be 'ref'\n")
+			"script (1, 1) : Error   : Parameter type can't be 'ref', because the type cannot be instantiated.\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

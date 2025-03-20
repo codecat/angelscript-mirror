@@ -756,6 +756,10 @@ int asCCompiler::CompileFunction(asCBuilder *in_builder, asCScriptCode *in_scrip
 
 	int stackPos = SetupParametersAndReturnVariable(in_parameterNames, in_func);
 
+	// If there are compile errors, there is no reason to build the final code
+	if (hasCompileErrors || builder->numErrors != buildErrors)
+		return -1;
+
 	//--------------------------------------------
 	// Compile the statement block
 
