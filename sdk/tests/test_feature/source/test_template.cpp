@@ -250,7 +250,7 @@ void do_smth(asIScriptGeneric* gen)
 	do_smth_called_correctly = gen->GetArgTypeId(0) == asTYPEID_INT32 && arg == 100 && (*obj) == "Success";
 }
 
-void q2as_test_bug(asIScriptGeneric* gen) 
+void q2as_test_bug(asIScriptGeneric* /* gen */)
 {
 
 }
@@ -275,6 +275,57 @@ bool Test()
 	int r;
 	COutStream out;
 	CBufferedOutStream bout;
+
+	// Test saving bytecode with template functions
+	// https://www.gamedev.net/forums/topic/718083-template-functions-pre-compiled-byte-code/
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		engine->RegisterGlobalFunction("T Test<T>(T v)", asFUNCTION(ScriptTestGen), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void testfunc() \n"
+			"{ \n"
+			"	auto n = Test<int>(10); \n"
+			"   assert( n == 10 ); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		CBytecodeStream st("test");
+		r = mod->SaveByteCode(&st);
+		if (r < 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		engine->RegisterGlobalFunction("T Test<T>(T v)", asFUNCTION(ScriptTestGen), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&st);
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "testfunc()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
 
 	// https://www.gamedev.net/forums/topic/717373-support-for-template-functions-is-now-implemented-in-2380-wip/5466542/
 	{
@@ -363,6 +414,7 @@ bool Test()
 			TEST_FAILED;
 
 		asITypeInfo *type = mod->GetTypeInfoByName("ASEntity2");
+		assert(type);
 
 		r = ExecuteString(engine, "testfunc()", mod);
 		if (r != asEXECUTION_FINISHED)

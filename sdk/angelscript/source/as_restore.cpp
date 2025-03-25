@@ -717,6 +717,8 @@ void asCReader::ReadUsedFunctions()
 			// Find the correct function
 			if( c == 'm' )
 			{
+				asASSERT(func.templateSubTypes.GetLength() == 0);
+
 				if( func.funcType == asFUNC_IMPORTED )
 				{
 					for( asUINT i = 0; i < module->m_bindInformations.GetLength(); i++ )
@@ -771,6 +773,8 @@ void asCReader::ReadUsedFunctions()
 			}
 			else if (c == 's')
 			{
+				asASSERT(func.templateSubTypes.GetLength() == 0);
+
 				// Look for shared entities in the engine, as they may not necessarily be part
 				// of the scope of the module if they have been inhereted from other modules.
 				if (func.funcType == asFUNC_FUNCDEF)
@@ -935,17 +939,46 @@ void asCReader::ReadUsedFunctions()
 				}
 				else if( func.objectType == 0 )
 				{
-					// This is a global function
-					const asCArray<asUINT> &funcs = engine->registeredGlobalFuncs.GetIndexes(func.nameSpace, func.name);
-					for( asUINT i = 0; i < funcs.GetLength(); i++ )
+					if (func.templateSubTypes.GetLength() == 0)
 					{
-						asCScriptFunction *f = engine->registeredGlobalFuncs.Get(funcs[i]);
-						if( f == 0 ||
-							!func.IsSignatureExceptNameAndObjectTypeEqual(f) )
-							continue;
+						// This is a global function
+						const asCArray<asUINT>& funcs = engine->registeredGlobalFuncs.GetIndexes(func.nameSpace, func.name);
+						for (asUINT i = 0; i < funcs.GetLength(); i++)
+						{
+							asCScriptFunction* f = engine->registeredGlobalFuncs.Get(funcs[i]);
+							if (f == 0 ||
+								!func.IsSignatureExceptNameAndObjectTypeEqual(f))
+								continue;
 
-						usedFunctions[n] = f;
-						break;
+							usedFunctions[n] = f;
+							break;
+						}
+					}
+					else
+					{
+						// This is a template function
+						asCScriptFunction* templFunc = 0;
+						for (asUINT i = 0; i < engine->registeredTemplateGlobalFuncs.GetLength(); i++)
+						{
+							asCScriptFunction* f = engine->registeredTemplateGlobalFuncs[i];
+							if (f->name == func.name &&
+								f->nameSpace == func.nameSpace &&
+								f->parameterTypes.GetLength() == func.parameterTypes.GetLength() &&
+								f->templateSubTypes.GetLength() == func.templateSubTypes.GetLength())
+							{
+								templFunc = f;
+								break;
+							}
+						}
+
+						int r = engine->GetTemplateFunctionInstance(templFunc, func.templateSubTypes);
+						if (r >= 0)
+						{
+							templFunc = engine->scriptFunctions[r];
+							asASSERT(templFunc->IsSignatureEqual(&func));
+
+							usedFunctions[n] = templFunc;
+						}
 					}
 				}
 				else if( func.objectType )
@@ -962,30 +995,6 @@ void asCReader::ReadUsedFunctions()
 						usedFunctions[n] = f;
 						break;
 					}
-				}
-
-				if( usedFunctions[n] == 0 )
-				{
-					// TODO: clean up: This part of the code should never happen. All functions should
-					//                 be found in the above logic. The only valid reason to come here
-					//                 is if the bytecode is wrong and the function doesn't exist anyway.
-					//                 This loop is kept temporarily until we can be certain all scenarios
-					//                 are covered.
-					for( asUINT i = 0; i < engine->scriptFunctions.GetLength(); i++ )
-					{
-						asCScriptFunction *f = engine->scriptFunctions[i];
-						if( f == 0 ||
-							func.objectType != f->objectType ||
-							func.nameSpace != f->nameSpace ||
-							!func.IsSignatureEqual(f) )
-							continue;
-
-						usedFunctions[n] = f;
-						break;
-					}
-
-					// No function is expected to be found
-					asASSERT(usedFunctions[n] == 0);
 				}
 			}
 
@@ -1056,7 +1065,10 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func, asCObjectType **p
 		}
 	}
 
-	func->funcType = (asEFuncType)ReadEncodedUInt();
+	asUINT val = (asEFuncType)ReadEncodedUInt();
+	bool isTemplateFunc = (val & 128) ? true : false;
+	val &= ~128;
+	func->funcType = asEFuncType(val);
 
 	// Read the default args, from last to first
 	if (func->parameterTypes.GetLength() > 0)
@@ -1143,6 +1155,14 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func, asCObjectType **p
 			ReadString(&ns);
 			func->nameSpace = engine->AddNameSpace(ns.AddressOf());
 		}
+
+		if (isTemplateFunc)
+		{
+			count = ReadEncodedUInt();
+			func->templateSubTypes.SetLength(count);
+			for (asUINT n = 0; n < count; n++)
+				ReadDataType(&func->templateSubTypes[n]);
+		}
 	}
 }
 
@@ -1190,6 +1210,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 
 	asCObjectType *parentClass = 0;
 	ReadFunctionSignature(func, &parentClass);
+	asASSERT(func->templateSubTypes.GetLength() == 0);
 	if( error )
 	{
 		func->DestroyHalfCreated();
@@ -2207,6 +2228,12 @@ void asCReader::ReadDataType(asCDataType *dt)
 	asUINT idx = ReadEncodedUInt();
 	if( idx != 0 )
 	{
+		if (idx-1 >= savedDataTypes.GetLength())
+		{
+			Error(TXT_INVALID_BYTECODE_d);
+			return;
+		}
+
 		// Get the datatype from the cache
 		*dt = savedDataTypes[idx-1];
 		return;
@@ -4133,7 +4160,10 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 			WriteEncodedInt64(func->inOutFlags[i]);
 	}
 
-	WriteEncodedInt64(func->funcType);
+	asUINT val = func->funcType;
+	if (func->templateSubTypes.GetLength())
+		val += 128;
+	WriteEncodedInt64(val);
 
 	// Write the default args, from last to first
 	// If the number of parameters is 0, then no need to save this
@@ -4186,6 +4216,14 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 		}
 		else
 			WriteString(&func->nameSpace->name);
+
+		// Save the function template subtypes
+		if (func->templateSubTypes.GetLength())
+		{
+			WriteEncodedInt64(func->templateSubTypes.GetLength());
+			for (asUINT n = 0; n < func->templateSubTypes.GetLength(); n++)
+				WriteDataType(&func->templateSubTypes[n]);
+		}
 	}
 }
 
