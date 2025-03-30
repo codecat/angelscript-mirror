@@ -9736,6 +9736,14 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 			lctx->type.isLValue = true; // Handle may not have been an lvalue, but the dereferenced object is
 		}
 
+		// TODO: It must be possible to register specific types that should be allowed to be treated as lvalue even if they are temporary
+		//       These can for example be used by types that are really proxies for more complex types. When it is possible to do so
+		//       I can reintroduce this check to prevent accidental bugs with assigning value to temporary objects
+		if (lctx->type.dataType.IsObject() && !lctx->type.dataType.IsObjectHandle())
+		{
+			lctx->type.isLValue = true;
+		}
+		
 		if (!lctx->type.isLValue)
 		{
 			Error(TXT_NOT_LVALUE, lexpr);

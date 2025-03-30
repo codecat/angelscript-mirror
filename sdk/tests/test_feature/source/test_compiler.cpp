@@ -412,7 +412,62 @@ bool Test()
 		engine->ShutDownAndRelease();
 	}
 
+	// Test using a special type as proxy and allow it to take assignments even for temporary objects
+	// TODO: The cGenericDataVar should have an indicator to tell the compiler it should allow value 
+	//       assign even though it is a temporary obect (non lvalue)
+	// Found in Frictional Games source code
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		const char* config = R"config( 
+		objtype "cStringID" 2826
+		objbeh "cStringID" 2 "void cStringID()"
+		objbeh "cStringID" 0 "void cStringID()"
+		objbeh "cStringID" 0 "void cStringID(const cStringID&in)"
+		objtype "cGenericDataVar" 2826
+		objbeh "cGenericDataVar" 2 "void cGenericDataVar()"
+		objbeh "cGenericDataVar" 0 "void cGenericDataVar()"
+		objbeh "cGenericDataVar" 0 "void cGenericDataVar(const cGenericDataVar&in)"
+		objmthd "cGenericDataVar" "cGenericDataVar& opAssign(const cGenericDataVar&in)"
+		objmthd "cGenericDataVar" "cGenericDataVar& opAssign(const float&in)"
+		objtype "cGenericData" 1
+		objbeh "cGenericData" 3 "cGenericData@ cGenericData()"
+		objbeh "cGenericData" 5 "void $beh5()"
+		objbeh "cGenericData" 6 "void $beh6()"
+		objmthd "cGenericData" "cGenericDataVar opIndex(cStringID)"
+)config";
+
+		std::stringstream strm;
+		strm << config;
+		strm.seekp(0);
+		ConfigEngineFromStream(engine, strm, "config", &stringFactory);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class cScrFancyTextModule { \n"
+			"	void SetVariable(cStringID a_sidVariable, float afValue){ mVariableData[a_sidVariable] = afValue; }\n"
+			"	cGenericData mVariableData;	\n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
 	// Test that expression with non lvalue used in assign op gives error
+	// TODO: This test can only be re-enabled after I've added support to indicate if 
+	// certain types should allow assignment even though not being lvalue 
+	// (for use as proxy for doing some complex operation))
+	/*
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -446,6 +501,7 @@ bool Test()
 
 		engine->ShutDownAndRelease();
 	}
+	*/
 
 	// Test assert failure with bitwise operators on booleans
 	// https://www.gamedev.net/forums/topic/711744-assertion-failed-on-invalid-use-of-enum-bit-flags/5445257/

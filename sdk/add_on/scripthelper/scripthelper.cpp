@@ -739,13 +739,18 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 		}
 		else if( token == "objprop" )
 		{
-			string name, decl, compositeOffset, isCompositeIndirect;
+			string name, decl, compositeOffset = "0", isCompositeIndirect = "0";
 			in::GetToken(engine, name, config, pos);
 			name = name.substr(1, name.length() - 2);
 			in::GetToken(engine, decl, config, pos);
 			decl = decl.substr(1, decl.length() - 2);
 			in::GetToken(engine, compositeOffset, config, pos);
 			in::GetToken(engine, isCompositeIndirect, config, pos);
+			if( !(isCompositeIndirect == "0" || isCompositeIndirect == "1") )
+			{
+				engine->WriteMessage(configFile, in::GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Wrong value for composite indirect. Is it an old config version?");
+				return -1;
+			}
 
 			asITypeInfo *type = engine->GetTypeInfoById(engine->GetTypeIdByDecl(name.c_str()));
 			if( type == 0 )
