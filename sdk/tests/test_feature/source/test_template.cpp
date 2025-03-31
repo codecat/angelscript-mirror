@@ -282,15 +282,26 @@ bool Test()
 		asIScriptEngine* engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
-		engine->RegisterGlobalFunction("T Test<T>(T v)", asFUNCTION(ScriptTestGen), asCALL_GENERIC);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("T Test<T>(T v)", asFUNCTION(ScriptTestGen), asCALL_GENERIC);
+		engine->SetDefaultNamespace("ns");
+		engine->RegisterGlobalFunction("T Test2<T>(T v)", asFUNCTION(ScriptTestGen), asCALL_GENERIC);
+		engine->SetDefaultNamespace("");
+		engine->RegisterObjectType("lmao", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectBehaviour("lmao", asBEHAVE_FACTORY, "lmao@ f()", asFUNCTION(make), asCALL_CDECL);
+		engine->RegisterObjectMethod("lmao", "void do_smth<class T>(T param)", asFUNCTION(do_smth), asCALL_GENERIC);
 
+		do_smth_called_correctly = false;
 		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"void testfunc() \n"
 			"{ \n"
 			"	auto n = Test<int>(10); \n"
 			"   assert( n == 10 ); \n"
+			"   auto m = ns::Test2<int>(15); \n"
+			"   assert( m == 15 ); \n"
+			"   lmao l; \n"
+			"   l.do_smth<int>(100); \n"
 			"} \n");
 		r = mod->Build();
 		if (r < 0)
@@ -306,8 +317,14 @@ bool Test()
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
-		engine->RegisterGlobalFunction("T Test<T>(T v)", asFUNCTION(ScriptTestGen), asCALL_GENERIC);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("T Test<T>(T v)", asFUNCTION(ScriptTestGen), asCALL_GENERIC);
+		engine->SetDefaultNamespace("ns");
+		engine->RegisterGlobalFunction("T Test2<T>(T v)", asFUNCTION(ScriptTestGen), asCALL_GENERIC);
+		engine->SetDefaultNamespace("");
+		engine->RegisterObjectType("lmao", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectBehaviour("lmao", asBEHAVE_FACTORY, "lmao@ f()", asFUNCTION(make), asCALL_CDECL);
+		engine->RegisterObjectMethod("lmao", "void do_smth<class T>(T param)", asFUNCTION(do_smth), asCALL_GENERIC);
 
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&st);
@@ -316,6 +333,9 @@ bool Test()
 
 		r = ExecuteString(engine, "testfunc()", mod);
 		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (!do_smth_called_correctly)
 			TEST_FAILED;
 
 		engine->ShutDownAndRelease();
@@ -477,6 +497,7 @@ bool Test()
 		engine->RegisterObjectBehaviour("lmao", asBEHAVE_FACTORY, "lmao@ f()", asFUNCTION(make), asCALL_CDECL);
 
 		// Register a template method on the object type
+		do_smth_called_correctly = false;
 		r = engine->RegisterObjectMethod("lmao", "void do_smth<class T>(T param)", asFUNCTION(do_smth), asCALL_GENERIC);
 		if (r < 0)
 			TEST_FAILED;

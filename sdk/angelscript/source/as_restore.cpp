@@ -971,29 +971,65 @@ void asCReader::ReadUsedFunctions()
 							}
 						}
 
-						int r = engine->GetTemplateFunctionInstance(templFunc, func.templateSubTypes);
-						if (r >= 0)
+						if (templFunc)
 						{
-							templFunc = engine->scriptFunctions[r];
-							asASSERT(templFunc->IsSignatureEqual(&func));
+							int r = engine->GetTemplateFunctionInstance(templFunc, func.templateSubTypes);
+							if (r >= 0)
+							{
+								templFunc = engine->scriptFunctions[r];
+								asASSERT(templFunc->IsSignatureEqual(&func));
 
-							usedFunctions[n] = templFunc;
+								usedFunctions[n] = templFunc;
+							}
 						}
 					}
 				}
 				else if( func.objectType )
 				{
-					// It is a class member, so we can search directly in the object type's members
-					// TODO: virtual function is different that implemented method
-					for( asUINT i = 0; i < func.objectType->methods.GetLength(); i++ )
+					if (func.templateSubTypes.GetLength() == 0)
 					{
-						asCScriptFunction *f = engine->scriptFunctions[func.objectType->methods[i]];
-						if( f == 0 ||
-							!func.IsSignatureEqual(f) )
-							continue;
+						// It is a class member, so we can search directly in the object type's members
+						// TODO: virtual function is different that implemented method
+						for (asUINT i = 0; i < func.objectType->methods.GetLength(); i++)
+						{
+							asCScriptFunction* f = engine->scriptFunctions[func.objectType->methods[i]];
+							if (f == 0 ||
+								!func.IsSignatureEqual(f))
+								continue;
 
-						usedFunctions[n] = f;
-						break;
+							usedFunctions[n] = f;
+							break;
+						}
+					}
+					else
+					{
+						// This is a template function
+						asCScriptFunction* templFunc = 0;
+						for (asUINT i = 0; i < func.objectType->methods.GetLength(); i++)
+						{
+							asCScriptFunction* f = engine->scriptFunctions[func.objectType->methods[i]];
+							if (f->name == func.name &&
+								f->nameSpace == func.nameSpace &&
+								f->IsReadOnly() == func.IsReadOnly() && 
+								f->parameterTypes.GetLength() == func.parameterTypes.GetLength() &&
+								f->templateSubTypes.GetLength() == func.templateSubTypes.GetLength())
+							{
+								templFunc = f;
+								break;
+							}
+						}
+
+						if (templFunc)
+						{
+							int r = engine->GetTemplateFunctionInstance(templFunc, func.templateSubTypes);
+							if (r >= 0)
+							{
+								templFunc = engine->scriptFunctions[r];
+								asASSERT(templFunc->IsSignatureEqual(&func));
+
+								usedFunctions[n] = templFunc;
+							}
+						}
 					}
 				}
 			}
@@ -1155,14 +1191,14 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func, asCObjectType **p
 			ReadString(&ns);
 			func->nameSpace = engine->AddNameSpace(ns.AddressOf());
 		}
+	}
 
-		if (isTemplateFunc)
-		{
-			count = ReadEncodedUInt();
-			func->templateSubTypes.SetLength(count);
-			for (asUINT n = 0; n < count; n++)
-				ReadDataType(&func->templateSubTypes[n]);
-		}
+	if (isTemplateFunc)
+	{
+		count = ReadEncodedUInt();
+		func->templateSubTypes.SetLength(count);
+		for (asUINT n = 0; n < count; n++)
+			ReadDataType(&func->templateSubTypes[n]);
 	}
 }
 
@@ -4216,14 +4252,14 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 		}
 		else
 			WriteString(&func->nameSpace->name);
+	}
 
-		// Save the function template subtypes
-		if (func->templateSubTypes.GetLength())
-		{
-			WriteEncodedInt64(func->templateSubTypes.GetLength());
-			for (asUINT n = 0; n < func->templateSubTypes.GetLength(); n++)
-				WriteDataType(&func->templateSubTypes[n]);
-		}
+	// Save the function template subtypes
+	if (func->templateSubTypes.GetLength())
+	{
+		WriteEncodedInt64(func->templateSubTypes.GetLength());
+		for (asUINT n = 0; n < func->templateSubTypes.GetLength(); n++)
+			WriteDataType(&func->templateSubTypes[n]);
 	}
 }
 

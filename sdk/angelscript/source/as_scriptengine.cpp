@@ -3219,6 +3219,7 @@ int asCScriptEngine::GetTemplateFunctionInstance(asCScriptFunction* baseFunc, co
 	if( newFunc->objectType ) newFunc->objectType->AddRefInternal();
 	newFunc->sysFuncIntf = asNEW(asSSystemFunctionInterface)(*baseFunc->sysFuncIntf);
 	newFunc->funcType = asFUNC_SYSTEM;
+	newFunc->nameSpace = baseFunc->nameSpace;
 
 	// TODO: Need to know the module if it is a script that instantiates the template function
 	newFunc->returnType = DetermineTypeForTemplate(baseFunc->returnType, baseFunc->templateSubTypes, types, 0, 0, 0);
