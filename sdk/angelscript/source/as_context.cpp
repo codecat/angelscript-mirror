@@ -5257,8 +5257,8 @@ void asCContext::DetermineLiveObjects(asCArray<int> &liveObjects, asUINT stackLe
 								var = v;
 								break;
 							}
-						asASSERT(var != asUINT(-1));
-						liveObjects[var] += 1;
+						if( var != asUINT(-1) )
+							liveObjects[var] += 1;
 					}
 					break;
 				case asBLOCK_BEGIN: // Start block

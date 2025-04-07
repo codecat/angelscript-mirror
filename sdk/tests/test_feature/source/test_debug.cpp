@@ -164,6 +164,28 @@ void LineCallback3(asIScriptContext* ctx, void* /*param*/)
 		PrintVariables(ctx, 0);
 }
 
+void LineCallback4(asIScriptContext* ctx, void* /*param*/)
+{
+	if (ctx->GetState() != asEXECUTION_ACTIVE)
+		return;
+
+	int col;
+	int line = ctx->GetLineNumber(0, &col);
+	int indent = ctx->GetCallstackSize();
+	for (int n = 1; n < indent; n++)
+		print(" ");
+	const asIScriptFunction* function = ctx->GetFunction();
+	print("%s:%s:%d,%d\n", function->GetModuleName(),
+		function->GetDeclaration(),
+		line, col);
+
+	if (line == 6)
+	{
+//		PrintVariables(ctx, 0); // print variables in Test()
+		PrintVariables(ctx, 1); // print variables in main()
+	}
+}
+
 bool doSkipTemporary = true;
 void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
 {
@@ -221,6 +243,13 @@ void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
 		{
 			if (varPointer)
 				print(" %s%s = %d\n", ctx->GetVarDeclaration(n, stackLevel), (name == 0 || strlen(name) == 0) ? "(temp)" : "", *(int*)varPointer);
+			else
+				print(" %s%s = <null>\n", ctx->GetVarDeclaration(n, stackLevel), (name == 0 || strlen(name) == 0) ? "(temp)" : "");
+		}
+		else if(typeId == engine->GetTypeIdByDecl("vec3_t"))
+		{
+			if (varPointer)
+				print(" %s%s = {%f,%f,%f}\n", ctx->GetVarDeclaration(n, stackLevel), (name == 0 || strlen(name) == 0) ? "(temp)" : "", *(float*)varPointer, *((((float*)varPointer))+1), *((((float*)varPointer)) + 2));
 			else
 				print(" %s%s = <null>\n", ctx->GetVarDeclaration(n, stackLevel), (name == 0 || strlen(name) == 0) ? "(temp)" : "");
 		}
@@ -282,16 +311,135 @@ int& foo_opAssign(int val, int* _this)
 
 bool Test2();
 
+struct vec3_t
+{
+	float x, y, z;
+};
+
+void vec3_fff(float x, float y, float z, vec3_t*v)
+{
+	v->x = x;
+	v->y = y;
+	v->z = z;
+}
+
+void vec3_v3(const vec3_t& o, vec3_t* v)
+{
+	*v = o;
+}
+
 bool Test()
 {
 	int r;
 	bool fail = Test2();
+
+	// Test GetAddressOfVar for object variables whose stack position is reused in multiple scopes
+	// Reported by Paril
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		CBufferedOutStream bout;
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterObjectType("vec3_t", sizeof(vec3_t), asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterObjectBehaviour("vec3_t", asBEHAVE_CONSTRUCT, "void vec3_t(float, float, float)", asFUNCTION(vec3_fff), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectBehaviour("vec3_t", asBEHAVE_CONSTRUCT, "void vec3_t(const vec3_t &in)", asFUNCTION(vec3_v3), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectProperty("vec3_t", "float x", asOFFSET(vec3_t, x));
+		engine->RegisterObjectProperty("vec3_t", "float y", asOFFSET(vec3_t, y));
+		engine->RegisterObjectProperty("vec3_t", "float z", asOFFSET(vec3_t, z));
+
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", R"script(
+void Test(vec3_t v)
+{
+    vec3_t a, b, c;
+
+    v.x = 50 + b.x + a.x + c.x;
+}
+
+bool Check() { return true; }
+
+void main(bool is_cgame)
+{
+    vec3_t(1, 2, 3);
+    vec3_t(1, 2, 3);
+
+    {
+        vec3_t test_a(1,2,3);
+        test_a.x++;
+    }
+
+    if (Check())
+    {
+        if (!is_cgame)
+        {
+            vec3_t test(3,2,1);
+            Test(test);
+        }
+    }
+}
+)script");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		printBuffer = "";
+		asIScriptContext* ctx = engine->CreateContext();
+		doSkipTemporary = true;
+		ctx->SetLineCallback(asFUNCTION(LineCallback4), 0, asCALL_CDECL);
+		ctx->SetExceptionCallback(asFUNCTION(ExceptionCallback), 0, asCALL_CDECL);
+		ctx->Prepare(mod->GetFunctionByDecl("void main(bool)"));
+		ctx->SetArgByte(0, false);
+		r = ctx->Execute();
+		if (r == asEXECUTION_EXCEPTION)
+		{
+			// It is possible to examine the callstack even after the Execute() method has returned
+			ExceptionCallback(ctx, 0);
+		}
+		ctx->Release();
+		doSkipTemporary = true;
+		engine->ShutDownAndRelease();
+
+		if (printBuffer !=
+			R"out(test:void main(bool):13,5
+test:void main(bool):13,5
+test:void main(bool):14,5
+test:void main(bool):17,9
+test:void main(bool):18,9
+test:void main(bool):21,5
+ test:bool Check():9,16
+ test:bool Check():9,16
+test:void main(bool):23,9
+test:void main(bool):25,13
+test:void main(bool):26,13
+ test:void Test(vec3_t):4,5
+ test:void Test(vec3_t):4,5
+ test:void Test(vec3_t):6,5
+ (in scope) bool is_cgame = {...}
+ (no scope) vec3_t test_a = <null>
+ (no scope) vec3_t test = <null>
+ test:void Test(vec3_t):7,2
+test:void main(bool):29,2
+)out")
+		{
+			TEST_FAILED;
+			PRINTF("%s", printBuffer.c_str());
+		}
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
 
 	// Test GetDeclaredAt for functions
 	{
 		asIScriptEngine* engine = asCreateScriptEngine();
 		CBufferedOutStream bout;
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"int a; \n"
