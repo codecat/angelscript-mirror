@@ -1345,6 +1345,9 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 						// The program position must be adjusted to be in number of instructions
 						func->scriptData->tryCatchInfo[i].tryPos = SanityCheck(ReadEncodedUInt(), 1000000);
 						func->scriptData->tryCatchInfo[i].catchPos = SanityCheck(ReadEncodedUInt(), 1000000);
+						
+						// The stack position must be adjusted to be according to the size of the variables
+						func->scriptData->tryCatchInfo[i].stackSize = SanityCheck(ReadEncodedUInt(), 100000);
 					}
 				}
 
@@ -3277,6 +3280,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 	{
 		func->scriptData->tryCatchInfo[n].tryPos = instructionNbrToPos[func->scriptData->tryCatchInfo[n].tryPos];
 		func->scriptData->tryCatchInfo[n].catchPos = instructionNbrToPos[func->scriptData->tryCatchInfo[n].catchPos];
+		func->scriptData->tryCatchInfo[n].stackSize = AdjustStackPosition(func->scriptData->tryCatchInfo[n].stackSize);
 	}
 
 	// The program position (every even number) needs to be adjusted
@@ -4348,6 +4352,8 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 				// The program position must be adjusted to be in number of instructions
 				WriteEncodedInt64(bytecodeNbrByPos[func->scriptData->tryCatchInfo[i].tryPos]);
 				WriteEncodedInt64(bytecodeNbrByPos[func->scriptData->tryCatchInfo[i].catchPos]);
+				// The stack size must be adjusted to be according to variable sizes
+				WriteEncodedInt64(AdjustStackPosition(func->scriptData->tryCatchInfo[i].stackSize));
 			}
 		}
 

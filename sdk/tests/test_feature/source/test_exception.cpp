@@ -112,7 +112,7 @@ bool Test()
 	// https://www.gamedev.net/forums/topic/715075-context-crash-during-exception-handling-in-determineliveobjects/
 	SKIP_ON_MAX_PORT
 	{
-		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		asIScriptEngine * engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 		engine->RegisterObjectType("ClassValue", sizeof(ClassValue),
 			asOBJ_VALUE | asOBJ_APP_CLASS_CD);
@@ -148,6 +148,51 @@ bool Test()
 			TEST_FAILED;
 		ctx->Release();
 		engine->ShutDownAndRelease();
+	}
+
+	// Test crash due to exception
+	// https://www.gamedev.net/forums/topic/718122-more-crashes-with-trycatch/
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Bar {}\n"
+			"class Foo { Bar@ Bar; }\n"
+			"void Main() {	\n"
+			"	Foo@ f; \n"
+			"	for (int i = 0; i < 1000; i++) {\n"
+			"		try {\n"
+			"			auto foo = f.Bar; \n"
+			"		} catch { }\n"
+			"	}\n"
+			"}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptContext* ctx = engine->CreateContext();
+		ExceptionHandler handler;
+		ctx->SetExceptionCallback(asMETHOD(ExceptionHandler, Callback), &handler, asCALL_THISCALL);
+		ctx->Prepare(mod->GetFunctionByDecl("void Main()"));
+		r = ctx->Execute();
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (!handler.ok)
+			TEST_FAILED;
+
+		ctx->Release();
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 	}
 
 	// Test crash due to exception

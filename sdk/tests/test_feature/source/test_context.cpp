@@ -57,7 +57,7 @@ public:
 				storage.Write(&stackPointer, sizeof(stackPointer));
 				storage.Write(&stackIndex, sizeof(stackIndex)); // TODO: This shouldn't be needed
 			}
-			else
+			else if (r == asNO_FUNCTION)
 			{
 				// This is a nested call, so get the state registers instead
 				asIScriptFunction* callingSystemFunction;
@@ -82,6 +82,8 @@ public:
 				storage.Write(&objectRegister, sizeof(objectRegister)); // TODO: serialize the object pointer
 				storage.Write(&objectType, sizeof(objectType)); // TODO: serialize the type info
 			}
+			else
+				TEST_FAILED;
 		}
 
 		// Store the context state registers

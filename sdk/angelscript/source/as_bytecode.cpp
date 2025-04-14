@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2024 Andreas Jonsson
+   Copyright (c) 2003-2025 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1585,6 +1585,7 @@ void asCByteCode::ExtractTryCatchInfo(asCScriptFunction *outFunc)
 			asSTryCatchInfo info;
 			info.tryPos    = pos;
 			info.catchPos  = *ARG_DW(instr->arg);
+			info.stackSize = asUINT(instr->stackSize);
 			outFunc->scriptData->tryCatchInfo.PushLast(info);
 		}
 

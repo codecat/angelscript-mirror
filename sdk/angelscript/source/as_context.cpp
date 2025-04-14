@@ -463,7 +463,7 @@ int asCContext::GetStateRegisters(asUINT stackLevel, asIScriptFunction **_callin
 
 		// Only return state registers for a nested call, see PushState()
 		if( tmp[0] != 0 )
-			return asERROR;
+			return asNO_FUNCTION;
 
 		// Restore the previous initial function and the associated values
 		callingSystemFunction = reinterpret_cast<asCScriptFunction*>(tmp[1]);
@@ -479,11 +479,15 @@ int asCContext::GetStateRegisters(asUINT stackLevel, asIScriptFunction **_callin
 
 	if(_callingSystemFunction) *_callingSystemFunction = callingSystemFunction;
 	if(_initialFunction)       *_initialFunction       = initialFunction;
-	if(_originalStackPointer)  *_originalStackPointer  = SerializeStackPointer(originalStackPointer);
+	asDWORD sp = SerializeStackPointer(originalStackPointer);
+	if (_originalStackPointer)  *_originalStackPointer = sp;
 	if(_argumentSize)          *_argumentSize          = argumentsSize;
 	if(_valueRegister)         *_valueRegister         = valueRegister;
 	if(_objectRegister)        *_objectRegister        = objectRegister;
 	if(_objectRegisterType)    *_objectRegisterType    = objectType;
+
+	if (int(sp) < 0)
+		return asERROR;
 
 	return asSUCCESS;
 }
@@ -520,13 +524,18 @@ int asCContext::GetCallStateRegisters(asUINT stackLevel, asDWORD *_stackFramePoi
 	}
 
 	if( stackFramePointer == 0 )
-		return asERROR; // TODO: This is not really an error. It just means that the stackLevel represent a pushed state
+		return asNO_FUNCTION; // It just means that the stackLevel represent a pushed state
 
-	if(_stackFramePointer) *_stackFramePointer = SerializeStackPointer(stackFramePointer); // TODO: Calculate stack frame pointer as delta from previous stack frame pointer (Or perhaps it will always be the same as the stack pointer in previous function?)
+	asDWORD sfp = SerializeStackPointer(stackFramePointer);
+	if(_stackFramePointer) *_stackFramePointer = sfp; // TODO: Calculate stack frame pointer as delta from previous stack frame pointer (Or perhaps it will always be the same as the stack pointer in previous function?)
 	if(_currentFunction)   *_currentFunction   = currentFunction;
 	if(_programPointer)    *_programPointer    = programPointer != 0? asUINT(programPointer - currentFunction->scriptData->byteCode.AddressOf()) : -1;
-	if(_stackPointer)      *_stackPointer      = SerializeStackPointer(stackPointer); // TODO: Calculate the stack pointer as offset from the stack frame pointer
+	asDWORD sp = SerializeStackPointer(stackPointer);
+	if(_stackPointer)      *_stackPointer      = sp; // TODO: Calculate the stack pointer as offset from the stack frame pointer
 	if(_stackIndex)        *_stackIndex        = stackIndex; // TODO: This shouldn't be returned, as it should be calculated during deserialization
+
+	if (int(sfp) < 0 || int(sp) < 0)
+		return asERROR;
 
 	return asSUCCESS;
 }
@@ -5586,9 +5595,10 @@ bool asCContext::CleanStackFrame(bool catchException)
 	else
 		m_isStackMemoryNotAllocated = false;
 
-	// If the exception was caught then move the program position to the catch block then stop the unwinding
+	// If the exception was caught then move the program position and stack pointer to the catch block then stop the unwinding
 	if (exceptionCaught)
 	{
+		m_regs.stackPointer = m_regs.stackFramePointer - tryCatchInfo->stackSize - m_currentFunction->scriptData->variableSpace;
 		m_regs.programPointer = m_currentFunction->scriptData->byteCode.AddressOf() + tryCatchInfo->catchPos;
 		return exceptionCaught;
 	}
@@ -6256,6 +6266,9 @@ asDWORD asCContext::SerializeStackPointer(asDWORD *v) const
 
 	// Find the stack block that is used, and the offset into that block
 	asUINT stackIndex = DetermineStackIndex(v);
+	asASSERT(int(stackIndex) >= 0);
+	if (stackIndex >= m_stackBlocks.GetLength()) 
+		return asUINT(asERROR);
 	asQWORD offset    = asQWORD(v - m_stackBlocks[stackIndex]);
 
 	asASSERT(offset < 0x03FFFFFF && (asUINT)stackIndex < 0x3F);

@@ -3364,8 +3364,9 @@ public:
 	//! \param[out] objectRegister Will be set to the address of the object held in the object register, or null if no object is currently held.
 	//! \param[out] objectTypeRegister Will be set to the object type of the object held in the object register, or null if no object is currently held.
 	//! \return A negative value to indicate an error.
-	//! \retval asERROR The \a stackLevel is not 0 or doesn't represent a pushed state for nested calls.
+	//! \retval asNO_FUNCTION The \a stackLevel is not 0 or doesn't represent a pushed state for nested calls.
 	//! \retval asINVALID_ARG The \a stackLevel is out of bounds.
+	//! \retval asERROR The context is in an invalid state.
 	//!
 	//! Call this to get the context state registers for serialization. During serialization the current state registers must be stored. If the context
 	//! has been used for nested calls, then this method must also be used to retrieve any pushed states by passing the \a stackLevel representing the push state.
@@ -3383,7 +3384,8 @@ public:
 	//! \param[out] stackIndex Will be set to the index of the stack memory block.
 	//! \return A negative value to indicate an error.
 	//! \retval asINVALID_ARG The \a stackLevel is out of bounds.
-	//! \retval asERROR The \a stackLevel represent a pushed state for nested calls.
+	//! \retval asNO_FUNCTION The \a stackLevel represent a pushed state for nested calls.
+	//! \retval asERROR The context is in an invalid state.
 	//!
 	//! Use this method to get the call state registers for serialization. Each function on the call stack must be stored during serialization. 
 	//! The number of functions on the call stack can be obtained with \ref GetCallstackSize.
