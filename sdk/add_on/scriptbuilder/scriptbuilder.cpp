@@ -152,9 +152,11 @@ void CScriptBuilder::ClearAll()
 	currentNamespace = "";
 
 	foundDeclarations.clear();
+
 	typeMetadataMap.clear();
 	funcMetadataMap.clear();
 	varMetadataMap.clear();
+	classMetadataMap.clear();
 #endif
 }
 

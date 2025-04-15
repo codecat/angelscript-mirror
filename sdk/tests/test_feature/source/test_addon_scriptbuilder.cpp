@@ -78,6 +78,50 @@ bool Test()
 
 	// TODO: Preprocessor directives should be alone on the line
 
+	// Test reusing builder for different scripts with metadata
+	// https://www.gamedev.net/forums/topic/718144-potential-bug-in-cscriptbuilder/5469392/
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		CScriptBuilder builder;
+		builder.StartNewModule(engine, "test");
+		builder.AddSectionFromMemory("test", "class A { [a] int a; } \n");
+		r = builder.BuildModule();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptModule* mod = engine->GetModule("test");
+		vector<string> metadata = builder.GetMetadataForTypeProperty(mod->GetTypeIdByDecl("A"), 0);
+		if (metadata[0] != "a")
+			TEST_FAILED;
+		engine->ShutDownAndRelease();
+
+		// Restart the engine
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		builder.StartNewModule(engine, "test");
+		builder.AddSectionFromMemory("test", "class A { int a; } \n");
+		r = builder.BuildModule();
+		if (r < 0)
+			TEST_FAILED;
+
+		mod = engine->GetModule("test");
+		metadata = builder.GetMetadataForTypeProperty(mod->GetTypeIdByDecl("A"), 0);
+		if (!metadata.empty())
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
 	// Test Metadata with namespaces using double scopes
 	// https://www.gamedev.net/forums/topic/717547-script-builder-metadata-namespace-bug/5466636/
 	{
