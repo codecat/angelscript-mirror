@@ -160,19 +160,16 @@ int main(int argc, char **argv)
 
 	// Compile the script code
 	r = CompileScript(engine, argv[scriptArg]);
-	if (r < 0)
+	if (r >= 0)
 	{
-		WaitForUser();
-		return -1;
-	}
+		// Execute the script
+		r = ExecuteScript(engine, argv[scriptArg]);
 
-	// Execute the script
-	r = ExecuteScript(engine, argv[scriptArg]);
-	
-	// Shut down the engine
-	if( g_commandLineArgs )
-		g_commandLineArgs->Release();
-	engine->ShutDownAndRelease();
+		// Shut down the engine
+		if (g_commandLineArgs)
+			g_commandLineArgs->Release();
+		engine->ShutDownAndRelease();
+	}
 
 	if (r < 0)
 		WaitForUser();

@@ -38,7 +38,7 @@ public:
 	int            Connect(asUINT ipv4Address, asWORD port);
 	int            Send(const std::string& data);
 	std::string    Receive(asINT64 timeoutMicrosec = 0);
-
+	bool           IsActive() const;
 
 protected:
 	~CScriptSocket();

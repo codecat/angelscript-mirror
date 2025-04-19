@@ -91,7 +91,7 @@ int CScriptSocket::Listen(asWORD port)
 	m_isListening = true;
 
 	// TODO: Allow script to define the max queue for incoming connections
-	listen(m_socket, 5);
+	listen(m_socket, 25);
 
 	return 0;
 }
@@ -102,6 +102,9 @@ int CScriptSocket::Listen(asWORD port)
 // Returns a negative value if there is an error (see return codes for select())
 int CScriptSocket::Select(asINT64 timeoutMicrosec)
 {
+	if (!IsActive())
+		return -1;
+
 	fd_set read = { 1, {(SOCKET)m_socket} };
 	TIMEVAL timeout = { 0, 0 }; // Don't wait
 	if (timeoutMicrosec > 0)
@@ -115,6 +118,12 @@ int CScriptSocket::Select(asINT64 timeoutMicrosec)
 	}
 
 	int r = select(0, &read, 0, 0, timeoutMicrosec < 0 ? 0 : &timeout);
+
+	// If any error occurred then close the socket
+	// TODO: Use WSAGetLastError to determine exact error
+	if (r < 0)
+		Close();
+
 	return r;
 }
 
@@ -129,8 +138,8 @@ CScriptSocket* CScriptSocket::Accept(asINT64 timeoutMicrosec)
 	if (r <= 0)
 		return 0;
 
-	// TODO: need to be able to check to what ip address and port the socket is connected it
-	// Each incoming client connection a new CScriptSocket is created and put in the array so the script can retrieve them
+	// TODO: need to be able to check to what ip address and port the socket is connected it (use getsockopt with SO_BSP_STATE)
+	// For each incoming client connection a new CScriptSocket is created
 	int clientSocket = (int)accept(m_socket, 0, 0);
 	if (clientSocket != -1)
 	{
@@ -145,7 +154,7 @@ CScriptSocket* CScriptSocket::Accept(asINT64 timeoutMicrosec)
 int CScriptSocket::Close()
 {
 	// If the socket is open
-	if (m_socket != -1)
+	if (m_socket == -1)
 		return -1;
 
 	// Close the listener socket
@@ -179,8 +188,6 @@ int CScriptSocket::Connect(asUINT ipv4Address, asWORD port)
 		return -1;
 	}
 
-	// TODO: Should the client socket already start receiving data? Or should it wait for the script to initiate that?
-
 	return 0;
 }
 
@@ -195,7 +202,13 @@ int CScriptSocket::Send(const std::string& data)
 	// TODO: How to determine the maximum size of data that can be sent in a single call?
 	int r = send(m_socket, data.c_str(), (int)data.length(), 0);
 	if (r == SOCKET_ERROR)
+	{
+		// TODO: Use WSAGetLastError to determine the type of the error
+
+		// If an error happens, then we close the socket
+		Close();
 		return -1;
+	}
 
 	// Return the number of bytes sent
 	return r;
@@ -220,7 +233,13 @@ std::string CScriptSocket::Receive(asINT64 timeoutMicrosec)
 	{
 		// Read the buffer
 		r = recv(m_socket, buf, sizeof(buf), 0);
-		if (r >= 0)
+		if (r == 0)
+		{
+			// The socket is closed from the other side
+			Close();
+			break;
+		}
+		else if (r >= 0)
 		{
 			msg.append(buf, r);
 			break;
@@ -234,11 +253,33 @@ std::string CScriptSocket::Receive(asINT64 timeoutMicrosec)
 				msg.append(buf, sizeof(buf));
 			}
 			else
+			{
+				// For any other error we just close the socket
+				Close();
 				break;
+			}
 		}
 	}
 
 	return msg;
+}
+
+bool CScriptSocket::IsActive() const
+{
+	if (m_socket == -1) 
+		return false;
+
+	int error_code = 0;
+	int error_code_size = sizeof(error_code);
+	int r = getsockopt(m_socket, SOL_SOCKET, SO_ERROR, (char*)&error_code, &error_code_size);
+	if (r < 0 || error_code != 0)
+	{
+		// If an error occurred just close the socket
+		const_cast<CScriptSocket*>(this)->Close();
+		return false;
+	}
+
+	return true;
 }
 
 static CScriptSocket* CScriptSocket_Factory()
@@ -265,6 +306,7 @@ int RegisterScriptSocket(asIScriptEngine* engine)
 	r = engine->RegisterObjectMethod("socket", "int connect(uint ipv4address, uint16 port)", asMETHOD(CScriptSocket, Connect), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("socket", "int send(const string &in data)", asMETHOD(CScriptSocket, Send), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("socket", "string receive(int64 timeout = 0)", asMETHOD(CScriptSocket, Receive), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectMethod("socket", "bool isActive() const", asMETHOD(CScriptSocket, IsActive), asCALL_THISCALL); assert(r >= 0);
 
 	return 0;
 }
