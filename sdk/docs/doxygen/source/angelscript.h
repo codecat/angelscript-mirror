@@ -4243,6 +4243,10 @@ public:
 	//! \param[out] col The column number where the function was declared
 	//! \return A negative value on error
 	//! \retval asNOT_SUPPORTED The function is not a script function
+	//!
+	//! The returned pointer for \a scriptSection is null when the function doesn't originate from a script file,
+	//! e.g. a registered function or an auto-generated script function. It can also be null if the information
+	//! has been removed, e.g. when saving bytecode without debug info.
 	virtual int              GetDeclaredAt(const char** scriptSection, int* row, int* col) const = 0;
 	//! \}
 
