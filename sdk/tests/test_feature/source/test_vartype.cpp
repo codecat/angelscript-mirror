@@ -184,6 +184,13 @@ void testSetReturnObject(asIScriptGeneric* gen)
 }
 
 
+int numArgs = 0;
+void testFactVariadic(asIScriptGeneric* gen)
+{
+	numArgs = gen->GetArgCount();
+}
+
+
 bool Test()
 {
 	RET_ON_MAX_PORT
@@ -195,6 +202,34 @@ bool Test()
  	asIScriptEngine *engine = 0;
 	asIScriptModule *mod = 0;
 	asIScriptContext *ctx = 0;
+
+	// Test ... in constructor
+	// Reported by Paril
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterStdString(engine);
+
+		bout.buffer = "";
+
+		engine->RegisterObjectType("test", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectBehaviour("test", asBEHAVE_FACTORY, "test @f(const ?&in ...)", asFUNCTION(testFactVariadic), asCALL_GENERIC);
+
+		r = ExecuteString(engine, "test @t = test(1,2,3);");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (numArgs != 3)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
 
 	// Test issue with asIGeneric::SetReturnObject
 	// https://www.gamedev.net/forums/topic/717861-returning-an-object-on-the-stack-in-a-variadic-function-causes-a-crash/5468071/
@@ -248,7 +283,7 @@ bool Test()
 		if (r < 0)
 			TEST_FAILED;
 
-		asIScriptContext* ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "main()", mod, ctx);
 		if (r != asEXECUTION_FINISHED)
 		{

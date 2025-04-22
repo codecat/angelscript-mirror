@@ -12626,9 +12626,12 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 
 			if( r == asSUCCESS )
 			{
-				asCByteCode objBC(engine);
-
 				PrepareFunctionCall(funcs[0], &ctx->bc, args);
+				if (builder->GetFunctionDescription(funcs[0])->IsVariadic())
+				{
+					// Argument count
+					ctx->bc.InstrDWORD(asBC_PshC4, (asDWORD)args.GetLength());
+				}
 
 				MoveArgsToStack(funcs[0], &ctx->bc, args, false);
 
@@ -15324,13 +15327,14 @@ int asCCompiler::MakeFunctionCall(asCExprContext *ctx, int funcId, asCObjectType
 	objBC.AddCode(&ctx->bc);
 
 	int r = PrepareFunctionCall(funcId, &ctx->bc, args);
+	if (r < 0)
+		return r;
+
 	if (descr->IsVariadic())
 	{
 		// Argument count
 		ctx->bc.InstrDWORD(asBC_PshC4, (asDWORD)args.GetLength());
 	}
-	if (r < 0)
-		return r;
 
 	// Verify if any of the args variable offsets are used in the other code.
 	// If they are exchange the offset for a new one
