@@ -190,6 +190,11 @@ void testFactVariadic(asIScriptGeneric* gen)
 	numArgs = gen->GetArgCount();
 }
 
+asIScriptFunction* calledFunc = 0;
+void func1(asIScriptGeneric* gen)
+{
+	calledFunc = gen->GetFunction();
+}
 
 bool Test()
 {
@@ -203,6 +208,47 @@ bool Test()
 	asIScriptModule *mod = 0;
 	asIScriptContext *ctx = 0;
 
+	// Test func overload between 'int &out' and '? &out' with enum expression. The correct one to use is '? &out'
+	// Reported by Paril
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterStdString(engine);
+
+		bout.buffer = "";
+
+		engine->RegisterGlobalFunction("void test(int32 & out)", asFUNCTION(func1), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void test(? & out)", asFUNCTION(func1), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"enum MyEnum { Val = 50 } \n"
+			"void func() \n"
+			"{ \n"
+			"	MyEnum v = MyEnum::Val; \n"
+			"	test(v); \n" // Which function is called?
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		calledFunc = 0;
+		r = ExecuteString(engine, "func()", mod);
+		if (r < 0)
+			TEST_FAILED;
+
+		if (std::string(calledFunc->GetDeclaration()) != "void test(?&out)")
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
 	// Test ... in constructor
 	// Reported by Paril
 	{
@@ -215,6 +261,7 @@ bool Test()
 		engine->RegisterObjectType("test", 0, asOBJ_REF | asOBJ_NOCOUNT);
 		engine->RegisterObjectBehaviour("test", asBEHAVE_FACTORY, "test @f(const ?&in ...)", asFUNCTION(testFactVariadic), asCALL_GENERIC);
 
+		numArgs = 0;
 		r = ExecuteString(engine, "test @t = test(1,2,3);");
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
