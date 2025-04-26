@@ -350,7 +350,9 @@ bool Test()
 			TEST_FAILED;
 
 		// The function's section name should be correct
-		if( std::string(func->GetScriptSectionName()) != "My func" )
+		const char* sectionName = 0;
+		func->GetDeclaredAt(&sectionName, 0, 0);
+		if( std::string(sectionName) != "My func" )
 			TEST_FAILED;
 
 		// We must release the function afterwards

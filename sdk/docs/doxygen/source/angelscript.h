@@ -293,6 +293,12 @@ enum asEEngineProp
 	asEP_ALWAYS_IMPL_DEFAULT_COPY           = 36,
 	//! Determine if the default copy constructor is provided automatically by compiler. 0 - as per language spec, 1 - always, 2 - never. Default: 0
 	asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT = 37,
+	//! \todo document this
+	asEP_MEMBER_INIT_MODE                   = 38,
+	//! \todo document this
+	asEP_BOOL_CONVERSION_MODE               = 39,
+	//! \todo document this
+	asEP_FOREACH_SUPPORT                    = 40,
 
 	asEP_LAST_PROPERTY
 };
@@ -638,7 +644,9 @@ enum asEFuncType
 	//! \brief An imported function
 	asFUNC_IMPORTED  = 5,
 	//! \brief A function delegate
-	asFUNC_DELEGATE  = 6
+	asFUNC_DELEGATE  = 6,
+	//! \todo document this
+	asFUNC_TEMPLATE  = 7
 };
 
 // Is the target a 64bit system?
@@ -1205,6 +1213,8 @@ public:
 	//! It is recommended to register the message callback routine right after creating the engine,
 	//! as some of the registration functions can provide useful information to better explain errors.
 	virtual int SetMessageCallback(const asSFuncPtr &callback, void *obj, asDWORD callConv) = 0;
+	//! \todo document this
+	virtual int GetMessageCallback(asSFuncPtr *callback, void **obj, asDWORD *callConv) = 0;
 	//! \brief Clears the registered message callback routine.
 	//! \return A negative value on error.
 	//!
@@ -2187,7 +2197,7 @@ public:
 	//! <pre>  void (param::*)(asIScriptContext *);</pre>
 	//!
 	//! See \ref doc_cpp_exceptions_1 for an example on how to use this.
-	virtual int SetTranslateAppExceptionCallback(asSFuncPtr callback, void *param, int callConv) = 0;
+	virtual int SetTranslateAppExceptionCallback(const asSFuncPtr &callback, void *param, int callConv) = 0;
 	//! \}
 
 protected:
@@ -2238,7 +2248,7 @@ public:
 	//! informed in number of bytes.
 	virtual int         GetRawStringData(const void *str, char *data, asUINT *length) const = 0;
 
-protected:
+	// The destructor doesn't have to be protected as the string factory is not necessarily reference counted
 	virtual ~asIStringFactory() {}
 };
 #endif
@@ -3135,7 +3145,7 @@ public:
 	//! \ref asCALL_THISCALL, \ref asCALL_CDECL_OBJLAST, or \ref asCALL_CDECL_OBJFIRST.
 	//! 
 	//! \see \ref doc_call_script_4
-	virtual int                SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
+	virtual int                SetExceptionCallback(const asSFuncPtr &callback, void *obj, int callConv) = 0;
 	//! \brief Removes the registered callback.
 	//!
 	//! Removes a previously registered callback.
@@ -3174,7 +3184,7 @@ public:
 	//! \ref asCALL_THISCALL, \ref asCALL_CDECL_OBJLAST, or \ref asCALL_CDECL_OBJFIRST.
 	//!
 	//! \see \ref doc_debug
-	virtual int                SetLineCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
+	virtual int                SetLineCallback(const asSFuncPtr &callback, void *obj, int callConv) = 0;
 	//! \brief Removes the registered callback.
 	//!
 	//! Removes a previously registered callback.
@@ -3950,9 +3960,10 @@ public:
 	//! \param[out] accessMask The access mask of the property
 	//! \param[out] compositeOffset The offset to composite type if used
 	//! \param[out] isCompositeIndirect Set to false if the composite type is inline
+	//! \param[out] isConst Set to true if the property is read only
 	//! \return A negative value on error
 	//! \retval asINVALID_ARG The \a index is out of bounds
-	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, bool *isProtected = 0, int *offset = 0, bool *isReference = 0, asDWORD *accessMask = 0, int *compositeOffset = 0, bool *isCompositeIndirect = 0) const = 0;
+	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, bool *isProtected = 0, int *offset = 0, bool *isReference = 0, asDWORD *accessMask = 0, int *compositeOffset = 0, bool *isCompositeIndirect = 0, bool *isConst = 0) const = 0;
 	//! \brief Returns the declaration of the property
 	//! \param[in] index The index of the property
 	//! \param[in] includeNamespace Set to true if the namespace should be included in the declaration.
@@ -4092,15 +4103,13 @@ public:
 	//! The returned value can be null if the module doesn't exist anymore, or if the function 
 	//! is not owned by any module, e.g. registered by the application or it is a \ref doc_callbacks_delegate "delegate".
 	virtual asIScriptModule *GetModule() const = 0;
+#ifdef AS_DEPRECATED
+	// deprecated since 2025-04-25, 2.38.0
 	//! \brief Returns the name of the script section where the function was implemented.
 	//! \return A null terminated string with the script section name where the function was implemented.
-	//!
-	//! The returned pointer is null when the function doesn't originate from a script file, i.e.
-	//! a registered function or an auto-generated script function. It can also be null if the information
-	//! has been removed, e.g. when saving bytecode without debug info.
-	//! 
-	//! \todo Move this to the Debug information section
+	//! \deprecated Since 2.38.0. Use \ref asIScriptFunction::GetDeclaredAt instead
 	virtual const char      *GetScriptSectionName() const = 0;
+#endif
 	//! \brief Returns the name of the config group in which the function was registered.
 	//! \return The name of the config group, or null if not in any group.
 	virtual const char      *GetConfigGroup() const = 0;
@@ -4165,6 +4174,8 @@ public:
 	//! \brief Returns true if the function is declared as 'property'.
 	//! \return True if the function is a property accessor.
 	virtual bool             IsProperty() const = 0;
+	//! \todo document this
+	virtual bool             IsVariadic() const = 0;
 	//! \brief Returns the number of parameters for this function.
 	//! \return The number of parameters.
 	virtual asUINT           GetParamCount() const = 0;
@@ -4186,6 +4197,18 @@ public:
 	virtual int              GetReturnTypeId(asDWORD *flags = 0) const = 0;
 	//! \}
 
+	//! \name Template functions
+	//! \{
+		
+	// Template functions
+	//! \todo document this
+	virtual asUINT           GetSubTypeCount() const = 0;
+	//! \todo document this
+	virtual int              GetSubTypeId(asUINT subTypeIndex = 0) const = 0;
+	//! \todo document this
+	virtual asITypeInfo     *GetSubType(asUINT subTypeIndex = 0) const = 0;
+	//! \}
+	
 	//! \name Type id for function pointers
 	//! \{
 

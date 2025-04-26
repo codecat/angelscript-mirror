@@ -69,10 +69,10 @@ BITOP         ::= '&' | '|' | '^' | '<<' | '>>' | '>>>'
 ASSIGNOP      ::= '=' | '+=' | '-=' | '*=' | '/=' | '|=' | '&=' | '^=' | '%=' | '**=' | '<<=' | '>>=' | '>>>='
 IDENTIFIER    ::= [A-Za-z_][A-Za-z0-9_]*            // single token:  starts with letter or _, can include any letter and digit, same as in C++
 NUMBER        ::= [0-9]+("."[0-9]+)?                // single token:  includes integers and real numbers, same as C++ 
-STRING        ::= '"' ("\". | [^"#x0D#x0A\\])* '"'   // single token:  single quoted ', double quoted ", or heredoc multi-line string """
+STRING        ::= '"' ("\". | [^"\#x0D\#x0A\\])* '"'   // single token:  single quoted ', double quoted ", or heredoc multi-line string """
 BITS          ::= '0'[bBoOdDxX][0-9A-Fa-f]+         // single token:  binary 0b or 0B, octal 0o or 0O, decimal 0d or 0D, hexadecimal 0x or 0X
-COMMENT       ::= ('//'[^#x0A]*) | ('/*'[^*]*'*/')  // single token:  starts with // and ends with new line or starts with /* and ends with */
-WHITESPACE    ::= [ #x09#x0A#x0D]+                  // single token:  spaces, tab, carriage return, line feed, and UTF8 byte-order-mark
+COMMENT       ::= ('//'[^\#x0A]*) | ('/*'[^*]*'*/')  // single token:  starts with // and ends with new line or starts with /* and ends with */
+WHITESPACE    ::= [ \#x09\#x0A\#x0D]+                  // single token:  spaces, tab, carriage return, line feed, and UTF8 byte-order-mark
 </pre>
 
 

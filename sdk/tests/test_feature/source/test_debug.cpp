@@ -266,12 +266,14 @@ void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
 void ExceptionCallback(asIScriptContext *ctx, void * /*param*/)
 {
 	const asIScriptFunction *function = ctx->GetExceptionFunction();
+
 	print("--- exception ---\n");
 	print("desc: %s\n", ctx->GetExceptionString());
 	print("func: %s\n", function->GetDeclaration());
 	print("modl: %s\n", function->GetModuleName());
-	print("sect: %s\n", function->GetScriptSectionName());
-	int col, line = ctx->GetExceptionLineNumber(&col);
+	const char* sectionName = 0;
+	int col, line = ctx->GetExceptionLineNumber(&col, &sectionName);
+	print("sect: %s\n", sectionName ? sectionName : "");
 	print("line: %d,%d\n", line, col);
 
 	// Print the variables in the current function

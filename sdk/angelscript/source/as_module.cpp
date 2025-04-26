@@ -428,9 +428,12 @@ int asCModule::InitGlobalProp(asCGlobalProperty *prop, asIScriptContext *myCtx)
 				msg.Format(TXT_FAILED_TO_INITIALIZE_s, prop->name.AddressOf());
 				asCScriptFunction *func = prop->GetInitFunc();
 
-				m_engine->WriteMessage(func->scriptData->scriptSectionIdx >= 0 ? m_engine->scriptSectionNames[func->scriptData->scriptSectionIdx]->AddressOf() : "",
-									 func->GetLineNumber(0, 0) & 0xFFFFF,
-									 func->GetLineNumber(0, 0) >> 20,
+				const char* scriptSection = 0;
+				int row, col;
+				func->GetDeclaredAt(&scriptSection, &row, &col);
+				m_engine->WriteMessage(scriptSection ? scriptSection : "",
+									 row,
+									 col,
 									 asMSGTYPE_ERROR,
 									 msg.AddressOf());
 
@@ -440,7 +443,8 @@ int asCModule::InitGlobalProp(asCGlobalProperty *prop, asIScriptContext *myCtx)
 
 					msg.Format(TXT_EXCEPTION_s_IN_s, ctx->GetExceptionString(), function->GetDeclaration());
 
-					m_engine->WriteMessage(function->GetScriptSectionName(),
+					function->GetDeclaredAt(&scriptSection, 0, 0);
+					m_engine->WriteMessage(scriptSection ? scriptSection : "",
 										   ctx->GetExceptionLineNumber(),
 										   0,
 										   asMSGTYPE_INFORMATION,

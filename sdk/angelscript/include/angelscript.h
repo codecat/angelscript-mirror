@@ -1153,7 +1153,10 @@ public:
 	virtual asEFuncType      GetFuncType() const = 0;
 	virtual const char      *GetModuleName() const = 0;
 	virtual asIScriptModule *GetModule() const = 0;
+#ifdef AS_DEPRECATED
+	// deprecated since 2025-04-25, 2.38.0
 	virtual const char      *GetScriptSectionName() const = 0;
+#endif
 	virtual const char      *GetConfigGroup() const = 0;
 	virtual asDWORD          GetAccessMask() const = 0;
 	virtual void            *GetAuxiliary() const = 0;

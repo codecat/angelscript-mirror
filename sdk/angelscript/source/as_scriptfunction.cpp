@@ -1522,8 +1522,9 @@ const char *asCScriptFunction::GetDeclaration(bool includeObjectName, bool inclu
 	return tempString->AddressOf();
 }
 
+#ifdef AS_DEPRECATED
+// deprecated since 2025-04-25, 2.38.0
 // interface
-// TODO: Deprecate this, since GetDeclaredAt is more complete
 const char *asCScriptFunction::GetScriptSectionName() const
 {
 	if( scriptData && scriptData->scriptSectionIdx >= 0 )
@@ -1531,6 +1532,7 @@ const char *asCScriptFunction::GetScriptSectionName() const
 
 	return 0;
 }
+#endif
 
 // interface
 const char *asCScriptFunction::GetConfigGroup() const

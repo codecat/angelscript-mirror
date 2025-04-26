@@ -30,7 +30,7 @@ The typeid used in several functions of the AngelScript interface is a 32bit sig
 Negative values are not valid typeids, and functions returning a typeid can thus use negative
 values to \ref asERetCodes "indicate errors".
 
-The value contained in the typeid is composed to two parts, the lower bits indicated by \ref asTYPEID_MASK_SEQNBR
+The value contained in the typeid is composed of two parts, the lower bits indicated by \ref asTYPEID_MASK_SEQNBR
 is a sequence that will increment with each new type registered by the application or declared in scripts. The
 higher bits form a bit mask indicating the category of the type. The bits in the bit mask have 
 the following meaning:
@@ -39,7 +39,7 @@ the following meaning:
  - bit \ref asTYPEID_SCRIPTOBJECT : The type is a script declared type, i.e. object can be cast to \ref asIScriptObject
  - bit \ref asTYPEID_TEMPLATE : The type is a template, and cannot be instantiated
  - bit \ref asTYPEID_HANDLETOCONST : The type is a handle to a const object, i.e. the referenced object must not be modified
- - bit \ref asTYPEID_OBJHANDLE : The type is a object handle, i.e. the value must be dereferenced to get the address of the actual object
+ - bit \ref asTYPEID_OBJHANDLE : The type is an object handle, i.e. the value must be dereferenced to get the address of the actual object
  - bit 32: The typeid is invalid, and the number indicates an error from \ref asERetCodes
 
 To identify if a typeid is to a primitive check that the bits in \ref asTYPEID_MASK_OBJECT are zero. This will be true

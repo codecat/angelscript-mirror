@@ -2447,9 +2447,10 @@ bool Test()
 		if( mod->LoadByteCode(&stream) != 0 )
 			TEST_FAILED;
 
+		const char* section = 0;
 		if( mod->GetFunctionCount() != 6 )
 			TEST_FAILED;
-		else if( string(mod->GetFunctionByIndex(0)->GetScriptSectionName()) != ":1" )
+		else if( mod->GetFunctionByIndex(0)->GetDeclaredAt(&section, 0, 0) >= 0 && string(section) != ":1" )
 			TEST_FAILED;
 
 		// Make sure the parameter names were loaded

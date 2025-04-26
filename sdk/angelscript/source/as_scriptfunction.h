@@ -162,7 +162,10 @@ public:
 	asEFuncType          GetFuncType() const;
 	const char          *GetModuleName() const;
 	asIScriptModule     *GetModule() const;
+#ifdef AS_DEPRECATED
+	// deprecated since 2025-04-25, 2.38.0
 	const char          *GetScriptSectionName() const;
+#endif
 	const char          *GetConfigGroup() const;
 	asDWORD              GetAccessMask() const;
 	void                *GetAuxiliary() const;

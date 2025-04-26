@@ -185,10 +185,12 @@ int RunApplication()
 
 			// Write some information about the script exception
 			asIScriptFunction *func = ctx->GetExceptionFunction();
+			const char* scriptSection = 0;
+			int line = ctx->GetExceptionLineNumber(0, &scriptSection);
 			cout << "func: " << func->GetDeclaration() << endl;
 			cout << "modl: " << func->GetModuleName() << endl;
-			cout << "sect: " << func->GetScriptSectionName() << endl;
-			cout << "line: " << ctx->GetExceptionLineNumber() << endl;
+			cout << "sect: " << (scriptSection ? scriptSection : "") << endl;
+			cout << "line: " << line << endl;
 			cout << "desc: " << ctx->GetExceptionString() << endl;
 		}
 		else
