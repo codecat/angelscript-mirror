@@ -20,6 +20,7 @@ add_executable(
         ../../source/test_addon_scriptgrid.cpp
         ../../source/test_addon_scripthandle.cpp
         ../../source/test_addon_scriptmath.cpp
+        ../../source/test_addon_scriptsocket.cpp
         ../../source/test_addon_serializer.cpp
         ../../source/test_addon_stdstring.cpp
         ../../source/test_addon_weakref.cpp
@@ -180,6 +181,7 @@ add_executable(
         ../../../../add_on/scripthelper/scripthelper.cpp
         ../../../../add_on/scriptmath/scriptmath.cpp
         ../../../../add_on/scriptmath/scriptmathcomplex.cpp
+        ../../../../add_on/scriptsocket/scriptsocket.cpp
         ../../../../add_on/scriptstdstring/scriptstdstring.cpp
         ../../../../add_on/scriptstdstring/scriptstdstring_utils.cpp
         ../../../../add_on/serializer/serializer.cpp

@@ -23,6 +23,7 @@ SRCNAMES = \
   test_addon_scriptgrid.cpp \
   test_addon_scripthandle.cpp \
   test_addon_scriptmath.cpp \
+  test_addon_scriptsocket.cpp \
   test_addon_serializer.cpp \
   test_addon_dictionary.cpp \
   test_addon_debugger.cpp \
@@ -186,6 +187,7 @@ OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
   obj/scriptany.o \
   obj/scriptmath.o \
   obj/scriptmathcomplex.o \
+  obj/scriptsocket.o \
   obj/scriptdictionary.o \
   obj/scriptfile.o \
   obj/scriptfilesystem.o \
@@ -235,6 +237,9 @@ obj/scriptmath.o: ../../../../add_on/scriptmath/scriptmath.cpp
 	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/scriptmathcomplex.o: ../../../../add_on/scriptmath/scriptmathcomplex.cpp
+	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
+
+obj/scriptsocket.o: ../../../../add_on/scriptsocket/scriptsocket.cpp
 	$(CXX) $(CXXFLAGS_ADDON) -o $@ -c $<
 
 obj/scriptany.o: ../../../../add_on/scriptany/scriptany.cpp
