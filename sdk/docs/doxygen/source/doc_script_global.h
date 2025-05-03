@@ -169,7 +169,7 @@ able to store dynamic pointers that can be invoked at a later time as a normal f
 
 \page doc_global_namespace Namespaces
 
-Namespaces can be used to organize large projects in logical units that may be easier 
+Namespaces can be used to organize large projects in logical units that may be easier
 to remember. When using namespaces it is also not necessary to worry about using names
 for entities that may exist in a different part of the project under a different namespace.
 
@@ -225,6 +225,28 @@ namespace declare the same entity.
   }
 </pre>
 
-\todo Describe using namespace. Can be global and can be within namespace
+\section doc_global_using_ns Using namespace
+
+In order to avoid having to always prefix symbols with their namespace it is also possible to use
+'using namespace' to tell the compiler to also search for symbols in a specific namespace.
+
+<pre>
+  namespace test
+  {
+    void func() {}
+  }
+  using namespace test;
+  void main()
+  {
+    func(); // The function will be found within the test namespace
+  }
+</pre>
+
+If 'using namespace' is used globally or within a namespace, the symbols from the given namespace will be visible throughout the entire enclosing namespace.
+
+\see \ref using_ns "Statement 'using namespace'"
+
+
+
 
 */

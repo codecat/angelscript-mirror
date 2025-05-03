@@ -10,10 +10,7 @@
  - \ref return
  - \ref block
  - \ref try
-
-\todo describe using namespace within statement block. Should it be a statement?
-
-
+ - \ref using_ns
 
 
 \section variable Variable declarations
@@ -168,7 +165,7 @@ part is executed after the logic within the loop, e.g. used to increment an iter
 Multiple variables can be declared in the <code>for</code> loop, separated by <code>,</code>. 
 Likewise, multiple increment expressions can be used in the last part by separating them with <code>,</code>.
 
-\todo Document foreach loops. Reference \ref doc_script_class_foreach_ops
+\todo Document foreach loops. Reference \ref doc_script_class_foreach_ops 
 
 
 
@@ -278,7 +275,27 @@ In some cases exceptions are intentionally raised by the script to interrupt som
 \see \ref doc_script_stdlib_exception
 
 
+\section using_ns Using namespace
 
+It is possible to declare 'using namespace' within a statement block. When this is done, all
+subsequent statements within that block will also search for symbols in the given namespace.
 
+<pre>
+  namespace test
+  {
+    void func() {}
+  }
+  void main()
+  {
+    test::func(); // This call must explicitly inform the namespace
+    {
+      using namespace test;
+      func(); // This call will implicitly search the namespace
+    }
+    test::func(); // This is after the statement block and must again explicitly inform the namespace
+  }
+</pre>
+
+\see \ref doc_global_using_ns "Global 'using namespace"
 
 */
