@@ -13,6 +13,33 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test subclasses and using namespaces
+	// Reported by Sam Tupy
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"using namespace legacy; \n"
+			"class t1 { \n"
+			"	t2@ test; \n"
+			"}\n"
+			"class t2 : t1 {}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
 	// Child funcdefs should first look for matching type names in parent object
 	// Reported by Rémy Stivani
 	{

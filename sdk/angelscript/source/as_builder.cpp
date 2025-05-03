@@ -6135,16 +6135,19 @@ bool asCBuilder::FindObjectTypeOrMixinInNsHierarchy(const asCString& name, asSNa
 				sMixinClass* m = 0;
 				if (ot == 0 && outMixin)
 					m = GetMixinClass(name.AddressOf(), ns);
-				if ((objType || mixin) && (ot || m))
+				if (ot || m)
 				{
-					asCString msg;
-					msg.Format(TXT_AMBIGUOUS_SYMBOL_NAME_s, name.AddressOf());
-					WriteError(msg, script, errNode);
-					return false;
-				}
+					if (objType || mixin)
+					{
+						asCString msg;
+						msg.Format(TXT_AMBIGUOUS_SYMBOL_NAME_s, name.AddressOf());
+						WriteError(msg, script, errNode);
+						return false;
+					}
 
-				objType = ot;
-				mixin = m;
+					objType = ot;
+					mixin = m;
+				}
 			}
 		}
 
