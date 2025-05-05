@@ -223,8 +223,8 @@ bool Test()
 		mod->AddScriptSection("test",
 			"void func() \n"
 			"{ \n"
-			"	string str = format('{} {}', 1, 3); \n"
-			"   assert( str == '1 3' ); \n"
+			"	string str = format('{} {} {} {}', 1, 3, 5, 7); \n"
+			"   assert( str == '1 3 5 7' ); \n"
 			"} \n");
 		r = mod->Build();
 		if (r < 0)

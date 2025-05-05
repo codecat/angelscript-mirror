@@ -3861,6 +3861,38 @@ int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 			currOffset += calledFunc->parameterTypes[p].GetSizeOnStackDWords();
 		}
 	}
+	if (offset > currOffset && calledFunc->IsVariadic())
+	{
+		asCDataType variadicType = calledFunc->parameterTypes[calledFunc->parameterTypes.GetLength() - 1];
+		for (;;)
+		{
+			if (offset <= currOffset) break;
+
+			if (!variadicType.IsPrimitive() ||
+				variadicType.IsReference())
+			{
+				// objects and references are passed by pointer
+				currOffset++;
+				if (currOffset > 0)
+					numPtrs++;
+#if AS_PTR_SIZE == 2
+				// For 64bit platforms it is necessary to increment the currOffset by one more
+				// DWORD since the stackDelta was counting the full 64bit size of the pointer
+				else if (stackDelta)
+					currOffset++;
+#endif
+				// The variable arg ? has an additional 32bit int with the typeid
+				if (variadicType.IsAnyType())
+					currOffset += 1;
+			}
+			else
+			{
+				// built-in primitives or enums are passed by value
+				asASSERT(variadicType.IsPrimitive());
+				currOffset += variadicType.GetSizeOnStackDWords();
+			}
+		}
+	}
 
 	return offset - numPtrs * (1 - AS_PTR_SIZE);
 }
@@ -5082,6 +5114,33 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 			// built-in primitives or enums are passed by value
 			asASSERT( calledFunc->parameterTypes[p].IsPrimitive() );
 			currOffset += calledFunc->parameterTypes[p].GetSizeOnStackDWords();
+		}
+	}
+	if (offset > currOffset && calledFunc->IsVariadic())
+	{
+		asCDataType variadicType = calledFunc->parameterTypes[calledFunc->parameterTypes.GetLength() - 1];
+		for (;;)
+		{
+			if (offset <= currOffset) break;
+
+			if(!variadicType.IsPrimitive() ||
+				variadicType.IsReference())
+			{
+				// objects and references are passed by pointer
+				currOffset += AS_PTR_SIZE;
+				if (currOffset > 0)
+					numPtrs++;
+
+				// The variable arg ? has an additional 32bit int with the typeid
+				if (variadicType.IsAnyType())
+					currOffset += 1;
+			}
+			else
+			{
+				// built-in primitives or enums are passed by value
+				asASSERT(variadicType.IsPrimitive());
+				currOffset += variadicType.GetSizeOnStackDWords();
+			}
 		}
 	}
 
