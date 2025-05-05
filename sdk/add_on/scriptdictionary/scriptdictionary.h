@@ -219,7 +219,7 @@ public:
 	bool opForEnd(const CScriptDictIter &iter) const;
 	CScriptDictIter* opForNext(CScriptDictIter& iter) const;
 	const CScriptDictValue& opForValue0(const CScriptDictIter& iter) const;
-	const std::string& opForValue1(const CScriptDictIter& iter) const;
+	const dictKey_t& opForValue1(const CScriptDictIter& iter) const;
 
 	// Garbage collections behaviours
 	int GetRefCount();

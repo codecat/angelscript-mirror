@@ -1113,7 +1113,7 @@ const CScriptDictValue& CScriptDictionary::opForValue0(const CScriptDictionary::
 	return iter.iter.m_it->second;
 }
 
-const std::string& CScriptDictionary::opForValue1(const CScriptDictionary::CScriptDictIter& iter) const
+const dictKey_t& CScriptDictionary::opForValue1(const CScriptDictionary::CScriptDictIter& iter) const
 {
 	return iter.iter.m_it->first;
 }
@@ -1202,7 +1202,7 @@ void RegisterScriptDictionary_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("dictionary", "bool opForEnd(dictionaryIter @+) const", asMETHODPR(CScriptDictionary, opForEnd, (const CScriptDictionary::CScriptDictIter&) const, bool), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("dictionary", "dictionaryIter @+ opForNext(dictionaryIter @+) const", asMETHODPR(CScriptDictionary, opForNext, (CScriptDictionary::CScriptDictIter&) const, CScriptDictionary::CScriptDictIter*), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("dictionary", "const dictionaryValue &opForValue0(dictionaryIter @+) const", asMETHODPR(CScriptDictionary, opForValue0, (const CScriptDictionary::CScriptDictIter&) const, const CScriptDictValue &), asCALL_THISCALL); assert(r >= 0);
-	r = engine->RegisterObjectMethod("dictionary", "const string &opForValue1(dictionaryIter @+) const", asMETHODPR(CScriptDictionary, opForValue1, (const CScriptDictionary::CScriptDictIter&) const, const string &), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectMethod("dictionary", "const string &opForValue1(dictionaryIter @+) const", asMETHODPR(CScriptDictionary, opForValue1, (const CScriptDictionary::CScriptDictIter&) const, const dictKey_t&), asCALL_THISCALL); assert(r >= 0);
 
 
 
