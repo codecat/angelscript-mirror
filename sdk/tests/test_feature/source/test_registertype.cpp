@@ -491,9 +491,6 @@ bool Test()
 		engine->ShutDownAndRelease();
 	}
 
-#if defined(__GNUC__)
-	PRINTF("Skipping test for asOFFSET on GNUC because it doesn't work\n");
-#else
 	// Test asOFFSET for an object member property as reference
 	// https://www.gamedev.net/forums/topic/717443-registerobjectmethod-crash-registering-a-const-reference/5466144/
 	{
@@ -509,7 +506,17 @@ bool Test()
 		// Standard offsetof and __builtin_offsetof also do not work
 		//int off1 = offsetof(Enemy, typeRef);
 		//int off2 = __builtin_offsetof(Enemy, typeRef);
+
+/* 
+		Disabled this test because the asOFFSET macro causes an exception when generating the
+		project with CMake for MSVC, even though I don't see any difference in the project settings. 
+		It also doesn't work on GNUC. It is anyway an invalid use of asOFFSET as it is not possible 
+		to get the offset for members declared as references in C++.
+
 		r = engine->RegisterObjectProperty("Enemy", "const EnemyTypeDetails &typeRef", asOFFSET(Enemy, typeRef));
+*/
+		// Simulating a very large offset that would be calculated by asOFFSET for members as references (since it would try to compare with the actual referenced address)
+		r = engine->RegisterObjectProperty("Enemy", "const EnemyTypeDetails &typeRef", 124353256);
 		if (r != asINVALID_ARG)
 			TEST_FAILED;
 		r = engine->RegisterObjectProperty("Enemy", "const EnemyTypeDetails &typePtr", asOFFSET(Enemy, typePtr)); assert(r >= 0);
@@ -522,7 +529,6 @@ bool Test()
 
 		engine->ShutDownAndRelease();
 	}
-#endif
 
 	// Test factory functions with auxiliary pointers using asOBJ_CDECL_OBJLAST and asOBJ_CDECL_OBJFIRST
 	// https://www.gamedev.net/forums/topic/711801-why-are-the-ascall_cdecl_objlastfirst-calling-conventions-only-supported-in-methods/5445516/
