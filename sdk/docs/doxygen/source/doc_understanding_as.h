@@ -15,8 +15,7 @@ when passing objects between AngelScript and C++.
  - \subpage doc_obj_handle
  - \subpage doc_memory
  - \subpage doc_typeid
-
-\todo Add article on the calling conventions used by AngelScript
+ - \subpage doc_callconv
 
 \todo Add article on sandboxing
 
@@ -50,6 +49,30 @@ for their value, e.g. the typeid for a 32bit signed integer is \ref asTYPEID_INT
 
 To get further information about the type, e.g. the exact object type, then use \ref asIScriptEngine::GetTypeInfoById which
 will return a \ref asITypeInfo that can then be used to get all details about the type.
+
+
+
+
+\page doc_callconv Calling convention
+
+The internal calling convention used by AngelScript in the virtual machine is quite simple.
+
+All function arguments are pushed on the stack from last to first. All arguments are aligned to 4 byte boundaries. References are either 4 bytes or 8 bytes depending on the CPU architecture.
+Primitives passed by value will be pushed as-is. Objects passed by value will have a reference to the object pushed on the stack while the object itself is stored on the heap. The called 
+function is responsible for cleaning up the object and freeing the memory. For object handles, the calling function will increase the refcount as the arguments are prepared and the handle 
+is pushed on the stack, the ownership of the handle is then handed over to the called function that must release it before returning.
+
+A variable argument type, ?, will have the typeid pushed on the stack before the actual argument value.
+
+If the function is a variadic, ..., i.e. accepts any number of arguments, then the number of actual arguments is pushed on the stack after the first function argument.
+
+If the function returns an object by value, then a hidden argument with the address where the returned object must be initialized is pushed on the stack.
+The returned object is owned by the called function until the control is returned to the caller, i.e. if an exception happens between the object is initialized 
+and the control is returned to the caller, the exception handler will clean up the returned object as part of the called functions call frame.
+
+If the function is a class method, then the address of the object instance is pushed on the stack as the last argument, thus allowing the called function to
+always rely on the this pointer to be on position 0 of the stack frame.
+
 
 
 
