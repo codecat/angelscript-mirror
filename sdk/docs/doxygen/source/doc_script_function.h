@@ -172,10 +172,14 @@ type of conversion compares to another.
  - conversion to object
  - variable argument type
 
+\todo Explain how it works for &out, and ?&out, that is used in case there are ambiguous options
+
 Observe that it is not possible to create overloads where the only difference is the return
 type. This is because the return type is not part of the selection criteria that the compiler
 uses to determine which function to call, the return type is just the result of the called 
 function.
+
+\todo Exceptions are opConv and opCast where compiler looks specifically at the return type
 
 <pre>
   void Function(int a, float b, string c) {}

@@ -23,6 +23,129 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Test dictionary with class that has conversion constructors for both double and int64
+	// Reported by Sam Tupy
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", R"(
+class broken {
+    broken() {val = 1;}
+    broken(double d) {val = 2;}
+    broken(int64 i) {val = 3;}
+	broken &opAssign(const broken &in o) {val = 4; return this;}
+	broken &opAssign(double o) {val = 5; return this;}
+	broken &opAssign(int64 o) {val = 6; return this;}
+	int val;
+}
+class single {
+	single() {val = 1;}
+	single(int64 i) {val = 2;}
+	single &opAssign(const single &in o) {val = 3; return this;}
+	single &opAssign(int64 o) {val = 4; return this;}
+	int val;
+}
+void main() {
+    broken b;
+	
+    dictionary().get("", b);
+	assert( b.val == 4 );
+
+	single s;
+	dictionary().get("", s);
+	assert( s.val == 4 );
+}
+)");
+		// There are 3 options for broken. Both double and int64 have the same weight and are less costly than ?&out. 
+		// Due the to ambigous choice the ?&out should take priority even though it is more expensive.
+
+		// There are 2 options for single. int64 and ?&out doesn't have the same weight so int64 is chosen.
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+		{
+			if (r == asEXECUTION_EXCEPTION)
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
+	// Test adding string to and retrieving from dictionary
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", R"(
+void test() 
+{
+	dictionary dict;
+	dict['a'] = 'a';
+	dict.set('b', 'b');
+
+	string a, b;
+	dict.get('a', a);
+
+	assert( a == 'a' );
+
+	b = string(dict['b']);
+
+	assert( b == 'b' );
+}
+)");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "test()", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+		{
+			if (r == asEXECUTION_EXCEPTION)
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
+
 	// Test modifying the dictionary while doing a foreach
 	{
 		engine = asCreateScriptEngine();

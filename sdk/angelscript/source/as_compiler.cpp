@@ -2706,11 +2706,12 @@ int asCCompiler::CompileDefaultAndNamedArgs(asCScriptNode *node, asCArray<asCExp
 	return anyErrors ? -1 : 0;
 }
 
-asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext*> &args, asCScriptNode *node, const char *name, asCArray<asSNamedArgument> *namedArgs, asCObjectType *objectType, bool isConstMethod, bool silent, bool allowObjectConstruct, const asCString &scope)
+asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext*> &args, asCScriptNode *node, const char *name, asCArray<asSNamedArgument> *namedArgs, asCObjectType *objectType, bool isConstMethod, bool silent, bool allowObjectConstruct, const asCString &scope, bool prioritizeVarOutRef)
 {
 	asCArray<int> origFuncs = funcs; // Keep the original list for error message
 	asUINT cost = 0;
 	asUINT n;
+	bool hasVarOutRef = false;
 
 	if( funcs.GetLength() > 0 )
 	{
@@ -2777,7 +2778,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 		for( n = 0; n < args.GetLength(); ++n )
 		{
 			asCArray<asSOverloadCandidate> tempFuncs;
-			MatchArgument(funcs, tempFuncs, args[n], n, allowObjectConstruct);
+			MatchArgument(funcs, tempFuncs, args[n], n, allowObjectConstruct, prioritizeVarOutRef);
 
 			// Intersect the found functions with the list of matching functions
 			for( asUINT f = 0; f < matchingFuncs.GetLength(); f++ )
@@ -2871,7 +2872,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 						}
 
 						// Add to the cost
-						cost = MatchArgument(desc, named.ctx, named.match, allowObjectConstruct);
+						cost = MatchArgument(desc, named.ctx, named.match, allowObjectConstruct, prioritizeVarOutRef);
 						if( cost == asUINT(-1) )
 						{
 							matchedAll = false;
@@ -2890,6 +2891,23 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 					else
 						matchingFuncs[i] = matchingFuncs.PopLast();
 					i--;
+				}
+			}
+		}
+
+		if (!prioritizeVarOutRef)
+		{
+			// Check if in any of the valid matching functions there is a ?&out reference, as it might be used to disambiguate
+			for (n = 0; !hasVarOutRef && n < matchingFuncs.GetLength(); ++n)
+			{
+				asCScriptFunction* func = builder->GetFunctionDescription(matchingFuncs[n].funcId);
+				for (asUINT p = 0; p < func->parameterTypes.GetLength(); p++)
+				{
+					if (func->parameterTypes[p].GetTokenType() == ttQuestion && func->inOutFlags[p] == asTM_OUTREF)
+					{
+						hasVarOutRef = true;
+						break;
+					}
 				}
 			}
 		}
@@ -2915,6 +2933,14 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 
 	if( !isConstMethod )
 		FilterConst(funcs);
+
+	// If there are ambiguous choices try one more time, but now prioritizing the &?out to accept any type
+	if (funcs.GetLength() != 1 && !prioritizeVarOutRef && hasVarOutRef)
+	{
+		// TODO: optimize: Use only the functions that matched, to avoid spending time discarding functions that is already known not to match
+		funcs = origFuncs;
+		MatchFunctions(funcs, args, node, name, namedArgs, objectType, isConstMethod, true, allowObjectConstruct, scope, !prioritizeVarOutRef);
+	}
 
 	if( funcs.GetLength() != 1 && !silent )
 	{
@@ -14749,7 +14775,7 @@ int asCCompiler::GetPrecedence(asCScriptNode *op)
 	return 0;
 }
 
-asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<asSOverloadCandidate> &matches, const asCExprContext *argExpr, int paramNum, bool allowObjectConstruct)
+asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<asSOverloadCandidate> &matches, const asCExprContext *argExpr, int paramNum, bool allowObjectConstruct, bool prioritizeVarOutRef)
 {
 	matches.SetLength(0);
 
@@ -14767,7 +14793,7 @@ asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<asSOverloadCand
 		if( (int)paramCount <= paramNum && !desc->IsVariadic())
 			continue;
 
-		int cost = MatchArgument(desc, argExpr, paramNum, allowObjectConstruct);
+		int cost = MatchArgument(desc, argExpr, paramNum, allowObjectConstruct, prioritizeVarOutRef);
 		if( cost != -1 )
 			matches.PushLast(asSOverloadCandidate(funcs[n], asUINT(cost)));
 	}
@@ -14775,7 +14801,7 @@ asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<asSOverloadCand
 	return (asUINT)matches.GetLength();
 }
 
-int asCCompiler::MatchArgument(asCScriptFunction *desc, const asCExprContext *argExpr, int paramNum, bool allowObjectConstruct)
+int asCCompiler::MatchArgument(asCScriptFunction *desc, const asCExprContext *argExpr, int paramNum, bool allowObjectConstruct, bool prioritizeVarOutRef)
 {
 	if (desc->IsVariadic() && paramNum >= (int)desc->parameterTypes.GetLength() - 1)
 	{
@@ -14802,9 +14828,18 @@ int asCCompiler::MatchArgument(asCScriptFunction *desc, const asCExprContext *ar
 		return 0;
 	}
 
-
 	int cost = -1;
-	if (desc->parameterTypes[paramNum].IsReference() && desc->inOutFlags[paramNum] == asTM_OUTREF && 
+	// By default the ?&out will have the highest cost, because we want the compiler to chose defined argument
+	// types first but, if there in an ambiguity and the ?&out is available it will be used instead 
+	if (prioritizeVarOutRef && 
+		desc->parameterTypes[paramNum].IsReference() && 
+		desc->inOutFlags[paramNum] == asTM_OUTREF && 
+		desc->parameterTypes[paramNum].GetTokenType() == ttQuestion)
+	{
+		cost = asCC_NO_CONV;
+	}
+	if (cost == -1 &&
+		desc->parameterTypes[paramNum].IsReference() && desc->inOutFlags[paramNum] == asTM_OUTREF && 
 		desc->parameterTypes[paramNum].GetTokenType() != ttQuestion &&
 		!argExpr->type.IsNullConstant() && !argExpr->IsVoidExpression() )
 	{
@@ -14819,7 +14854,7 @@ int asCCompiler::MatchArgument(asCScriptFunction *desc, const asCExprContext *ar
 		if (!argExpr->type.dataType.IsEqualExceptRef(ti.type.dataType))
 			return -1;
 	}
-	else
+	else if( cost == -1 )
 	{
 		// Can we make the match by implicit conversion?
 		asCExprContext ti(engine);
