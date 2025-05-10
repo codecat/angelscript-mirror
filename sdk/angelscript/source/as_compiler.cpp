@@ -2706,12 +2706,11 @@ int asCCompiler::CompileDefaultAndNamedArgs(asCScriptNode *node, asCArray<asCExp
 	return anyErrors ? -1 : 0;
 }
 
-asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext*> &args, asCScriptNode *node, const char *name, asCArray<asSNamedArgument> *namedArgs, asCObjectType *objectType, bool isConstMethod, bool silent, bool allowObjectConstruct, const asCString &scope, bool prioritizeVarOutRef)
+asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext*> &args, asCScriptNode *node, const char *name, asCArray<asSNamedArgument> *namedArgs, asCObjectType *objectType, bool isConstMethod, bool silent, bool allowObjectConstruct, const asCString &scope)
 {
 	asCArray<int> origFuncs = funcs; // Keep the original list for error message
 	asUINT cost = 0;
 	asUINT n;
-	bool hasVarOutRef = false;
 
 	if( funcs.GetLength() > 0 )
 	{
@@ -2778,7 +2777,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 		for( n = 0; n < args.GetLength(); ++n )
 		{
 			asCArray<asSOverloadCandidate> tempFuncs;
-			MatchArgument(funcs, tempFuncs, args[n], n, allowObjectConstruct, prioritizeVarOutRef);
+			MatchArgument(funcs, tempFuncs, args[n], n, allowObjectConstruct);
 
 			// Intersect the found functions with the list of matching functions
 			for( asUINT f = 0; f < matchingFuncs.GetLength(); f++ )
@@ -2872,7 +2871,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 						}
 
 						// Add to the cost
-						cost = MatchArgument(desc, named.ctx, named.match, allowObjectConstruct, prioritizeVarOutRef);
+						cost = MatchArgument(desc, named.ctx, named.match, allowObjectConstruct);
 						if( cost == asUINT(-1) )
 						{
 							matchedAll = false;
@@ -2891,23 +2890,6 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 					else
 						matchingFuncs[i] = matchingFuncs.PopLast();
 					i--;
-				}
-			}
-		}
-
-		if (!prioritizeVarOutRef)
-		{
-			// Check if in any of the valid matching functions there is a ?&out reference, as it might be used to disambiguate
-			for (n = 0; !hasVarOutRef && n < matchingFuncs.GetLength(); ++n)
-			{
-				asCScriptFunction* func = builder->GetFunctionDescription(matchingFuncs[n].funcId);
-				for (asUINT p = 0; p < func->parameterTypes.GetLength(); p++)
-				{
-					if (func->parameterTypes[p].GetTokenType() == ttQuestion && func->inOutFlags[p] == asTM_OUTREF)
-					{
-						hasVarOutRef = true;
-						break;
-					}
 				}
 			}
 		}
@@ -2933,14 +2915,6 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 
 	if( !isConstMethod )
 		FilterConst(funcs);
-
-	// If there are ambiguous choices try one more time, but now prioritizing the &?out to accept any type
-	if (funcs.GetLength() != 1 && !prioritizeVarOutRef && hasVarOutRef)
-	{
-		// TODO: optimize: Use only the functions that matched, to avoid spending time discarding functions that is already known not to match
-		funcs = origFuncs;
-		MatchFunctions(funcs, args, node, name, namedArgs, objectType, isConstMethod, true, allowObjectConstruct, scope, !prioritizeVarOutRef);
-	}
 
 	if( funcs.GetLength() != 1 && !silent )
 	{
@@ -14775,7 +14749,7 @@ int asCCompiler::GetPrecedence(asCScriptNode *op)
 	return 0;
 }
 
-asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<asSOverloadCandidate> &matches, const asCExprContext *argExpr, int paramNum, bool allowObjectConstruct, bool prioritizeVarOutRef)
+asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<asSOverloadCandidate> &matches, const asCExprContext *argExpr, int paramNum, bool allowObjectConstruct)
 {
 	matches.SetLength(0);
 
@@ -14793,7 +14767,7 @@ asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<asSOverloadCand
 		if( (int)paramCount <= paramNum && !desc->IsVariadic())
 			continue;
 
-		int cost = MatchArgument(desc, argExpr, paramNum, allowObjectConstruct, prioritizeVarOutRef);
+		int cost = MatchArgument(desc, argExpr, paramNum, allowObjectConstruct);
 		if( cost != -1 )
 			matches.PushLast(asSOverloadCandidate(funcs[n], asUINT(cost)));
 	}
@@ -14801,7 +14775,7 @@ asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<asSOverloadCand
 	return (asUINT)matches.GetLength();
 }
 
-int asCCompiler::MatchArgument(asCScriptFunction *desc, const asCExprContext *argExpr, int paramNum, bool allowObjectConstruct, bool prioritizeVarOutRef)
+int asCCompiler::MatchArgument(asCScriptFunction *desc, const asCExprContext *argExpr, int paramNum, bool allowObjectConstruct)
 {
 	if (desc->IsVariadic() && paramNum >= (int)desc->parameterTypes.GetLength() - 1)
 	{
@@ -14828,18 +14802,9 @@ int asCCompiler::MatchArgument(asCScriptFunction *desc, const asCExprContext *ar
 		return 0;
 	}
 
-	int cost = -1;
-	// By default the ?&out will have the highest cost, because we want the compiler to chose defined argument
-	// types first but, if there in an ambiguity and the ?&out is available it will be used instead 
-	if (prioritizeVarOutRef && 
-		desc->parameterTypes[paramNum].IsReference() && 
-		desc->inOutFlags[paramNum] == asTM_OUTREF && 
-		desc->parameterTypes[paramNum].GetTokenType() == ttQuestion)
-	{
-		cost = asCC_NO_CONV;
-	}
-	if (cost == -1 &&
-		desc->parameterTypes[paramNum].IsReference() && desc->inOutFlags[paramNum] == asTM_OUTREF && 
+	// For &out references, ensure no match is given for impossible conversion from param type to arg type
+	// The cost for this conversion is not used, as we still want to use the same order of prioritization as for input arguments
+	if (desc->parameterTypes[paramNum].IsReference() && desc->inOutFlags[paramNum] == asTM_OUTREF && 
 		desc->parameterTypes[paramNum].GetTokenType() != ttQuestion &&
 		!argExpr->type.IsNullConstant() && !argExpr->IsVoidExpression() )
 	{
@@ -14850,70 +14815,69 @@ int asCCompiler::MatchArgument(asCScriptFunction *desc, const asCExprContext *ar
 		ti.type = type;
 		ti.exprNode = argExpr->exprNode;
 
-		cost = ImplicitConversion(&ti, argExpr->type.dataType, 0, asIC_IMPLICIT_CONV, false, allowObjectConstruct);
+		ImplicitConversion(&ti, argExpr->type.dataType, 0, asIC_IMPLICIT_CONV, false, allowObjectConstruct);
 		if (!argExpr->type.dataType.IsEqualExceptRef(ti.type.dataType))
 			return -1;
 	}
-	else if( cost == -1 )
+
+	// Can we make the match by implicit conversion?
+	int cost = -1;
+	asCExprContext ti(engine);
+	ti.type = argExpr->type;
+	ti.methodName = argExpr->methodName;
+	ti.enumValue = argExpr->enumValue;
+	ti.exprNode = argExpr->exprNode;
+	if (argExpr->type.dataType.IsPrimitive())
+		ti.type.dataType.MakeReference(false);
+
+	// Don't allow the implicit conversion to make a copy in case the argument is expecting a reference to the true value
+	if (desc->parameterTypes[paramNum].IsReference() && desc->inOutFlags[paramNum] == asTM_INOUTREF)
+		allowObjectConstruct = false;
+
+	cost = ImplicitConversion(&ti, desc->parameterTypes[paramNum], 0, asIC_IMPLICIT_CONV, false, allowObjectConstruct);
+	if (!desc->parameterTypes[paramNum].IsEqualExceptRef(ti.type.dataType))
+		return -1;
+
+	// If the function parameter is an inout-reference then it must not be possible to call the
+	// function with an incorrect argument type, even though the type can normally be converted.
+	if (desc->parameterTypes[paramNum].IsReference() &&
+		desc->inOutFlags[paramNum] == asTM_INOUTREF &&
+		desc->parameterTypes[paramNum].GetTokenType() != ttQuestion)
 	{
-		// Can we make the match by implicit conversion?
-		asCExprContext ti(engine);
-		ti.type = argExpr->type;
-		ti.methodName = argExpr->methodName;
-		ti.enumValue = argExpr->enumValue;
-		ti.exprNode = argExpr->exprNode;
-		if (argExpr->type.dataType.IsPrimitive())
-			ti.type.dataType.MakeReference(false);
+		// Observe, that the below checks are only necessary for when unsafe references have been
+		// enabled by the application. Without this the &inout reference form wouldn't be allowed
+		// for these value types.
 
-		// Don't allow the implicit conversion to make a copy in case the argument is expecting a reference to the true value
-		if (desc->parameterTypes[paramNum].IsReference() && desc->inOutFlags[paramNum] == asTM_INOUTREF)
-			allowObjectConstruct = false;
-
-		cost = ImplicitConversion(&ti, desc->parameterTypes[paramNum], 0, asIC_IMPLICIT_CONV, false, allowObjectConstruct);
-		if (!desc->parameterTypes[paramNum].IsEqualExceptRef(ti.type.dataType))
-			return -1;
-
-		// If the function parameter is an inout-reference then it must not be possible to call the
-		// function with an incorrect argument type, even though the type can normally be converted.
-		if (desc->parameterTypes[paramNum].IsReference() &&
-			desc->inOutFlags[paramNum] == asTM_INOUTREF &&
-			desc->parameterTypes[paramNum].GetTokenType() != ttQuestion)
+		// Don't allow a primitive to be converted to a reference of another primitive type
+		if (desc->parameterTypes[paramNum].IsPrimitive() &&
+			desc->parameterTypes[paramNum].GetTokenType() != argExpr->type.dataType.GetTokenType())
 		{
-			// Observe, that the below checks are only necessary for when unsafe references have been
-			// enabled by the application. Without this the &inout reference form wouldn't be allowed
-			// for these value types.
+			asASSERT(engine->ep.allowUnsafeReferences);
+			return -1;
+		}
 
-			// Don't allow a primitive to be converted to a reference of another primitive type
-			if (desc->parameterTypes[paramNum].IsPrimitive() &&
-				desc->parameterTypes[paramNum].GetTokenType() != argExpr->type.dataType.GetTokenType())
-			{
-				asASSERT(engine->ep.allowUnsafeReferences);
-				return -1;
-			}
+		// Don't allow an enum to be converted to a reference of another enum type
+		if (desc->parameterTypes[paramNum].IsEnumType() &&
+			desc->parameterTypes[paramNum].GetTypeInfo() != argExpr->type.dataType.GetTypeInfo())
+		{
+			asASSERT(engine->ep.allowUnsafeReferences);
+			return -1;
+		}
 
-			// Don't allow an enum to be converted to a reference of another enum type
-			if (desc->parameterTypes[paramNum].IsEnumType() &&
-				desc->parameterTypes[paramNum].GetTypeInfo() != argExpr->type.dataType.GetTypeInfo())
-			{
-				asASSERT(engine->ep.allowUnsafeReferences);
-				return -1;
-			}
+		// Don't allow a non-handle expression to be converted to a reference to a handle
+		if (desc->parameterTypes[paramNum].IsObjectHandle() &&
+			!argExpr->type.dataType.IsObjectHandle())
+		{
+			asASSERT(engine->ep.allowUnsafeReferences);
+			return -1;
+		}
 
-			// Don't allow a non-handle expression to be converted to a reference to a handle
-			if (desc->parameterTypes[paramNum].IsObjectHandle() &&
-				!argExpr->type.dataType.IsObjectHandle())
-			{
-				asASSERT(engine->ep.allowUnsafeReferences);
-				return -1;
-			}
-
-			// Don't allow a value type to be converted
-			if ((desc->parameterTypes[paramNum].GetTypeInfo() && (desc->parameterTypes[paramNum].GetTypeInfo()->GetFlags() & asOBJ_VALUE)) &&
-				(desc->parameterTypes[paramNum].GetTypeInfo() != argExpr->type.dataType.GetTypeInfo()))
-			{
-				asASSERT(engine->ep.allowUnsafeReferences);
-				return -1;
-			}
+		// Don't allow a value type to be converted
+		if ((desc->parameterTypes[paramNum].GetTypeInfo() && (desc->parameterTypes[paramNum].GetTypeInfo()->GetFlags() & asOBJ_VALUE)) &&
+			(desc->parameterTypes[paramNum].GetTypeInfo() != argExpr->type.dataType.GetTypeInfo()))
+		{
+			asASSERT(engine->ep.allowUnsafeReferences);
+			return -1;
 		}
 	}
 

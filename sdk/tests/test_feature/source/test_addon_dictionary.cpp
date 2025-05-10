@@ -60,9 +60,11 @@ void main() {
     dictionary().get("", b);
 	assert( b.val == 4 );
 
+	b = broken(dictionary()[""]);
+
 	single s;
 	dictionary().get("", s);
-	assert( s.val == 4 );
+	assert( s.val == 3 ); 
 }
 )");
 		// There are 3 options for broken. Both double and int64 have the same weight and are less costly than ?&out. 

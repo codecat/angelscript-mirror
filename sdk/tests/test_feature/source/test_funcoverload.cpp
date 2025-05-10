@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "../../../add_on/scriptdictionary/scriptdictionary.h"
 
 namespace TestFuncOverload
 {
@@ -24,11 +25,160 @@ void FuncInt(int)
 
 bool Test2();
 
+bool script_dictionary_get_string(CScriptDictionary* dict, const std::string& key, std::string* value) {
+	return dict->Get(key, value, asGetActiveContext()->GetEngine()->GetStringFactory());
+}
+
+int set(asINT64) { return 0; }
+int get(asINT64&) { return 0; }
+int set(double) { return 1; }
+int get(double&) { return 1;}
+int set(const std::string& ){return 2;}
+int get(std::string&) { return 2; }
+int set(void*, int /*typeId*/) { return 3; }
+int get(void*, int /*typeId*/) { return 3; }
+
 bool Test()
 {
 	bool fail = Test2();
 	COutStream out;
 	CBufferedOutStream bout;
+
+	// Test function overload for &out parameters. The same prioritization order is used as for input arguments, even  
+	// though technically the &out parameter will be converted to the argument and not the other way around
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+
+		engine->RegisterGlobalFunction("int set(int64)", asFUNCTIONPR(set, (asINT64), int), asCALL_CDECL);
+		engine->RegisterGlobalFunction("int get(int64 &out)", asFUNCTIONPR(get, (asINT64 &), int), asCALL_CDECL);
+		engine->RegisterGlobalFunction("int set(double)", asFUNCTIONPR(set, (double), int), asCALL_CDECL);
+		engine->RegisterGlobalFunction("int get(double &out)", asFUNCTIONPR(get, (double&), int), asCALL_CDECL);
+		engine->RegisterGlobalFunction("int set(const string &in)", asFUNCTIONPR(set, (const std::string &), int), asCALL_CDECL);
+		engine->RegisterGlobalFunction("int get(string &out)", asFUNCTIONPR(get, (std::string &), int), asCALL_CDECL);
+		engine->RegisterGlobalFunction("int set(const ? &in)", asFUNCTIONPR(set, (void *, int), int), asCALL_CDECL);
+		engine->RegisterGlobalFunction("int get(? &out)", asFUNCTIONPR(get, (void *, int), int), asCALL_CDECL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", R"(
+class c_from_str {
+    c_from_str(string s = "") {}
+}
+class c_to_str {
+	string opImplConv() { return ""; }
+}
+enum E { val }
+void main() {
+    c_from_str b;
+    assert(set(b) == 3); // match set(?), since c_from_str cannot be converted to string
+	assert(get(b) == 3); // match get(?), since c_from_str cannot be converted to string (even though a string can be converted to c_from_str)
+	c_to_str a;
+	assert(set(a) == 2); // match set(string), since c_to_str can be converted to string
+	assert(get(a) == 3); // match get(?), since c_to_str cannot be created from string
+	string str;
+	assert(set(str) == 2);
+	assert(get(str) == 2); 
+	int i = 0;
+	assert(set(i) == 0);
+	assert(get(i) == 0);
+	float f = 0;
+	assert(set(f) == 1);
+	assert(get(f) == 1);
+	E e = val;
+	assert(set(e) == 0); // match set(int64)
+	assert(get(e) == 3); // match get(?), since int64 cannot be converted to enum
+}
+)");
+		int r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptContext* ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+		{
+			if (r == asEXECUTION_EXCEPTION)
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
+	// Test proper function overload for &out parameters
+	// Reported by Sam Tupy
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		// TODO: Need to have an engine property to allow &out to match arg for &out using arg to param type (as was done before 2.38.0), instead of param to arg type (as is done in 2.38.0)
+
+		engine->RegisterObjectMethod("dictionary", "bool get(const string&in key, string&out value) const", asFUNCTION(script_dictionary_get_string), asCALL_CDECL_OBJFIRST);
+
+		// Now there are 4 overloads for get
+		//  get(key, int64 &out)
+		//  get(key, double &out)
+		//  get(key, string &out)
+		//  get(key, ? &out)
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", R"(
+class broken {
+    broken(string s = "") {}
+}
+void main() {
+    dictionary d = {{"broken", @broken()}, {"int", 123}, {"dbl", 3.14}, {"str", "text"}};
+    broken@ b;
+    assert(d.get("broken", @b) && b !is null); // match get(?), even though string can be converted to broken
+	string str;
+	assert(d.get("str", str) && str == "text"); // match get(string)
+	int i;
+	assert(d.get("int", i) && i == 123); // match get(int64)
+	float f;
+	assert(d.get("dbl", f) && f == 3.14); // match get(double)
+}
+)");
+		int r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptContext* ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+		{
+			if (r == asEXECUTION_EXCEPTION)
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
 
 	// Test function overload between obj@ and const obj@
 	// Reported by Patrick Jeeves
