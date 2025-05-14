@@ -648,6 +648,8 @@ r = engine->RegisterObjectProperty("object", "comp_a", asOFFSET(Component, a), a
 The last parameter indicates that to reach the property of the composite member it is necessary to dereference 
 the pointer. If the composite member is inlined, then the parameter should be set to false.
 
+\todo Explain what to do with members declared as references since asOFFSET doesn't work for them
+
 
 
 \section doc_reg_objprop_accessor Property accessors

@@ -293,11 +293,11 @@ enum asEEngineProp
 	asEP_ALWAYS_IMPL_DEFAULT_COPY           = 36,
 	//! Determine if the default copy constructor is provided automatically by compiler. 0 - as per language spec, 1 - always, 2 - never. Default: 0
 	asEP_ALWAYS_IMPL_DEFAULT_COPY_CONSTRUCT = 37,
-	//! \todo document this
+	//! Determine how class members with init expressions are handled. 0 - pre 2.38.0, members with init expr in declaration are initialized after super(), 1 - all members initialized in beginning, except if explicitly initialized in body. Default: 1
 	asEP_MEMBER_INIT_MODE                   = 38,
-	//! \todo document this
+	//! Determine how boolean conversion are done. 0 - only use opImplConv for registered value type, 1 - use also opConv in contextual conversion even for reference types. Default: 1
 	asEP_BOOL_CONVERSION_MODE               = 39,
-	//! \todo document this
+	//! Enable foreach support. Default: true
 	asEP_FOREACH_SUPPORT                    = 40,
 
 	asEP_LAST_PROPERTY
@@ -645,7 +645,7 @@ enum asEFuncType
 	asFUNC_IMPORTED  = 5,
 	//! \brief A function delegate
 	asFUNC_DELEGATE  = 6,
-	//! \todo document this
+	//! \brief A template function
 	asFUNC_TEMPLATE  = 7
 };
 
@@ -710,7 +710,9 @@ typedef void (*asJITFunction)(asSVMRegisters* registers, asPWORD jitArg);
 // This macro does basically the same thing as offsetof defined in stddef.h, but
 // GNUC should not complain about the usage as I'm not using 0 as the base pointer.
 //! \brief Returns the offset of an attribute in a struct
-//! \todo Explain that it doesn't work for members that are declared as references. For these the offset must be manually calculated. Reference Register object properties with a more detailed explanation on how to deal with this
+//!
+//! This macro doesn't work for members that are declared as references, as C++ doesn't allow taking the offset for these. For these the offset must be manually calculated. 
+//! \see \ref doc_reg_objprop
 #define asOFFSET(s,m) ((int)(size_t)(&reinterpret_cast<s*>(100000)->m)-100000)
 
 //! \brief Returns an asSFuncPtr representing the function specified by the name
@@ -1213,7 +1215,15 @@ public:
 	//! It is recommended to register the message callback routine right after creating the engine,
 	//! as some of the registration functions can provide useful information to better explain errors.
 	virtual int SetMessageCallback(const asSFuncPtr &callback, void *obj, asDWORD callConv) = 0;
-	//! \todo document this
+	//! \brief Gets the current message callback.
+	//! \param[out] callback Will be set with the function or method pointer.
+	//! \param[out] obj      Will be set with the object pointer.
+	//! \param[out] callConv Will be set with the calling convention.
+	//! \return A negative value for an error.
+	//! \retval asNO_FUNCTION No message callback has been registered.
+	//!
+	//! The current message callback can be retrieved so that another 
+	//! callback can be temporarily set and then the original one restored.
 	virtual int GetMessageCallback(asSFuncPtr *callback, void **obj, asDWORD *callConv) = 0;
 	//! \brief Clears the registered message callback routine.
 	//! \return A negative value on error.

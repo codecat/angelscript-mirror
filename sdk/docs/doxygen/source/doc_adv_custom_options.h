@@ -169,6 +169,9 @@ This option was added to provide backwards compatibility with 2.35.0.
 
 \todo document asEP_FOREACH_SUPPORT
 
+\todo document asEP_MEMBER_INIT_MODE
+
+
 
 
 
