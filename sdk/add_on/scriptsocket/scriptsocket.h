@@ -24,6 +24,8 @@
 
 BEGIN_AS_NAMESPACE
 
+#ifdef _WIN32
+
 class CScriptSocket
 {
 public:
@@ -50,6 +52,8 @@ protected:
 	int m_socket;
 	bool m_isListening;
 };
+
+#endif
 
 int RegisterScriptSocket(asIScriptEngine* engine);
 

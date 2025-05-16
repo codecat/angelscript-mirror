@@ -3,6 +3,11 @@
 
 BEGIN_AS_NAMESPACE
 
+// For now, this is only supported on Windows
+#ifdef _WIN32
+
+
+
 #ifdef _WIN32
 
 // Link with ws2_32.lib
@@ -310,6 +315,15 @@ int RegisterScriptSocket(asIScriptEngine* engine)
 
 	return 0;
 }
+
+#else
+
+int RegisterScriptSocket(asIScriptEngine* engine)
+{
+	return asNOT_SUPPORTED;
+}
+
+#endif
 
 END_AS_NAMESPACE
 
