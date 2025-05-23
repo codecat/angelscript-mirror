@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2025 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -513,6 +513,35 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 				}
 				
 				continue;
+			}
+			else if (descr->parameterTypes[n].GetTokenType() == ttQuestion)
+			{
+				// Copy the reference and the type id as two separate arguments
+				// Copy the value directly to "r" registers or the stack, checking for alignment
+				
+				// First the reference...
+				if (paramSize < 4)
+				{
+					paramBuffer[dpos++] = args[spos++];
+					paramSize += 1;
+				}
+				else
+				{
+					paramBuffer[stackPos++] = args[spos++];
+					stackSize += 1;
+				}
+
+				// ...then the type id
+				if (paramSize < 4)
+				{
+					paramBuffer[dpos++] = args[spos++];
+					paramSize += 1;
+				}
+				else
+				{
+					paramBuffer[stackPos++] = args[spos++];
+					stackSize += 1;
+				}
 			}
 			else
 			{

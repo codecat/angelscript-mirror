@@ -107,13 +107,19 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Skip these tests if the library is not build to support exceptions
+	if (strstr(asGetLibraryOptions(), "AS_NO_EXCEPTIONS"))
+	{
+		PRINTF("Tests in %s skipped due to AS_NO_EXCEPTIONS\n", __FILE__);
+		return false;
+	}
+
 	// Test crash due to exception, with object variable declared just after the end of a block. 
 	// The asIScriptContext::IsVarInScope didn't work properly, leading to the crash in the DetermineLiveObjects
 	// https://www.gamedev.net/forums/topic/715075-context-crash-during-exception-handling-in-determineliveobjects/
 	SKIP_ON_MAX_PORT
 	{
 		asIScriptEngine * engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
 		engine->RegisterObjectType("ClassValue", sizeof(ClassValue),
 			asOBJ_VALUE | asOBJ_APP_CLASS_CD);
 		engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, true);
