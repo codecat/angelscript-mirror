@@ -166,9 +166,11 @@ void test()
 {
 	dictionary dict = {{'a',1},{'b',2},{'c',3}};
 	string keys, values;
+	int count = 0;
 	foreach( auto val, auto key : dict )
 	{
-		if( key == 'b' ) dict.delete(key);  // this will make the iter loose its anchor, but it must not crash the application
+		// if( key == 'b' ) dict.delete(key);  // the order of the keys is compiler dependent, so to make the test persistent we must use count instead   
+		if( count++ == 1 ) dict.delete(key); // this will make the iter loose its anchor, but it must not crash the application
 		values += int(val);
 		keys += key;
 	}
