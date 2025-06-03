@@ -248,6 +248,40 @@ An example where the opCast/opImplCast operator overloads come in handy is when 
 
 \section doc_script_class_foreach_ops Foreach loop operators
 
-\todo Document this. reference \ref while
+<table cellspacing=0 cellpadding=0 border=0>
+<tr><td width=150><b>op</b></td><td width=400><b>opfunc</b></td></tr>
+<tr><td><i>begin foreach</i></td><td>opForBegin</td></tr>
+<tr><td><i>end foreach</i></td><td>opForEnd</td></tr>
+<tr><td><i>next foreach iteration</i></td><td>opForNext</td></tr>
+<tr><td><i>foreach value</i></td><td>opForValue, opForValue0, opForValue1, opForValue2...</td></tr>
+</table>
+
+When the compiler tries to compile a <code>foreach</code> loop it will need a use a set of methods on the container type.
+
+<pre>
+  foreach( auto val, auto key : <i>expr</i> )
+  {
+    ...
+  }
+</pre>
+
+The above will be compiled as if it was written as
+
+<pre>
+  for( auto @container = <i>expr</i>, auto @it = container.opForBegin(); !container.opForEnd(it); @it = container.opForNext(it) )
+  {
+    auto val = container.opForValue0(it);
+    auto key = container.opForValue1(it);
+    ...
+  }
+</pre>
+
+Where the types support handles the compiler will use handle assignments, otherwise it will use value assignments.
+
+The iterator type returned by <code>opForBegin</code>, can be a simple integer for indexing, or an iterator class if more complex operations are needed for keeping track of the iterations.
+
+If the container only supports a single value, then the operator <code>opForValue</code> can be used, otherwise multiple numbered <code>opForValue#</code> operators must be used.
+
+\see \ref while
 
 */

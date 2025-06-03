@@ -702,8 +702,6 @@ a rather low precision of seconds only.
 
 \section doc_datatype_datetime_addon Supporting datetime object
 
-\todo describe weekday
-
 \subsection doc_addon_datetime_2_construct Constructors
 
 <b>datetime()</b><br>
@@ -748,6 +746,10 @@ Returns the second of the time stored in the object. The range is 0 to 59.
 <b>bool setTime(uint hour, uint minute, uint second)</b>
 
 Sets the date or time. Returns true if the specified date or time is valid. Does not modify the object if not valid.
+
+<b>uint get_weekDay() const property</b>
+
+Returns the day of the week for the date stored in the object. The range is 0 to 6, where 0 represents Sunday, 1 represents Monday, and so on.
 
 \subsection doc_addon_datetime_2_ops Operators
 

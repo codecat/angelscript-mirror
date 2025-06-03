@@ -165,7 +165,28 @@ part is executed after the logic within the loop, e.g. used to increment an iter
 Multiple variables can be declared in the <code>for</code> loop, separated by <code>,</code>. 
 Likewise, multiple increment expressions can be used in the last part by separating them with <code>,</code>.
 
-\todo Document foreach loops. Reference \ref doc_script_class_foreach_ops 
+<pre>
+  // A foreach loop iterates over each element in a container object
+  dictionary dict = {...};
+  int count = 0;
+  int sum = 0;
+  foreach( auto val, auto key : dict )
+  {
+     count++;
+     sum += int(val);
+     dict[key] = 0;
+  }
+  double average = double(sum)/count;
+</pre>
+
+A <code>foreach</code> is a special kind of loop for container objects, where the loop will iterate over each element in the container.
+
+The type and number of values that can be used for the container depends on the type of the container. Each container type that supports 
+<code>foreach</code> loops will have a set of methods to allow the compiler to build the logic for iterating over the elements.
+
+If the container is modified while still within the <code>foreach</code> loop, e.g. an element is removed or added, the behavior is undefined.
+
+\see \ref doc_script_class_foreach_ops 
 
 
 
