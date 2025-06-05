@@ -47,8 +47,6 @@ Get the exception string for the last exception thrown.
 The syntax for using arrays may differ for the application you're working with so consult the application's manual
 for more details.
 
-\todo Explain the foreach support
-
 It is possible to declare array variables with the array identifier followed by the type of the 
 elements within angle brackets. 
 
@@ -98,7 +96,7 @@ When the array stores \ref doc_script_handle "handles" the elements are assigned
   \@arr[0] = Foo();
 </pre>
 
-Arrays can also be created and initialized within expressions as \ref anonobj "anonymous objects". 
+Arrays can also be created and initialized within expressions as \ref anonobj "anonymous objects".
 
 <pre>
   // Call a function that expects an array of integers as input
@@ -108,6 +106,22 @@ Arrays can also be created and initialized within expressions as \ref anonobj "a
   // initialization lists it is necessary to explicitly inform the array type
   foo2(array<int> = {1,2,3,4});
 </pre>
+
+The array object supports \ref while "foreach loops" to easily iterate over all contained elements.
+
+<pre>
+  array<int> arr = {1,2,3,4,5,6};
+  int sum = 0;
+  
+  // sum the values and invert the array
+  foreach( auto value, auto index : arr ) // The index variable can be omitted if not needed
+  {
+    sum += value;
+    arr[index] = -value; // use the index to modify the current element in the array
+  }
+</pre>
+
+
 
 \section doc_datatypes_arrays_addon Supporting array object
 
@@ -229,8 +243,6 @@ If no match is found the methods will return a negative value.
 
 \subsection doc_datatypes_array_addon_example Script example
   
-\todo update sample to use foreach
-  
 <pre>
   int main()
   {
@@ -242,8 +254,8 @@ If no match is found the methods will return a negative value.
     arr.sortAsc();            // 0,1,3,4
   
     int sum = 0;
-    for( uint n = 0; n < arr.length(); n++ )
-      sum += arr[n];
+    foreach( auto value : arr )
+      sum += value;
       
     return sum;
   }
@@ -258,8 +270,6 @@ If no match is found the methods will return a negative value.
 \note Dictionaries are only available in the scripts if the application \ref doc_addon_dict "registers the support for them". 
 The syntax for using dictionaries may differ for the application you're working with so consult the application's manual
 for more details.
-
-\todo Explain the foreach support
 
 The dictionary stores key-value pairs, where the key is a string, and the value can be of any type. Key-value
 pairs can be added or removed dynamically, making the dictionary a good general purpose container object.
@@ -314,6 +324,20 @@ Dictionaries of dictionaries are created using \ref anonobj "anonymous objects" 
 <pre>
   dictionary d2 = {{'a', dictionary = {{'aa', 1}, {'ab', 2}}}, 
                    {'b', dictionary = {{'ba', 1}, {'bb', 2}}}};
+</pre>
+
+The dictionary object supports \ref while "foreach loops" to easily iterate over all contained elements.
+
+<pre>
+  dictionary dict = {{'a',1},{'b',2},{'c',3}};
+  int sum = 0;
+  
+  // sum the values and clear the entries
+  foreach( auto value, auto key : dict ) // The key variable can be omitted if not needed
+  {
+    sum += int(value);
+    dict[key] = 0; // use the key to modify the current element in the dictionary
+  }
 </pre>
 
 
