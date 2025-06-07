@@ -3036,11 +3036,16 @@ public:
 	//! \param[in] arg The argument index.
 	//! \return A pointer to the argument on the stack.
 	//!
-	//! This method returns a pointer to the argument on the stack for assignment. For object handles, you
-	//! should increment the reference counter. For object values, you should pass a pointer to a copy of the
-	//! object.
+	//! This method returns a pointer to the argument on the stack for assignment, so it can be set by the application.
 	//!
-	//! \todo Explain better the difference of this compared to GetArgAddress and GetArgObject
+	//! For object handles, the application must increment the reference counter to the object because
+	//! the reference will be released before the function returns.
+	//!
+	//! For object values, the application must give a pointer to a copy of the object because
+	//! AngelScript will delete the object once it the function returns.
+	//!
+	//! This method is generic, i.e. it works for all argument types; primitive, handles, objects, by value, or by reference.
+	//! For this reason it is very convenient to be used in generated code, such as templates or macros.
 	virtual void *GetAddressOfArg(asUINT arg) = 0;
 	//! \}	
 
@@ -3083,7 +3088,8 @@ public:
 	//! \brief Returns the address of the returned value
 	//! \return A pointer to the return value returned from the script function, or 0 on error.
 	//!
-	//! \todo Explain better the difference of this compared to GetReturnAddress and GetReturnObject
+	//! This method is generic, i.e. it works for all types; primitive, handles, objects, by value, or by reference.
+	//! For this reason it is very convenient to be used in generated code, such as templates or macros.
 	virtual void   *GetAddressOfReturnValue() = 0;
 	//! \}
 
@@ -3573,7 +3579,10 @@ public:
 	//! \param[in] arg The argument index.
 	//! \return A pointer to the argument value.
 	//!
-	//! \todo Explain better the difference of this compared to GetArgAddress and GetArgObject
+	//! This method returns a pointer to the argument, so the application can read it.
+	//!
+	//! This method is generic, i.e. it works for all argument types; primitive, handles, objects, by value, or by reference.
+	//! For this reason it is very convenient to be used in generated code, such as templates or macros.
 	virtual void   *GetAddressOfArg(asUINT arg) = 0;
 	//! \}
 
@@ -4184,7 +4193,8 @@ public:
 	//! \brief Returns true if the function is declared as 'property'.
 	//! \return True if the function is a property accessor.
 	virtual bool             IsProperty() const = 0;
-	//! \todo document this
+	//! \brief Returns true if the function has variadic arguments.
+	//! \return True if the function has variadic arguments.
 	virtual bool             IsVariadic() const = 0;
 	//! \brief Returns the number of parameters for this function.
 	//! \return The number of parameters.

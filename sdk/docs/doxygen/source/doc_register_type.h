@@ -596,7 +596,7 @@ the pointer. If the composite member is inlined, then the parameter should be se
 
 \page doc_reg_objprop Registering object properties
 
-Class member variables can be registered so that they can be directly
+Class member variables can be registered with \ref asIScriptEngine::RegisterObjectProperty "RegisterObjectProperty" so that they can be directly
 accessed by the script without the need for any method calls.
 
 \code
@@ -648,7 +648,7 @@ r = engine->RegisterObjectProperty("object", "comp_a", asOFFSET(Component, a), a
 The last parameter indicates that to reach the property of the composite member it is necessary to dereference 
 the pointer. If the composite member is inlined, then the parameter should be set to false.
 
-\todo Explain what to do with members declared as references since asOFFSET doesn't work for them
+
 
 
 

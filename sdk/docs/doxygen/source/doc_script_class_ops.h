@@ -268,7 +268,7 @@ When the compiler tries to compile a <code>foreach</code> loop it will need a us
 The above will be compiled as if it was written as
 
 <pre>
-  for( auto @container = <i>expr</i>, auto @it = container.opForBegin(); !container.opForEnd(it); @it = container.opForNext(it) )
+  for( auto \@container = <i>expr</i>, auto \@it = container.opForBegin(); !container.opForEnd(it); \@it = container.opForNext(it) )
   {
     auto val = container.opForValue0(it);
     auto key = container.opForValue1(it);

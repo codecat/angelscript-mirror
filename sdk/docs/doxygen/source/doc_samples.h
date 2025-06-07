@@ -169,14 +169,13 @@ breakpoints, stepping through the code, examining variables, etc.
  - \ref doc_addon_file
  - \ref doc_addon_filesystem
  - \ref doc_addon_datetime
+ - \ref doc_addon_socket
  - \ref doc_addon_ctxmgr
  - \ref doc_addon_build
  - \ref doc_addon_helpers_try
  - \ref asIScriptEngine::SetContextCallbacks
  - \ref doc_script_stdlib_system
  - Implementing a \#pragma callback
-
-\todo add socket
 
 \see \subpage doc_samples_asrun_manual
 

@@ -7,19 +7,28 @@ This pages describes the standard library provided by the AngelScript SDK. The a
 use AngelScript may or may not expose the standard library to the scripts. Always consult the application's
 manual for information on the API it exposes.
 
- - \subpage doc_script_stdlib_exception
  - \subpage doc_script_stdlib_string
  - \subpage doc_datatypes_arrays
  - \subpage doc_datatypes_dictionary
  - \subpage doc_datatypes_ref
  - \subpage doc_datatypes_weakref
  - \subpage doc_script_stdlib_datetime
- - \subpage doc_script_stdlib_coroutine
  - \subpage doc_script_stdlib_file
  - \subpage doc_script_stdlib_filesystem
+ - \subpage doc_script_stdlib_socket
+ - \subpage doc_script_stdlib_exception
+ - \subpage doc_script_stdlib_coroutine
  - \subpage doc_script_stdlib_system
- 
-\todo Add socket
+
+
+
+
+\page doc_script_stdlib_socket socket
+
+\note The socket is only available in the scripts if the application \ref doc_addon_socket "registers the support".
+
+\todo Document this
+
 
 
 
@@ -43,7 +52,8 @@ Get the exception string for the last exception thrown.
 
 \page doc_datatypes_arrays array
 
-\note Arrays are only available in the scripts if the application \ref doc_addon_array "registers the support for them". 
+\note Arrays are only available in the scripts if the application \ref doc_addon_array "registers the support for them".
+
 The syntax for using arrays may differ for the application you're working with so consult the application's manual
 for more details.
 

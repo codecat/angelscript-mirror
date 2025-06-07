@@ -29,9 +29,23 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
  - \subpage doc_addon_math
  - \subpage doc_addon_grid
  - \subpage doc_addon_datetime
+ - \subpage doc_addon_socket
  - \subpage doc_addon_helpers_try
- 
-\todo add socket
+
+
+
+
+
+\page doc_addon_socket socket object
+
+<b>Path:</b> /sdk/add_on/scriptsocket/
+
+\todo Document this. Mention it only works for Windows.
+
+\section doc_addon_socket_2 Public script interface
+
+\see \ref doc_script_stdlib_socket "socket in the script language"
+
 
 
 
