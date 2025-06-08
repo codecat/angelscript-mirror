@@ -191,7 +191,9 @@ r = engine->RegisterObjectBehaviour("myTemplate<float>", asBEHAVE_FACTORY, "myTe
 
 
 
- 
+\page doc_adv_template_func Template functions
+
+\todo Write this
 
 
 */

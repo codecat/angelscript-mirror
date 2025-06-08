@@ -4221,11 +4221,16 @@ public:
 	//! \{
 		
 	// Template functions
-	//! \todo document this
+	//! \brief Returns the number of template sub types.
+	//! \return The number of template sub types.
 	virtual asUINT           GetSubTypeCount() const = 0;
-	//! \todo document this
+	//! \brief Returns the type id of a template sub type.
+	//! \param[in] subTypeIndex The index of the template sub type.
+	//! \return The type id of the template sub type.
 	virtual int              GetSubTypeId(asUINT subTypeIndex = 0) const = 0;
-	//! \todo document this
+	//! \brief Returns the type info for a template sub type.
+	//! \param[in] subTypeIndex The index of the template sub type.
+	//! \return the type info for the template sub type.
 	virtual asITypeInfo     *GetSubType(asUINT subTypeIndex = 0) const = 0;
 	//! \}
 	
