@@ -466,10 +466,8 @@ have been initialized.
 
 All members are initialized immediately in the beginning of the defined constructor, so the rest of the 
 code in the constructor can access members without worry. The exception is when the constructor explicitly
-initializes a base class by calling super(), in this case the members with explicit initialization will
-remain uninitialized until after the base class has been fully constructed.
-
-\todo The above is no longer true. If constructor is explicitly assigning a value to a member it will be considered an initialization and will override the default initialization. explain order of initialization. including initialization of base type
+initializes a base class by calling super(), or overrides the initialization of a member within the body of the constructor.
+In this case the members explicitly initialized within the body will remain uninitialized until that statement is reached.
 
 <pre>
   class Bar
@@ -482,15 +480,34 @@ remain uninitialized until after the base class has been fully constructed.
   {
     Foo()
     {
-      // b is already initialized here
+      // b is initialized first
+      // If not explicitly initialized later, c would be initialized here, leading 
+      // to a null pointer exception since super() has not been called yet.
 
-      super(b); // a will be initialized in this call
+      super(b); // a will only be initialized in this call
 
-      // c is initialized right after super() returns
+      c = a; // explicitly initialize c after the base class to avoid the null pointer exception
     }
     
     string b;
     string c = a;
+  }
+</pre>
+
+Members can also be initialized in conditions. If they are, then both cases must initialize the members.
+
+<pre>
+  class Foo
+  {
+    Foo(int a)
+    {
+      if( a == 0 ) // If a member is initialized in a condition, then both possibilities must initialize the member
+        d = 'foo';
+      else
+        d = 'bar';
+    }
+    
+    string d = 'default';
   }
 </pre>
 

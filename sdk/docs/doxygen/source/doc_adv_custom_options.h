@@ -165,12 +165,23 @@ can be encoded in UTF-8 format and compiler normally.
 By turning on this option the compiler will silently accept duplicate declarations of shared interfaces in modules. 
 This option was added to provide backwards compatibility with 2.35.0.
 
-\todo document asEP_BOOL_CONVERSION_MODE
+\ref asEP_BOOL_CONVERSION_MODE
 
-\todo document asEP_FOREACH_SUPPORT
+By default boolean conversions is only done implicitly for value types with opImplConv conversion operator. If set to 1, then 
+the compiler will also use the explicit opConv conversion operator even for reference types, in contexts where a boolean is 
+expected, e.g. in conditions.
 
-\todo document asEP_MEMBER_INIT_MODE
+\ref asEP_FOREACH_SUPPORT
 
+By turning off this property the support for \ref while "foreach loops" is disabled. This option was added to provide 
+backwards compatibility for existing scripts before 2.38.0 that may be using the reserved keyword <tt>foreach</tt>.
+
+\ref asEP_MEMBER_INIT_MODE
+
+When this property to 0, the class members with an initialization expression in the declaration will always be initialized 
+after the call to super(). It is also not possible to explicitly initialize members within the body of the constructor. When 
+set to 1 (default), the class members will be initialized as described in \ref doc_script_class_memberinit. This mode was 
+added to provide backwards compatibility with versions before 2.38.0.
 
 
 
