@@ -40,7 +40,32 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
 
 <b>Path:</b> /sdk/add_on/scriptsocket/
 
-\todo Document this. Mention it only works for Windows.
+The <code>CScriptSocket</code> provides an easy to use TCP socket for the scripts.
+
+\note Currently this add-on only works on Windows.
+
+\section doc_addon_socket_1 Public C++ interface
+
+\code
+class CScriptSocket
+{
+public:
+  CScriptSocket();
+
+  // Memory management
+  void AddRef() const;
+  void Release() const;
+
+  // Methods
+  int            Listen(asWORD port);
+  int            Close();
+  CScriptSocket* Accept(asINT64 timeoutMicrosec = 0);
+  int            Connect(asUINT ipv4Address, asWORD port);
+  int            Send(const std::string& data);
+  std::string    Receive(asINT64 timeoutMicrosec = 0);
+  bool           IsActive() const;
+};
+\endcode
 
 \section doc_addon_socket_2 Public script interface
 
@@ -142,7 +167,7 @@ public:
 
   // Clear the serializer to free references held internally
   void Clear();
-	
+
   // Add implementation for serializing user types
   void AddUserType(CUserType *ref, const std::string &name);
 
@@ -151,7 +176,7 @@ public:
 
   // Restore all global variables after reloading script
   int Restore(asIScriptModule *mod);
-  
+
   // Store extra objects that are not seen from the module's global variables
   void AddExtraObjectToStore(asIScriptObject *object);
 
@@ -194,9 +219,9 @@ struct CStringType : public CUserType
 {
   void *AllocateUnitializedMemory(CSerializedValue* value)
   {
-	// This must not be done for strings
-	assert(false);
-	return 0;
+    // This must not be done for strings
+    assert(false);
+    return 0;
   }	
   void Store(CSerializedValue *val, void *ptr)
   {
@@ -219,8 +244,8 @@ struct CArrayType : public CUserType
 {
   void* AllocateUnitializedMemory(CSerializedValue* value)
   {
-	CScriptArray* arr = CScriptArray::Create(value->GetType());
-	return arr;
+    CScriptArray* arr = CScriptArray::Create(value->GetType());
+    return arr;
   }
   void Store(CSerializedValue *val, void *ptr)
   {

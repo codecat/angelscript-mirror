@@ -31,9 +31,11 @@ class CScriptSocket
 public:
 	CScriptSocket();
 
+	// Memory management
 	void AddRef() const;
 	void Release() const;
 
+	// Methods
 	int            Listen(asWORD port);
 	int            Close();
 	CScriptSocket* Accept(asINT64 timeoutMicrosec = 0);

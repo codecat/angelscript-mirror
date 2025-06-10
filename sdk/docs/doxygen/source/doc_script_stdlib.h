@@ -519,8 +519,6 @@ an uninitialized value of the desired type is returned.
 
 \page doc_script_stdlib_string string
 
-\todo Add format and scan
-
 \note Strings are only available in the scripts if the application \ref doc_addon_std_string "registers the support for them". 
 The syntax for using strings may differ for the application you're working with so consult the application's manual
 for more details.
@@ -615,7 +613,19 @@ Splits the string in smaller strings where the delimiter is found.
 <b>string join(const array<string> &in arr, const string &in delimiter)</b><br>
 
 Concatenates the strings in the array into a large string, separated by the delimiter.
- 
+
+<b>uint scan(const string&in str, ?&out ...)</b>
+
+Parses the string for subsequent values of the type matching the type of each argument. All primitive types and the string type are supported.
+
+Returns the number of values that were successfully parsed.
+
+<pre>
+  uint scanned = scan('123 3.14 hello', i, f, s);
+</pre>
+
+
+
 <b>int64  parseInt(const string &in str, uint base = 10, uint &out byteCount = 0)</b><br>
 <b>uint64 parseUInt(const string &in str, uint base = 10, uint &out byteCount = 0)</b><br>
 
@@ -627,6 +637,15 @@ considered as part of the integer value.
 
 Parses the string for a floating point value. If \a byteCount is provided it will be set to the 
 number of bytes that were considered as part of the value.
+
+<b>string format(const string&in fmt, const ?&in ...)</b>
+
+Formats a string with multiple values. The logic will replace each {} found in the fmt string with the 
+corresponding argument. Arguments can be given as any of the primitive types or the the string type. 
+
+<pre>
+  string result = format('{} {} {}', 123, true, 'hello');
+</pre>
 
 <b>string formatInt(int64 val, const string &in options = '', uint width = 0)</b><br>
 <b>string formatUInt(uint64 val, const string &in options = '', uint width = 0)</b><br>
