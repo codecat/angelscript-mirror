@@ -27,7 +27,81 @@ manual for information on the API it exposes.
 
 \note The socket is only available in the scripts if the application \ref doc_addon_socket "registers the support".
 
-\todo Document this
+The socket object can be used to establish client-server connections using TCP.
+
+The socket works with queues and buffers so even a single threaded script will be able to successfully communicate with remote systems.
+
+<pre>
+  // Start listening for incoming connections
+  socket server;
+  server.listen(39000);
+  
+  // Wait for a client to connect
+  socket @client = server.accept(10*1000000); // Timeout of 10 seconds
+  if( client !is null )
+  {
+    // Receive a message
+    string pkg = client.receive(1*1000000); // 1 second time out
+    
+    // Return the same message to the client
+    client.send(pkg);
+  }
+</pre>
+
+
+\section doc_datatypes_socket_addon Supporting socket object
+
+\subsection doc_datatypes_socket_addon_mthd Methods
+
+<b>int listen(uint16 port)</b>
+
+Starts listening to incoming connections on the requested port.
+
+Returns a negative value if the action failed, e.g. if the port is already in use.
+
+<b>int close()</b>
+
+Closes the socket if it is open.
+
+Returns a negative value if the action failed, e.g. if the socket wasn't open to begin with.
+
+<b>socket @accept(int64 timeout = 0)</b>
+
+This method can be used on sockets that are listening for incoming connections. If a client is trying to connect the 
+method will return a new socket object with the connection established.
+
+If timeout is given as zero, the function will return immediately if there is no incoming connection, otherwise it 
+will wait for as long as the given timeout before returning if no connection comes. The timeout is given in microseconds.
+
+Returns a new socket object if a connection could be established, or null if no connection was established.
+
+<b>int connect(uint ipv4address, uint16 port)</b>
+
+Connect to a remote socket at the given ip address and port.
+
+The ip address is represented as a 32bit unsigned integer, e.g. ip address 127.0.0.1 is given as <tt>(127<<24)|(0<<16)|(0<<8)|(1)</tt>, or simply as <tt>0x7F000001</tt>.
+
+Returns a negative value if the action failed, e.g. no connection could be established.
+
+<b>int send(const string &in data)</b>
+
+Sends data over an already established connection.
+
+Returns the number of bytes that was sent, or a negative value if the action failed.
+
+<b>string receive(int64 timeout = 0)</b>
+
+Receives data that was sent over the connection.
+
+If timeout is given as zero, the function will return immediately if there is no incoming data, otherwise it 
+will wait for as long as the given timeout before returning if no data comes. The timeout is given in microseconds.
+
+Returns a string with the bytes that was received.
+
+<b>bool isActive() const</b>
+
+Returns true if the socket is active, i.e. either listening or is connected.
+
 
 
 

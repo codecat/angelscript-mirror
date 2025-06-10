@@ -1713,7 +1713,7 @@ bool Test()
 			obj->Release();
 
 		// Expressions are evaluated in the scope where they will be executed
-		// Before 2.38.0 the members where initialized after the call to super
+		// Before 2.38.0 the members were initialized after the call to super
 		{
 			engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 			engine->SetEngineProperty(asEP_MEMBER_INIT_MODE, 0);
