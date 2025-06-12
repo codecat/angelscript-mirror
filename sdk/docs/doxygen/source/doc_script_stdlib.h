@@ -37,7 +37,7 @@ The socket works with queues and buffers so even a single threaded script will b
   server.listen(39000);
   
   // Wait for a client to connect
-  socket @client = server.accept(10*1000000); // Timeout of 10 seconds
+  socket \@client = server.accept(10*1000000); // Timeout of 10 seconds
   if( client !is null )
   {
     // Receive a message
@@ -65,7 +65,7 @@ Closes the socket if it is open.
 
 Returns a negative value if the action failed, e.g. if the socket wasn't open to begin with.
 
-<b>socket @accept(int64 timeout = 0)</b>
+<b>socket \@accept(int64 timeout = 0)</b>
 
 This method can be used on sockets that are listening for incoming connections. If a client is trying to connect the 
 method will return a new socket object with the connection established.

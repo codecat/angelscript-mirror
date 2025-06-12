@@ -172,14 +172,7 @@ type of conversion compares to another.
  - conversion to object
  - variable argument type
 
-\todo Explain how it works for &out, and ?&out, that is used in case there are ambiguous options
-
-Observe that it is not possible to create overloads where the only difference is the return
-type. This is because the return type is not part of the selection criteria that the compiler
-uses to determine which function to call, the return type is just the result of the called 
-function.
-
-\todo Exceptions are opConv and opCast where compiler looks specifically at the return type
+Example:
 
 <pre>
   void Function(int a, float b, string c) {}
@@ -193,6 +186,31 @@ function.
     Function(2.5f, 'a', 1);  // Will call the third overload
   }  
 </pre>
+
+For functions with output parameters, <tt>&out</tt>, the compiler will follow the same order. The exception 
+is when the conversion from the argument type to the expression type is not possible, in which case 
+that match is discarded. Example:
+
+<pre>
+  void get(int &out val) {}
+  void get(? &out val) {} // Note, functions with variable type can only be registered from the application
+  enum e { eval }
+  void func()
+  {
+     e v;
+     get(v);  // This will match the get(? &out val), because int cannot be implicitly converted to enum
+  }
+</pre>
+
+Observe that it is not possible to create overloads where the only difference is the return
+type. This is because the return type is not part of the selection criteria that the compiler
+uses to determine which function to call, the return type is just the result of the called 
+function.
+
+The exceptions are \ref doc_script_class_conv "opConv and opCast" where the compiler looks 
+specifically at the return type to determine the match.
+
+
 
 
 
