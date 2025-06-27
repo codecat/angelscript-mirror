@@ -50,6 +50,10 @@
 
 #ifdef _MSC_VER
 #pragma warning(disable:4702) // unreachable code
+
+// Apparently a bug in MSVC (or perhaps Windows SDK) caused use HUGE_VALF to issue a warning
+// ref: https://developercommunity.visualstudio.com/t/C4756-related-issues-in-VS-2022/10697767
+#pragma warning(disable:4756)
 #endif
 
 //make compiler shut up
@@ -4702,7 +4706,7 @@ static const void *const dispatch_table[256] = {
 		{
 			float r = powf(*(float*)(l_fp - asBC_SWORDARG1(l_bc)), *(float*)(l_fp - asBC_SWORDARG2(l_bc)));
 			*(float*)(l_fp - asBC_SWORDARG0(l_bc)) = r;
-			if( r == float(HUGE_VAL) )
+			if( r == HUGE_VALF || isinf(r) )
 			{
 				// Need to move the values back to the context
 				m_regs.programPointer    = l_bc;
@@ -4721,7 +4725,7 @@ static const void *const dispatch_table[256] = {
 		{
 			double r = pow(*(double*)(l_fp - asBC_SWORDARG1(l_bc)), *(double*)(l_fp - asBC_SWORDARG2(l_bc)));
 			*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = r;
-			if( r == HUGE_VAL )
+			if( r == HUGE_VAL || isinf(r) )
 			{
 				// Need to move the values back to the context
 				m_regs.programPointer    = l_bc;
@@ -4740,7 +4744,7 @@ static const void *const dispatch_table[256] = {
 		{
 			double r = pow(*(double*)(l_fp - asBC_SWORDARG1(l_bc)), *(int*)(l_fp - asBC_SWORDARG2(l_bc)));
 			*(double*)(l_fp - asBC_SWORDARG0(l_bc)) = r;
-			if( r == HUGE_VAL )
+			if( r == HUGE_VAL || isinf(r) )
 			{
 				// Need to move the values back to the context
 				m_regs.programPointer    = l_bc;

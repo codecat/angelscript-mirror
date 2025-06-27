@@ -37,6 +37,12 @@
 
 #include <math.h> // fmodf() pow()
 
+#ifdef _MSC_VER
+// Apparently a bug in MSVC (or perhaps Windows SDK) caused use HUGE_VALF to issue a warning
+// ref: https://developercommunity.visualstudio.com/t/C4756-related-issues-in-VS-2022/10697767
+#pragma warning(disable:4756)
+#endif
+
 #include "as_config.h"
 
 #ifndef AS_NO_COMPILER
@@ -16119,8 +16125,7 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asCExprContext *lctx,
 			else if( op == ttStarStar )
 			{
 				v = powf(lctx->type.GetConstantF(), rctx->type.GetConstantF());
-
-				if( v == HUGE_VAL )
+				if( v == HUGE_VALF || isinf(v) )
 					Error(TXT_POW_OVERFLOW, node);
 			}
 
@@ -16136,7 +16141,7 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asCExprContext *lctx,
 				if( op == ttStarStar || op == ttPowAssign )
 				{
 					v = pow(lctx->type.GetConstantD(), int(rctx->type.GetConstantDW()));
-					if( v == HUGE_VAL )
+					if( v == HUGE_VAL || isinf(v) )
 						Error(TXT_POW_OVERFLOW, node);
 				}
 				else
@@ -16167,7 +16172,7 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asCExprContext *lctx,
 				else if( op == ttStarStar )
 				{
 					v = pow(lctx->type.GetConstantD(), rctx->type.GetConstantD());
-					if( v == HUGE_VAL )
+					if( v == HUGE_VAL || isinf(v))
 						Error(TXT_POW_OVERFLOW, node);
 				}
 			}
