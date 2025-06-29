@@ -77,8 +77,12 @@ declared in. No positional arguments may follow any named arguments.
   func(flagB: true, flagA: true);
 </pre>
 
-\todo Describe how to call a function template with explicit types
+For function templates it is necessary to explicitly inform the subtypes so the 
+compiler can evaluate the correct function template instance to call.
 
+<pre>
+  templ<int,float>(arg1, arg2);
+</pre>
 
 
 
@@ -432,6 +436,10 @@ For types that support it, the anonymous objects can also be initialized with in
   funcExpectsAnArrayOfInts({1,2,3,4});
 </pre>
 
-\todo describe instantiating templates as anonymous objects
+If the desired type for the anonymous object is a template, it may be necessary to explicitly inform the template type;
+
+<pre>
+  funcExpectsAnArray(array<int> = {1,2,3,4});
+</pre>
 
 */

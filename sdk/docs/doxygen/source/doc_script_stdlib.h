@@ -1132,9 +1132,28 @@ Raises an exception if the file doesn't exist or cannot be accessed.
 
 <b>void print(const string &in line)</b>
 
-Prints a line to the standard output.
+Prints a line to the standard output. No line feed is added at the end, so the caller must include that in the argument if desired.
 
-\todo Describe how to set color on the output
+On systems that support it, e.g. Windows, the virtual terminal processing is enabled. This allows to change the color of the text 
+that is written to the output, controlling the movement of the cursor, enable line drawing, etc. The commands are given by starting
+an escape sequence with the character <i>ESC</i>, i.e. character 27 in the ASCII table, or 1B in hexadecimal. Following the <i>ESC</i> 
+is a sequence of bytes that is interpreted by the terminal while rendering the text.
+
+Heres an example on how to change the text color.
+
+<pre>
+  const string YELLOW_ON_RED = "\x1b[101;93m";
+  const string STRONG_YELLOW = "\x1b[93m";
+  const string RESET_STYLE = "\x1b[0m";
+  
+  void main()
+  {
+	  print("This " + STRONG_YELLOW + " is yellow. " + YELLOW_ON_RED + "Now on red background." + RESET_STYLE + "\n");
+  }
+</pre>
+
+To learn the possible commands that can be given this way, do a search for "Console Virtual Terminal Sequences" on the internet.
+
  
 <b>string getInput()</b>
 

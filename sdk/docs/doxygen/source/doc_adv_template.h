@@ -2,8 +2,6 @@
 
 \page doc_adv_template Template types
 
-\todo reference \ref doc_callbacks and show how to register child template func def and example how to use it.
-
 A template type in AngelScript works similarly to how templates work in C++. The scripts 
 will be able to instantiate different forms of the template type by specifying which subtype 
 that should be used. The methods for the instance will then be adapted to this subtype, so
@@ -117,6 +115,24 @@ This means that the parameter takes a const handle to a read only Obj, i.e. both
 object instance it refers to cannot be modified by the method. Now the script will be able to call the method
 both with read only handles and non-read only handles.
 
+
+
+\section doc_adv_template_1_child Child funcdefs of templates
+
+If you want to implement a callback method on the template type that takes a funcdef, and that funcdef itself 
+depends on the template subtypes, then you must register the funcdef as a child of the template type.
+
+\code
+// Register a child funcdef by informing the template as the scope
+r = engine->RegisterFuncdef("bool myTemplate<T>::callback(const T &in)"); assert( r >= 0 );
+
+// Register the method taking the funcdef as reference or handle for making the callback
+r = engine->RegisterObjectMethod("myTemplate<T>", "void doCallback(const callback &in)", asFUNCTION(...), asCALL_GENERIC); assert(r >= 0);
+\endcode
+
+The callback itself is used normally, as in \ref doc_callbacks.
+
+\see The sort method on the \ref doc_addon_array "script array add-on"
 
 
 
