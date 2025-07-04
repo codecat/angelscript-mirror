@@ -145,6 +145,25 @@ namespace Test_Addon_StdString
 			}
 			ctx->Release();
 
+			// Test regexFind with utf8 characters. The regex doesn't really understand
+			// the utf8 encoding so each byte is matched individually
+			ctx = engine->CreateContext();
+			r = ExecuteString(engine,
+				"string s = '0J\\xc3\\xb6nsson9';\n" // \xc3\xb6 is utf-8 for ö
+				"uint length;\n"
+				"int pos = s.regexFind('[[:alpha:]\\x80-\\xff]+', 0, length);\n"
+				"assert( pos == 1 );\n"
+				"assert( length == 8 );\n", 0, ctx);
+			if (r != asEXECUTION_FINISHED)
+			{
+				TEST_FAILED;
+				if (r == asEXECUTION_EXCEPTION)
+				{
+					PRINTF("%s\n", GetExceptionInfo(ctx).c_str());
+				}
+			}
+			ctx->Release();
+
 
 			engine->ShutDownAndRelease();
 		}

@@ -610,7 +610,7 @@ r = engine->RegisterObjectProperty("mytype", "int a", asOFFSET(MyStruct,a)); ass
 
 If a class member is indirect, i.e. the class holds a pointer to the member that is 
 allocated on the heap, then it is possible to registered the property using & to tell
-the script engine that an dereference is needed to access the member.
+the script engine that a dereference is needed to access the member.
 
 \code
 struct MyStruct
@@ -624,7 +624,11 @@ r = engine->RegisterObjectProperty("mytype", "othertype &a", asOFFSET(MyStruct,a
 Of course, the application must make sure the pointer is valid during the whole time 
 that it may be accessed from the script.
 
-\todo describe limitation with asOFFSET and members declared as references. suggest manually calculate offset relative to adjacent member, but alert on byte alignment
+Remember, in C++ it is not possible to take the address of class members declared as references, because 
+the & operator in this case gives the actual reference that the member is referring to. For this reason
+it is not possible to use asOFFSET to determine the offset of members declared as references. Instead the
+offset can be manually calculated relative to an adjacent member. Remember to verify the byte alignment 
+and possible padding added by the compiler.
 
 \section doc_reg_objprop_composite Composite members
 
