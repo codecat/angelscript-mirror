@@ -5373,9 +5373,8 @@ void asCCompiler::CompileForEachStatement(asCScriptNode* node, asCByteCode* bc)
 					int retTid = engine->scriptFunctions[opForValueIdN]->GetReturnTypeId(&retFlags);
 
 					bool isConst = itemDataTypes[i].IsReadOnly() || (retFlags & asTM_CONST);
-					bool isHandle = itemDataTypes[i].IsObjectHandle() ;
 					asCDataType dt = asCDataType::CreateById(engine, retTid, isConst);
-					dt.MakeHandle(isHandle);
+					dt.MakeHandle(true); // Always use handle for auto if possible
 					itemDataTypes[i] = dt;
 				}
 			}

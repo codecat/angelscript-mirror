@@ -41,6 +41,64 @@ bool Test()
 	int r;
 	CBufferedOutStream bout;
 
+	// Test foreach with auto (without @) and polymorphism. As for normal var decl auto should implicitly use @
+	// https://www.gamedev.net/forums/topic/718755-unexpected-foreach-behavior-with-auto/5470713/
+	{
+		asIScriptEngine* engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(Print_Generic), asCALL_GENERIC);
+		g_printBuffer = "";
+
+		asIScriptModule* mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("foreach1234", 
+			"class Bar {\n"
+			"	void Thing() {\n"
+			"		print('Bar'); \n"
+			"	}\n"
+			"}\n"
+			"class Foo : Bar { \n"
+			"	void Thing() override {	\n"
+			"		print('Foo'); \n"
+			"	}\n"
+			"}\n"
+			"void main() {"
+			"	array<Bar@> b = { Foo() }; \n"
+			"	foreach(auto a : b) {\n"
+			"		a.Thing(); \n"
+			"	}\n"
+			"   for( auto i = b.opForBegin(); !b.opForEnd(i); i = b.opForNext(i) ) { \n"
+			"		auto a = b.opForValue0(i);\n"
+			"		a.Thing(); \n"
+			"	}\n"
+			"}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (g_printBuffer != "FooFoo")
+		{
+			TEST_FAILED;
+			PRINTF("%s\n", g_printBuffer.c_str());
+		}
+
+		if (bout.buffer != "")
+		{
+			TEST_FAILED;
+			PRINTF("%s", bout.buffer.c_str());
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test foreach on array with script classes using auto@
 	// Reported by Paril
 	{
