@@ -377,7 +377,7 @@ The following flags are covered by asGetTypeTraits:
 <tr><td>\ref asOBJ_APP_ARRAY                  &nbsp; </td><td>The C++ type is an array</td></tr>
 </table>
 
-\todo explain how to interpret when the constructor, copy constructor or operator= has been defaulted with '= default'
+Don't include the flags for constructor, destructor, assignment, and/or copy constructor if they have been declared as '= default' in the C++ class.
 
 On some platforms the native calling convention may require further knowledge about the class and its members that \ref asGetTypeTraits
 cannot determine in order to work properly. Whether or not the flags are needed depends on the compiler and target platform, but if the flags

@@ -19,6 +19,8 @@
   int var = 0, var2 = 10;
   object\@ handle, handle2;
   const float pi = 3.141592f;
+  object obj(23), obj2 = object(23);
+  array<int> arr, arr2 = {1,2,3};
 </pre>
 
 Variables must be declared before they are used within the statement block, 
@@ -26,7 +28,7 @@ or any sub blocks. When the code exits the statement block where the variable
 was declared the variable is no longer valid.
 
 A variable can be declared with or without an initial expression. If it 
-is declared with an initial expression it, the expression must have the evaluate
+is declared with an initial expression it, the expression must evaluate
 to a type compatible with the variable type.
 
 Any number of variables can be declared on the same line separated with commas, where
@@ -40,9 +42,7 @@ a random value. Variables of complex types, such as handles and object are initi
 with a default value. For handles this is <code>null</code>, for objects this is 
 what is defined by the object's default constructor.
 
-\todo Describe variables with direct object initialization, i.e. object obj(expr);
-
-\todo Describe how to declare variables of template types, i.e. array<int> arr;
+\see \ref doc_datatypes_auto
 
 
 
