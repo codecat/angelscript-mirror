@@ -209,7 +209,15 @@ r = engine->RegisterObjectBehaviour("myTemplate<float>", asBEHAVE_FACTORY, "myTe
 
 \page doc_adv_template_func Template functions
 
-\todo Write this
+Template functions can be implemented with the \ref doc_generic "generic calling convention" and registered with the engine either as \ref asIScriptEngine::RegisterGlobalFunction "global functions" or as \ref asIScriptEngine::RegisterObjectMethod "class methods".
+
+Once the template function is called, the function can determine the type of the arguments using the \ref asIScriptGeneric::GetArgTypeId, or alternatively with \ref asIScriptFunction::GetSubTypeId.
+
+\code
+// Register a global template function
+r = engine->RegisterGlobalFunction("T Test<T, U>(T t, U u)", asFUNCTION(ScriptTestGen), asCALL_GENERIC); assert( r >= 0 );
+\endcode
+
 
 
 */
