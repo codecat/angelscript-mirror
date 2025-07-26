@@ -94,6 +94,47 @@ bool TestCondition()
 	CBufferedOutStream bout;
 	asIScriptEngine* engine;
 
+	// Test crash on condition
+	// https://www.gamedev.net/forums/topic/718891-ternary-operator-crash-when-using-auto/5470948/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class test \n"
+			"{ \n"
+			"} \n"
+			"void test_function(const test & in value) \n"
+			"{ \n"
+			"} \n"
+			"void failing_test() \n"
+			"{ \n"
+			"	auto test_a = test(); \n"
+			"	auto test_b = test(); \n"
+			"   test copy; \n"
+			"	copy = true ? test_a : test_b; \n"
+			"	test_function(true ? test_a : test_b); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "failing_test()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
 	// Test proper conversion of null in condition
 	// https://www.gamedev.net/forums/topic/717777-opimplconv-with-different-return-types-crashes-application-in-ternary-operator-assignment/5467648/
 	{

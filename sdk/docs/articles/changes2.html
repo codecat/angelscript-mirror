@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.38.0 WIP - 2025/07/12</h2>
+<h2>Version 2.38.0 WIP - 2025/07/26</h2>
 
 <ul>
 <li>Bug fixes
@@ -66,6 +66,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed issue with returning a structure of 4 floats by value in native 32bit arm hard float calling conventions (Thanks Konstantin Taunder)
 <li>Fixed premature release of class factory when discarding a module with a shared class declared within a namespace (Thanks Miss)
 <li>Fixed use of auto in foreach loop which should use handle if possible (Thanks Miss)
+<li>Fixed crash with ternary operator yielding reference to object handle and passed to function argument (Thanks romanpunia_gd)
 </ul>
 <li>Library
 <ul>

@@ -8630,7 +8630,7 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 				// correct, so nothing should be done other than remove the mark as reference.
 				// For types allocated on the heap, it is necessary to dereference the pointer
 				// that is currently on the stack
-				if( IsVariableOnHeap(ctx->type.stackOffset) )
+				if( !(ctx->type.isVariable || ctx->type.isTemporary) || IsVariableOnHeap(ctx->type.stackOffset) )
 					Dereference(ctx, generateCode);
 				else
 					ctx->type.dataType.MakeReference(false);
