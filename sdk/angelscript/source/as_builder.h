@@ -124,6 +124,8 @@ struct sFuncDef
 	int            idx;
 };
 
+#endif // AS_NO_COMPILER
+
 struct sMixinClass
 {
 	asCScriptCode *script;
@@ -132,7 +134,7 @@ struct sMixinClass
 	asSNameSpace  *ns;
 };
 
-#endif // AS_NO_COMPILER
+
 
 class asCBuilder
 {
@@ -185,12 +187,15 @@ protected:
 
 	asCTypeInfo       *GetType(const char *type, asSNameSpace *ns, asCObjectType *parentType);
 	asCObjectType     *GetObjectType(const char *type, asSNameSpace *ns);
-	bool               FindObjectTypeOrMixinInNsHierarchy(const asCString& name, asSNameSpace* startNs, bool isExplicitNs, asCScriptNode* errNode, asCScriptCode* script, asCObjectType **outObjType, sMixinClass **outMixin);
 	asCFuncdefType    *GetFuncDef(const char *type, asSNameSpace *ns, asCObjectType *parentType);
 	asCTypeInfo       *GetTypeFromTypesKnownByObject(const char *type, asCObjectType *currentType);
 	asCDataType        CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, asSNameSpace *implicitNamespace, bool acceptHandleForScope = false, asCObjectType *currentType = 0, bool reportError = true, bool *isValid = 0, asCArray<asCDataType> *templateSubType = 0, asCArray<asSNameSpace*>* scopeVisibleNamespaces = 0);
 	asCObjectType     *GetTemplateInstanceFromNode(asCScriptNode *node, asCScriptCode *file, asCObjectType *templateType, asSNameSpace *implicitNamespace, asCObjectType *currentType, asCScriptNode **next = 0);
 	asCDataType        ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node, asCScriptCode *file, asETypeModifiers *inOutFlag, bool *autoHandle);
+
+	bool               FindObjectTypeOrMixinInNsHierarchy(const asCString& name, asSNameSpace* startNs, bool isExplicitNs, asCScriptNode* errNode, asCScriptCode* script, asCObjectType** outObjType, sMixinClass** outMixin);
+	void               AddVisibleNamespaces(asSNameSpace* ns, const asCArray<asSNameSpace*>& visited, asCArray<asSNameSpace*>& pending);
+	asSNameSpace      *FindNextVisibleNamespace(const asCArray<asSNameSpace*>& visited, asCArray<asSNameSpace*>& pending, asSNameSpace* parentNs, bool* checkAmbiguous = 0);
 
 	int numErrors;
 	int numWarnings;
@@ -198,6 +203,7 @@ protected:
 
 	asCScriptEngine *engine;
 	asCModule       *module;
+	asCMap<asSNameSpace*, asCArray<asSNameSpace*>>    namespaceVisibility;
 
 #ifndef AS_NO_COMPILER
 protected:
@@ -237,8 +243,6 @@ protected:
 	void               ParseScripts();
 	void               RegisterTypesFromScript(asCScriptNode *node, asCScriptCode *script, asSNameSpace *ns);
 	void               RegisterNamespaceVisibility(asCScriptNode *node, asCScriptCode *script, asSNameSpace *ns);
-	void               AddVisibleNamespaces(asSNameSpace *ns, const asCArray<asSNameSpace*>& visited, asCArray<asSNameSpace*>& pending);
-	asSNameSpace      *FindNextVisibleNamespace(const asCArray<asSNameSpace*>& visited, asCArray<asSNameSpace*>& pending, asSNameSpace *parentNs, bool* checkAmbiguous = 0);
 	void               RegisterNonTypesFromScript(asCScriptNode *node, asCScriptCode *script, asSNameSpace *ns);
 	void               CompileFunctions();
 	void               CompileGlobalVariables();
@@ -255,7 +259,6 @@ protected:
 	asCArray<asCScriptCode *>                         scripts;
 	asCArray<sFunctionDescription *>                  functions;
 	asCSymbolTable<sGlobalVariableDescription>        globVariables;
-	asCMap<asSNameSpace*, asCArray<asSNameSpace*>>    namespaceVisibility;
 	asCArray<sClassDeclaration *>                     classDeclarations;
 	asCArray<sClassDeclaration *>                     interfaceDeclarations;
 	asCArray<sClassDeclaration *>                     namedTypeDeclarations;
