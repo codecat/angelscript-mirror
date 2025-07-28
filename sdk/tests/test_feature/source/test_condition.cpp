@@ -95,12 +95,44 @@ bool TestCondition()
 	asIScriptEngine* engine;
 
 	// Test crash on condition
+	// https://www.gamedev.net/forums/topic/718945-ternary-operator-with-global-assignment-causes-crash/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+//		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int a = -1; \n"
+			"int b = -1; \n"
+			"void Main() { \n"
+			"	int i = true ? (a = 1) : (b = 0); \n" // TODO: issue is SetV4, LDG, WRTV4 is replaced with SetG4 which doesn't load the address of the global var into the value register. Should make it SetG4, LDG if the value register is used afterwards
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "Main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
+	// Test crash on condition
 	// https://www.gamedev.net/forums/topic/718891-ternary-operator-crash-when-using-auto/5470948/
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
-		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
+//		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
 
 		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",

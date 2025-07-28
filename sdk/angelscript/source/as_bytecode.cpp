@@ -1388,7 +1388,9 @@ bool asCByteCode::IsTempRegUsed(asCByteInstruction *curr)
 			curr->op == asBC_JS       ||
 			curr->op == asBC_JNS      ||
 			curr->op == asBC_JP       ||
-			curr->op == asBC_JNP      )
+			curr->op == asBC_JNP      ||
+			curr->op == asBC_JMPP     || // TODO: JMP and JMPP cannot be said to read the temporary register. Need to follow the branch to determine what happens next
+			curr->op == asBC_JMP ) 
 			return true;
 
 		// Which instructions overwrite the register or discard the value?
@@ -1409,16 +1411,6 @@ bool asCByteCode::IsTempRegUsed(asCByteInstruction *curr)
 			curr->op == asBC_TNS       ||
 			curr->op == asBC_TP        ||
 			curr->op == asBC_TNP       ||
-			curr->op == asBC_JS        ||
-			curr->op == asBC_JNS       ||
-			curr->op == asBC_JP        ||
-			curr->op == asBC_JNP       ||
-			curr->op == asBC_JMPP      ||
-			curr->op == asBC_JMP       ||
-			curr->op == asBC_JZ        ||
-			curr->op == asBC_JNZ       ||
-			curr->op == asBC_JLowZ     ||
-			curr->op == asBC_JLowNZ    ||
 			curr->op == asBC_CMPi      ||
 			curr->op == asBC_CMPu      ||
 			curr->op == asBC_CMPf      ||
@@ -1426,7 +1418,6 @@ bool asCByteCode::IsTempRegUsed(asCByteInstruction *curr)
 			curr->op == asBC_CMPIi     ||
 			curr->op == asBC_CMPIu     ||
 			curr->op == asBC_CMPIf     ||
-			curr->op == asBC_LABEL     ||
 			curr->op == asBC_LoadThisR ||
 			curr->op == asBC_LoadRObjR ||
 			curr->op == asBC_LoadVObjR )
