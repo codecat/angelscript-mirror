@@ -1118,6 +1118,135 @@ const dictKey_t& CScriptDictionary::opForValue1(const CScriptDictionary::CScript
 	return iter.iter.m_it->first;
 }
 
+void ScriptDictIterAddRef_Generic(asIScriptGeneric* gen)
+{
+	CScriptDictionary::CScriptDictIter* iter = (CScriptDictionary::CScriptDictIter*)gen->GetObject();
+	iter->AddRef();
+}
+
+void ScriptDictIterRelease_Generic(asIScriptGeneric* gen)
+{
+	CScriptDictionary::CScriptDictIter* iter = (CScriptDictionary::CScriptDictIter*)gen->GetObject();
+	iter->Release();
+}
+
+void ScriptDictionary_opForBegin_Generic(asIScriptGeneric* gen)
+{
+	CScriptDictionary* dict = (CScriptDictionary*)gen->GetObject();
+	*(CScriptDictionary::CScriptDictIter**)gen->GetAddressOfReturnLocation() = dict->opForBegin();
+}
+
+void ScriptDictionary_opForEnd_Generic(asIScriptGeneric* gen)
+{
+	CScriptDictionary* dict = (CScriptDictionary*)gen->GetObject();
+	CScriptDictionary::CScriptDictIter* iter = *(CScriptDictionary::CScriptDictIter**)gen->GetAddressOfArg(0);
+	*(bool*)gen->GetAddressOfReturnLocation() = dict->opForEnd(*iter);
+}
+
+void ScriptDictionary_opForNext_Generic(asIScriptGeneric* gen)
+{
+	CScriptDictionary* dict = (CScriptDictionary*)gen->GetObject();
+	CScriptDictionary::CScriptDictIter* iter = *(CScriptDictionary::CScriptDictIter**)gen->GetAddressOfArg(0);
+	*(CScriptDictionary::CScriptDictIter**)gen->GetAddressOfReturnLocation() = dict->opForNext(*iter);
+}
+
+void ScriptDictionary_opForValue0_Generic(asIScriptGeneric* gen)
+{
+	CScriptDictionary* dict = (CScriptDictionary*)gen->GetObject();
+	CScriptDictionary::CScriptDictIter* iter = *(CScriptDictionary::CScriptDictIter**)gen->GetAddressOfArg(0);
+	*reinterpret_cast<const CScriptDictValue**>(gen->GetAddressOfReturnLocation()) = &dict->opForValue0(*iter);
+}
+
+void ScriptDictionary_opForValue1_Generic(asIScriptGeneric* gen)
+{
+	CScriptDictionary* dict = (CScriptDictionary*)gen->GetObject();
+	CScriptDictionary::CScriptDictIter* iter = *(CScriptDictionary::CScriptDictIter**)gen->GetAddressOfArg(0);
+	*reinterpret_cast<const dictKey_t**>(gen->GetAddressOfReturnLocation()) = &dict->opForValue1(*iter);
+}
+
+//------------------------------------------------------------------
+// Iterator implementation
+
+CScriptDictionary::CIterator CScriptDictionary::begin() const
+{
+	return CIterator(*this, dict.begin());
+}
+
+CScriptDictionary::CIterator CScriptDictionary::end() const
+{
+	return CIterator(*this, dict.end());
+}
+
+CScriptDictionary::CIterator CScriptDictionary::find(const dictKey_t& key) const
+{
+	return CIterator(*this, dict.find(key));
+}
+
+CScriptDictionary::CIterator::CIterator(
+	const CScriptDictionary& dict,
+	dictMap_t::const_iterator it)
+	: m_it(it), m_dict(dict)
+{
+}
+
+void CScriptDictionary::CIterator::operator++()
+{
+	++m_it;
+}
+
+void CScriptDictionary::CIterator::operator++(int)
+{
+	++m_it;
+
+	// Normally the post increment would return a copy of the object with the original state,
+	// but it is rarely used so we skip this extra copy to avoid unnecessary overhead
+}
+
+CScriptDictionary::CIterator& CScriptDictionary::CIterator::operator*()
+{
+	return *this;
+}
+
+bool CScriptDictionary::CIterator::operator==(const CIterator& other) const
+{
+	return m_it == other.m_it;
+}
+
+bool CScriptDictionary::CIterator::operator!=(const CIterator& other) const
+{
+	return m_it != other.m_it;
+}
+
+const dictKey_t& CScriptDictionary::CIterator::GetKey() const
+{
+	return m_it->first;
+}
+
+int CScriptDictionary::CIterator::GetTypeId() const
+{
+	return m_it->second.m_typeId;
+}
+
+bool CScriptDictionary::CIterator::GetValue(asINT64& value) const
+{
+	return m_it->second.Get(m_dict.engine, &value, asTYPEID_INT64);
+}
+
+bool CScriptDictionary::CIterator::GetValue(double& value) const
+{
+	return m_it->second.Get(m_dict.engine, &value, asTYPEID_DOUBLE);
+}
+
+bool CScriptDictionary::CIterator::GetValue(void* value, int typeId) const
+{
+	return m_it->second.Get(m_dict.engine, value, typeId);
+}
+
+const void* CScriptDictionary::CIterator::GetAddressOfValue() const
+{
+	return m_it->second.GetAddressOfValue();
+}
+
 //--------------------------------------------------------------------------
 // Register the type
 
@@ -1284,90 +1413,19 @@ void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ScriptDictionaryEnumReferences_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ScriptDictionaryReleaseAllReferences_Generic), asCALL_GENERIC); assert( r >= 0 );
 
+	// Support foreach
+	r = engine->RegisterObjectType("dictionaryIter", 0, asOBJ_REF); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("dictionaryIter", asBEHAVE_ADDREF, "void f()", asFUNCTION(ScriptDictIterAddRef_Generic), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("dictionaryIter", asBEHAVE_RELEASE, "void f()", asFUNCTION(ScriptDictIterRelease_Generic), asCALL_GENERIC); assert(r >= 0);
+
+	r = engine->RegisterObjectMethod("dictionary", "dictionaryIter @opForBegin() const", asFUNCTION(ScriptDictionary_opForBegin_Generic), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterObjectMethod("dictionary", "bool opForEnd(dictionaryIter @+) const", asFUNCTION(ScriptDictionary_opForEnd_Generic), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterObjectMethod("dictionary", "dictionaryIter @+ opForNext(dictionaryIter @+) const", asFUNCTION(ScriptDictionary_opForNext_Generic), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterObjectMethod("dictionary", "const dictionaryValue &opForValue0(dictionaryIter @+) const", asFUNCTION(ScriptDictionary_opForValue0_Generic), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterObjectMethod("dictionary", "const string &opForValue1(dictionaryIter @+) const", asFUNCTION(ScriptDictionary_opForValue1_Generic), asCALL_GENERIC); assert(r >= 0);
+
 	// Cache some things the dictionary will need at runtime
 	SDictionaryCache::Setup(engine);
-}
-
-//------------------------------------------------------------------
-// Iterator implementation
-
-CScriptDictionary::CIterator CScriptDictionary::begin() const
-{
-	return CIterator(*this, dict.begin());
-}
-
-CScriptDictionary::CIterator CScriptDictionary::end() const
-{
-	return CIterator(*this, dict.end());
-}
-
-CScriptDictionary::CIterator CScriptDictionary::find(const dictKey_t &key) const
-{
-	return CIterator(*this, dict.find(key));
-}
-
-CScriptDictionary::CIterator::CIterator(
-		const CScriptDictionary &dict,
-		dictMap_t::const_iterator it)
-	: m_it(it), m_dict(dict)
-{}
-
-void CScriptDictionary::CIterator::operator++()
-{
-	++m_it;
-}
-
-void CScriptDictionary::CIterator::operator++(int)
-{
-	++m_it;
-
-	// Normally the post increment would return a copy of the object with the original state,
-	// but it is rarely used so we skip this extra copy to avoid unnecessary overhead
-}
-
-CScriptDictionary::CIterator &CScriptDictionary::CIterator::operator*()
-{
-	return *this;
-}
-
-bool CScriptDictionary::CIterator::operator==(const CIterator &other) const
-{
-	return m_it == other.m_it;
-}
-
-bool CScriptDictionary::CIterator::operator!=(const CIterator &other) const
-{
-	return m_it != other.m_it;
-}
-
-const dictKey_t &CScriptDictionary::CIterator::GetKey() const
-{
-	return m_it->first;
-}
-
-int CScriptDictionary::CIterator::GetTypeId() const
-{
-	return m_it->second.m_typeId;
-}
-
-bool CScriptDictionary::CIterator::GetValue(asINT64 &value) const
-{
-	return m_it->second.Get(m_dict.engine, &value, asTYPEID_INT64);
-}
-
-bool CScriptDictionary::CIterator::GetValue(double &value) const
-{
-	return m_it->second.Get(m_dict.engine, &value, asTYPEID_DOUBLE);
-}
-
-bool CScriptDictionary::CIterator::GetValue(void *value, int typeId) const
-{
-	return m_it->second.Get(m_dict.engine, value, typeId);
-}
-
-const void *CScriptDictionary::CIterator::GetAddressOfValue() const
-{
-	return m_it->second.GetAddressOfValue();
 }
 
 END_AS_NAMESPACE

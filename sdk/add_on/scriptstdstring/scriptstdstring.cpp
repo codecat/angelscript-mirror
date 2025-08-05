@@ -1513,6 +1513,18 @@ static void StringSubString_Generic(asIScriptGeneric *gen)
 	new(gen->GetAddressOfReturnLocation()) string(StringSubString(start, count, *str));
 }
 
+// static int StringRegexFind(const string& rex, asUINT start, asUINT& outLengthOfMatch, const string& str)
+static void StringRegexFind_Generic(asIScriptGeneric* gen)
+{
+	// Get the arguments
+	string* str = (string*)gen->GetObject();
+	string *rex = *(string**)gen->GetAddressOfArg(0);
+	asUINT start = *(asUINT*)gen->GetAddressOfArg(1);
+	asUINT* outLen = *(asUINT**)gen->GetAddressOfArg(2);
+
+	*(int*)(gen->GetAddressOfReturnLocation()) = StringRegexFind(*rex, start, *outLen, *str);
+}
+
 void RegisterStdString_Generic(asIScriptEngine *engine)
 {
 	int r = 0;
@@ -1586,6 +1598,7 @@ void RegisterStdString_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("string", "int findLastNotOf(const string &in, int start = -1) const", asFUNCTION(StringFindLastNotOf_Generic), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterObjectMethod("string", "void insert(uint pos, const string &in other)", asFUNCTION(StringInsert_Generic), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterObjectMethod("string", "void erase(uint pos, int count = -1)", asFUNCTION(StringErase_Generic), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterObjectMethod("string", "int regexFind(const string  &in regex, uint start = 0, uint &out lengthOfMatch = void) const", asFUNCTION(StringRegexFind_Generic), asCALL_GENERIC); assert(r >= 0);
 
 	r = engine->RegisterGlobalFunction("uint scan(const string&in str, ?&out ...)", asFUNCTION(StringScan), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterGlobalFunction("string format(const string&in fmt, const ?&in ...)", asFUNCTION(StringFormat), asCALL_GENERIC); assert(r >= 0);

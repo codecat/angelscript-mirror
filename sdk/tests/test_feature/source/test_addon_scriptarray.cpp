@@ -467,6 +467,7 @@ bool Test()
 
 	// Test passing array<array<double>> to application
 	// https://www.gamedev.net/forums/topic/717597-how-do-i-register-an-angelscript-function-that-passes-an-array-of-array-of-doubles/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);

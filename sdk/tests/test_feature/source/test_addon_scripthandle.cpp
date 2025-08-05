@@ -111,6 +111,7 @@ bool Test()
 
 	// Test passing a function pointer to a function expecting a ref@
 	// https://www.gamedev.net/forums/topic/717716-registering-a-function-to-handle-a-script-specific-class/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine();
 		RegisterScriptHandle(engine);
