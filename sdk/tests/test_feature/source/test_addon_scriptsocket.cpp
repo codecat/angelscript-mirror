@@ -3,6 +3,7 @@
 #include "../../../add_on/scriptstdstring/scriptstdstring.h"
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
 #include "../../../add_on/contextmgr/contextmgr.h"
+#include "../../../add_on/autowrapper/aswrappedcall.h"
 
 namespace Test_Addon_ScriptSocket
 {
@@ -39,7 +40,11 @@ bool Test()
 		ctxMgr.RegisterCoRoutineSupport(engine);
 
 		RegisterScriptSocket(engine);
+#ifdef AS_MAX_PORTABILITY
+		engine->RegisterGlobalFunction("void print(const string &in)", WRAP_FN(print), asCALL_GENERIC);
+#else
 		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_CDECL);
+#endif
 
 		bool success = false;
 		engine->RegisterGlobalProperty("bool success", &success);

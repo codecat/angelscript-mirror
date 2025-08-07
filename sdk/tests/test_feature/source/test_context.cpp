@@ -603,6 +603,7 @@ bool Test()
 
 	// Test reuse of context after the stack has grown
 	// Reported by Doi Hiroshi
+	SKIP_ON_MAX_PORT
 	{
 		auto engine = asCreateScriptEngine();
 

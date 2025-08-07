@@ -1,5 +1,6 @@
 #include "scriptsocket.h"
 #include <assert.h>
+#include "../autowrapper/aswrappedcall.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -292,7 +293,7 @@ static CScriptSocket* CScriptSocket_Factory()
 	return new CScriptSocket();
 }
 
-int RegisterScriptSocket(asIScriptEngine* engine)
+int RegisterScriptSocket_Native(asIScriptEngine* engine)
 {
 	int r; 
 
@@ -314,6 +315,38 @@ int RegisterScriptSocket(asIScriptEngine* engine)
 	r = engine->RegisterObjectMethod("socket", "bool isActive() const", asMETHOD(CScriptSocket, IsActive), asCALL_THISCALL); assert(r >= 0);
 
 	return 0;
+}
+
+int RegisterScriptSocket_Generic(asIScriptEngine* engine)
+{
+	int r;
+
+	// Check that the string type has been registered already
+	r = engine->GetTypeIdByDecl("string"); assert(r >= 0);
+
+	// Register the socket class with the script engine
+	engine->RegisterObjectType("socket", 0, asOBJ_REF);
+	r = engine->RegisterObjectBehaviour("socket", asBEHAVE_FACTORY, "socket @f()", WRAP_FN(CScriptSocket_Factory), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("socket", asBEHAVE_ADDREF, "void f()", WRAP_MFN(CScriptSocket, AddRef), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("socket", asBEHAVE_RELEASE, "void f()", WRAP_MFN(CScriptSocket, Release), asCALL_GENERIC); assert(r >= 0);
+
+	r = engine->RegisterObjectMethod("socket", "int listen(uint16 port)", WRAP_MFN(CScriptSocket, Listen), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterObjectMethod("socket", "int close()", WRAP_MFN(CScriptSocket, Close), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterObjectMethod("socket", "socket @accept(int64 timeout = 0)", WRAP_MFN(CScriptSocket, Accept), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterObjectMethod("socket", "int connect(uint ipv4address, uint16 port)", WRAP_MFN(CScriptSocket, Connect), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterObjectMethod("socket", "int send(const string &in data)", WRAP_MFN(CScriptSocket, Send), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterObjectMethod("socket", "string receive(int64 timeout = 0)", WRAP_MFN(CScriptSocket, Receive), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterObjectMethod("socket", "bool isActive() const", WRAP_MFN(CScriptSocket, IsActive), asCALL_GENERIC); assert(r >= 0);
+
+	return 0;
+}
+
+int RegisterScriptSocket(asIScriptEngine* engine)
+{
+	if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY"))
+		return RegisterScriptSocket_Generic(engine);
+	else
+		return RegisterScriptSocket_Native(engine);
 }
 
 #else
