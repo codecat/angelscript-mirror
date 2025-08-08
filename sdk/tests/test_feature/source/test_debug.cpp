@@ -337,6 +337,7 @@ bool Test()
 
 	// Test GetAddressOfVar for object variables whose stack position is reused in multiple scopes
 	// Reported by Paril
+	SKIP_ON_MAX_PORT
 	{
 		asIScriptEngine* engine = asCreateScriptEngine();
 		CBufferedOutStream bout;

@@ -46,6 +46,7 @@ bool Test()
 
 	// Test function overload for &out parameters. The same prioritization order is used as for input arguments, even  
 	// though technically the &out parameter will be converted to the argument and not the other way around
+	SKIP_ON_MAX_PORT
 	{
 		asIScriptEngine* engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -119,6 +120,7 @@ void main() {
 
 	// Test proper function overload for &out parameters
 	// Reported by Sam Tupy
+	SKIP_ON_MAX_PORT
 	{
 		asIScriptEngine *engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -185,6 +187,7 @@ void main() {
 	{
 		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
@@ -223,6 +226,7 @@ void main() {
 	{
 		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
@@ -257,6 +261,7 @@ void main() {
 	{
 		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 

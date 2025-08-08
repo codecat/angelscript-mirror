@@ -68,6 +68,7 @@ bool TestNested()
 
 	// Test using GetThisPointer on context with nested states
 	// Reported by Patrick Jeeves
+	SKIP_ON_MAX_PORT
 	{
 		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		COutStream out;

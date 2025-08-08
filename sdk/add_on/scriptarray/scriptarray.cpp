@@ -2272,13 +2272,14 @@ static void RegisterScriptArray_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_RELEASE, "void f()", asFUNCTION(ScriptArrayRelease_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "T &opIndex(uint index)", asFUNCTION(ScriptArrayAt_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "const T &opIndex(uint index) const", asFUNCTION(ScriptArrayAt_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("array<T>", "array<T> &opAssign(const array<T>&in)", asFUNCTION(ScriptArrayAssignment_Generic), asCALL_GENERIC); assert( r >= 0 );
 
 	r = engine->RegisterObjectMethod("array<T>", "uint opForBegin() const", asFUNCTION(ScriptArray_opForBegin_Generic), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterObjectMethod("array<T>", "bool opForEnd(uint) const", asFUNCTION(ScriptArray_opForEnd_Generic), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterObjectMethod("array<T>", "uint opForNext(uint) const", asFUNCTION(ScriptArray_opForNext_Generic), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterObjectMethod("array<T>", "const T &opForValue0(uint index) const", asFUNCTION(ScriptArrayAt_Generic), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterObjectMethod("array<T>", "uint opForValue1(uint index) const", asFUNCTION(ScriptArray_opForValue1_Generic), asCALL_GENERIC); assert(r >= 0);
+
+	r = engine->RegisterObjectMethod("array<T>", "array<T> &opAssign(const array<T>&in)", asFUNCTION(ScriptArrayAssignment_Generic), asCALL_GENERIC); assert(r >= 0);
 
 	r = engine->RegisterObjectMethod("array<T>", "void insertAt(uint index, const T&in value)", asFUNCTION(ScriptArrayInsertAt_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "void insertAt(uint index, const array<T>& arr)", asFUNCTION(ScriptArrayInsertAtArray_Generic), asCALL_GENERIC); assert(r >= 0);
